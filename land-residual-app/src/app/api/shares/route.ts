@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/auth';
+import { getSession } from '@/lib/auth';
 import {
   createDealShare,
   getSharesByDeal,
@@ -7,16 +7,15 @@ import {
   deactivateShare,
 } from '@/lib/db';
 
+// System user ID for password-based auth mode
+const SYSTEM_USER_ID = 'system-user-laaa';
+
 // Create a new share link
 export async function POST(request: NextRequest) {
   try {
-    const authResult = await requireAuth(['admin', 'team']);
-    if ('error' in authResult) {
-      return NextResponse.json(
-        { error: authResult.error },
-        { status: authResult.status }
-      );
-    }
+    // Try to get session, but allow access in password-based auth mode
+    const session = await getSession();
+    const userId = session?.userId || SYSTEM_USER_ID;
 
     const body = await request.json();
     const { dealId, shareType, clientEmail, clientName, expiresInDays } = body;
@@ -40,7 +39,7 @@ export async function POST(request: NextRequest) {
     const share = createDealShare({
       deal_id: dealId,
       share_type: shareType || 'summary',
-      created_by: authResult.session.userId,
+      created_by: userId,
       client_email: clientEmail,
       client_name: clientName,
       expires_in_days: expiresInDays,
@@ -72,14 +71,6 @@ export async function POST(request: NextRequest) {
 // Get shares for a deal
 export async function GET(request: NextRequest) {
   try {
-    const authResult = await requireAuth(['admin', 'team']);
-    if ('error' in authResult) {
-      return NextResponse.json(
-        { error: authResult.error },
-        { status: authResult.status }
-      );
-    }
-
     const { searchParams } = new URL(request.url);
     const dealId = searchParams.get('dealId');
 
@@ -120,14 +111,6 @@ export async function GET(request: NextRequest) {
 // Deactivate a share
 export async function DELETE(request: NextRequest) {
   try {
-    const authResult = await requireAuth(['admin', 'team']);
-    if ('error' in authResult) {
-      return NextResponse.json(
-        { error: authResult.error },
-        { status: authResult.status }
-      );
-    }
-
     const { searchParams } = new URL(request.url);
     const shareId = searchParams.get('id');
 

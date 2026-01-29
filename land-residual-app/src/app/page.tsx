@@ -234,6 +234,7 @@ function AppContent() {
         <ShareManager
           dealId={inputs.id}
           dealName={inputs.name || 'Untitled Deal'}
+          inputs={inputs}
           onClose={() => setShowShareManager(false)}
         />
       )}

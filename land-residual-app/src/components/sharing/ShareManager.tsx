@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { cn, formatDate } from '@/lib/utils';
+import { DealInputs } from '@/types/deal';
 
 interface Share {
   id: string;
@@ -20,13 +21,16 @@ interface Share {
 interface ShareManagerProps {
   dealId: string;
   dealName: string;
+  inputs: DealInputs;
   onClose: () => void;
 }
 
-export function ShareManager({ dealId, dealName, onClose }: ShareManagerProps) {
+export function ShareManager({ dealId, dealName, inputs, onClose }: ShareManagerProps) {
   const [shares, setShares] = useState<Share[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
 
@@ -35,6 +39,35 @@ export function ShareManager({ dealId, dealName, onClose }: ShareManagerProps) {
   const [clientEmail, setClientEmail] = useState('');
   const [shareType, setShareType] = useState<'summary' | 'full'>('summary');
   const [expiresInDays, setExpiresInDays] = useState<number | ''>('');
+
+  // Sync deal to database
+  const syncDealToDb = useCallback(async () => {
+    setSyncing(true);
+    setSyncError(null);
+    try {
+      const response = await fetch('/api/deals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: dealId,
+          name: dealName,
+          inputs,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to sync deal');
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Failed to sync deal:', error);
+      setSyncError('Failed to save deal to server. Please try again.');
+      return false;
+    } finally {
+      setSyncing(false);
+    }
+  }, [dealId, dealName, inputs]);
 
   const loadShares = useCallback(async () => {
     try {
@@ -50,13 +83,26 @@ export function ShareManager({ dealId, dealName, onClose }: ShareManagerProps) {
     }
   }, [dealId]);
 
+  // Sync deal and load shares on mount
   useEffect(() => {
-    loadShares();
-  }, [loadShares]);
+    async function init() {
+      await syncDealToDb();
+      await loadShares();
+    }
+    init();
+  }, [syncDealToDb, loadShares]);
 
   const handleCreate = async () => {
     setCreating(true);
+    setSyncError(null);
     try {
+      // Sync deal first to ensure it's in DB
+      const synced = await syncDealToDb();
+      if (!synced) {
+        setCreating(false);
+        return;
+      }
+
       const response = await fetch('/api/shares', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -76,9 +122,12 @@ export function ShareManager({ dealId, dealName, onClose }: ShareManagerProps) {
         setClientName('');
         setClientEmail('');
         setExpiresInDays('');
+      } else {
+        setSyncError(data.error || 'Failed to create share link');
       }
     } catch (error) {
       console.error('Failed to create share:', error);
+      setSyncError('Failed to create share link. Please try again.');
     } finally {
       setCreating(false);
     }
@@ -125,6 +174,19 @@ export function ShareManager({ dealId, dealName, onClose }: ShareManagerProps) {
             </svg>
           </button>
         </div>
+
+        {/* Sync Status */}
+        {syncing && (
+          <div className="p-3 border-b border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900/20">
+            <p className="text-sm text-blue-700 dark:text-blue-300">Syncing deal to server...</p>
+          </div>
+        )}
+
+        {syncError && (
+          <div className="p-3 border-b border-gray-200 dark:border-gray-700 bg-red-50 dark:bg-red-900/20">
+            <p className="text-sm text-red-700 dark:text-red-300">{syncError}</p>
+          </div>
+        )}
 
         {/* Create Form */}
         {showCreateForm ? (
