@@ -104,10 +104,14 @@ export function parseZIMASText(text: string): Partial<ZIMASData> {
     rawText: text,
   };
 
-  // Property Address - look for address pattern after "Address:"
-  const addressMatch = text.match(/Address:\s*([^\n]+)/i);
+  // Property Address - look for address pattern, stop at Tract/APN/PIN
+  const addressMatch = text.match(/Address:\s*([^\n]+?)(?:\s+(?:Tract|APN|PIN|Block|Lot):|$)/i) ||
+    text.match(/Address:\s*([^\n]+)/i);
   if (addressMatch) {
-    data.propertyAddress = addressMatch[1].trim();
+    // Clean up address - remove trailing Tract/Zoning info if captured
+    let addr = addressMatch[1].trim();
+    addr = addr.replace(/\s+Tract:.*$/i, '').replace(/\s+Zoning:.*$/i, '').trim();
+    data.propertyAddress = addr;
   }
 
   // APN (Assessor Parcel Number)
@@ -122,12 +126,29 @@ export function parseZIMASText(text: string): Partial<ZIMASData> {
     data.pin = pinMatch[1];
   }
 
-  // Lot Size - various formats
-  const lotSizeSFMatch = text.match(/Lot\s*Size\s*\(SF\):\s*([\d,]+)/i) ||
-    text.match(/Lot\s*Area\s*\(SF\):\s*([\d,]+)/i) ||
-    text.match(/([\d,]+)\s*SF/i);
-  if (lotSizeSFMatch) {
-    data.lotSizeSF = parseInt(lotSizeSFMatch[1].replace(/,/g, ''), 10);
+  // Lot Size - various formats in ZIMAS PDFs
+  const lotSizePatterns = [
+    /Lot\s*Size\s*\(SF\)[:\s]*([\d,]+)/i,
+    /Lot\s*Area\s*\(SF\)[:\s]*([\d,]+)/i,
+    /Lot\s*Area\s*\(Calculated\)[:\s]*([\d,]+)/i,
+    /Approx\.?\s*Lot\s*Area[^:]*[:\s]*([\d,]+)/i,
+    /Parcel\s*Area[:\s]*([\d,]+)\s*(?:SF|sq\.?\s*ft)/i,
+    /Area[:\s]*([\d,]+)\s*(?:SF|sq\.?\s*ft)/i,
+    /Size[:\s]*([\d,]+)\s*(?:SF|sq\.?\s*ft)/i,
+    /([\d,]+)\s*(?:SF|sq\.?\s*ft|square\s*feet)/i,
+    /(?:^|\s)([\d,]{4,})\s*SF/im,  // 4+ digits followed by SF
+  ];
+
+  for (const pattern of lotSizePatterns) {
+    const match = text.match(pattern);
+    if (match) {
+      const value = parseInt(match[1].replace(/,/g, ''), 10);
+      // Reasonable lot size range: 500 SF to 5,000,000 SF
+      if (value >= 500 && value <= 5000000) {
+        data.lotSizeSF = value;
+        break;
+      }
+    }
   }
 
   const lotSizeAcresMatch = text.match(/Lot\s*Size\s*\(Acres\):\s*([\d.]+)/i);
