@@ -114,8 +114,10 @@ export function parseZIMASText(text: string): Partial<ZIMASData> {
     data.propertyAddress = addr;
   }
 
-  // APN (Assessor Parcel Number)
-  const apnMatch = text.match(/APN:\s*(\d{10})/i) || text.match(/(\d{10})/);
+  // APN (Assessor Parcel Number) - formats: "APN: 1234567890" or "Assessor Parcel No. (APN) 1234567890"
+  const apnMatch = text.match(/Assessor\s*Parcel\s*No\.?\s*\(APN\)\s*(\d{10})/i) ||
+    text.match(/APN[:\s]+(\d{10})/i) ||
+    text.match(/(\d{10})/);
   if (apnMatch) {
     data.apn = apnMatch[1];
   }
@@ -128,21 +130,24 @@ export function parseZIMASText(text: string): Partial<ZIMASData> {
 
   // Lot Size - various formats in ZIMAS PDFs
   const lotSizePatterns = [
+    /Lot\/Parcel\s*Area\s*\(Calculated\)\s*([\d,]+\.?\d*)\s*\(sq\s*ft\)/i, // "Lot/Parcel Area (Calculated) 19,496.3 (sq ft)"
     /Lot\s*Size\s*\(SF\)[:\s]*([\d,]+)/i,
     /Lot\s*Area\s*\(SF\)[:\s]*([\d,]+)/i,
     /Lot\s*Area\s*\(Calculated\)[:\s]*([\d,]+)/i,
     /Approx\.?\s*Lot\s*Area[^:]*[:\s]*([\d,]+)/i,
+    /Parcel\s*Area[:\s]*([\d,]+\.?\d*)\s*\(sq\s*ft\)/i,
     /Parcel\s*Area[:\s]*([\d,]+)\s*(?:SF|sq\.?\s*ft)/i,
     /Area[:\s]*([\d,]+)\s*(?:SF|sq\.?\s*ft)/i,
     /Size[:\s]*([\d,]+)\s*(?:SF|sq\.?\s*ft)/i,
+    /([\d,]+\.?\d*)\s*\(sq\s*ft\)/i, // "19,496.3 (sq ft)"
     /([\d,]+)\s*(?:SF|sq\.?\s*ft|square\s*feet)/i,
-    /(?:^|\s)([\d,]{4,})\s*SF/im,  // 4+ digits followed by SF
   ];
 
   for (const pattern of lotSizePatterns) {
     const match = text.match(pattern);
     if (match) {
-      const value = parseInt(match[1].replace(/,/g, ''), 10);
+      // Handle decimal values like "19,496.3"
+      const value = Math.round(parseFloat(match[1].replace(/,/g, '')));
       // Reasonable lot size range: 500 SF to 5,000,000 SF
       if (value >= 500 && value <= 5000000) {
         data.lotSizeSF = value;
@@ -169,16 +174,18 @@ export function parseZIMASText(text: string): Partial<ZIMASData> {
     data.generalPlanLandUse = generalPlanMatch[1].trim();
   }
 
-  // TOC Tier
-  const tocMatch = text.match(/TOC\s*(?:Tier)?:?\s*(Tier\s*\d+|Not\s*in\s*TOC)/i) ||
-    text.match(/Transit\s*Oriented\s*Communities[^:]*:\s*([^\n]+)/i);
+  // TOC Tier - format: "Transit Oriented Communities (TOC) Tier 3"
+  const tocMatch = text.match(/Transit\s*Oriented\s*Communities\s*\(TOC\)\s*(Tier\s*\d+)/i) ||
+    text.match(/TOC[:\s]*(Tier\s*\d+)/i) ||
+    text.match(/TOC\s*(?:Tier)?:?\s*(Tier\s*\d+|Not\s*in\s*TOC)/i);
   if (tocMatch) {
     data.tocTier = tocMatch[1].trim();
   }
 
-  // AHLF Market Area
-  const ahlfMatch = text.match(/AHLF\s*Market\s*Area:\s*([^\n]+)/i) ||
-    text.match(/Affordable\s*Housing\s*Linkage\s*Fee[^:]*:\s*([^\n]+)/i);
+  // AHLF Market Area - format: "Affordable Housing Linkage Fee Residential Market Area Medium"
+  const ahlfMatch = text.match(/Affordable\s*Housing\s*Linkage\s*Fee\s*Residential\s*Market\s*Area\s*(\w+)/i) ||
+    text.match(/Residential\s*Market\s*Area\s*(\w+)/i) ||
+    text.match(/AHLF\s*Market\s*Area[:\s]*([^\n]+)/i);
   if (ahlfMatch) {
     data.ahlfMarketArea = ahlfMatch[1].trim();
   }
@@ -199,9 +206,10 @@ export function parseZIMASText(text: string): Partial<ZIMASData> {
     data.councilDistrict = councilMatch[1];
   }
 
-  // RSO (Rent Stabilization Ordinance) Area
-  data.rsoArea = /RSO\s*Area:\s*Yes/i.test(text) ||
-    /Rent\s*Stabilization\s*Ordinance\s*\(RSO\):\s*Yes/i.test(text);
+  // RSO (Rent Stabilization Ordinance) Area - format: "Rent Stabilization Ordinance (RSO) Yes"
+  data.rsoArea = /Rent\s*Stabilization\s*Ordinance\s*\(RSO\)\s*Yes/i.test(text) ||
+    /RSO\s*Area:\s*Yes/i.test(text) ||
+    /\(RSO\)\s*Yes/i.test(text);
 
   // Flood Zone
   data.floodZone = /Flood\s*Zone:\s*Yes/i.test(text) ||
