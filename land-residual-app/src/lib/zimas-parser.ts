@@ -263,11 +263,89 @@ export function parseZIMASText(text: string): Partial<ZIMASData> {
     data.specificPlanArea = value === 'None' ? '' : value;
   }
 
+  // Building Info - parse from ZIMAS building section
+  // Look for units pattern: "# of Units: 5" or "Units 5" or "5 Units"
+  const unitsPatterns = [
+    /#\s*of\s*Units[:\s]*(\d+)/i,
+    /Units[:\s]*(\d+)/i,
+    /(\d+)\s*Units/i,
+    /Residential\s*Units[:\s]*(\d+)/i,
+    /Number\s*of\s*Units[:\s]*(\d+)/i,
+  ];
+
+  for (const pattern of unitsPatterns) {
+    const match = text.match(pattern);
+    if (match && data.buildingInfo) {
+      const units = parseInt(match[1], 10);
+      if (units > 0 && units < 1000) {
+        data.buildingInfo.numberOfUnits = units;
+        break;
+      }
+    }
+  }
+
+  // Look for stories pattern: "Stories: 3" or "# of Stories: 3" or "3 Stories"
+  const storiesPatterns = [
+    /#\s*of\s*Stories[:\s]*(\d+)/i,
+    /Stories[:\s]*(\d+)/i,
+    /(\d+)\s*Stor(?:y|ies)/i,
+    /Number\s*of\s*Stories[:\s]*(\d+)/i,
+    /Height[:\s]*(\d+)\s*Stories/i,
+  ];
+
+  for (const pattern of storiesPatterns) {
+    const match = text.match(pattern);
+    if (match && data.buildingInfo) {
+      const stories = parseInt(match[1], 10);
+      if (stories > 0 && stories < 100) {
+        data.buildingInfo.numberOfStories = stories;
+        break;
+      }
+    }
+  }
+
+  // Look for year built: "Year Built: 1965" or "Built: 1965"
+  const yearBuiltPatterns = [
+    /Year\s*Built[:\s]*(\d{4})/i,
+    /Built[:\s]*(\d{4})/i,
+    /Construction\s*Year[:\s]*(\d{4})/i,
+  ];
+
+  for (const pattern of yearBuiltPatterns) {
+    const match = text.match(pattern);
+    if (match && data.buildingInfo) {
+      const year = parseInt(match[1], 10);
+      if (year > 1800 && year <= new Date().getFullYear()) {
+        data.buildingInfo.yearBuilt = year;
+        break;
+      }
+    }
+  }
+
+  // Look for building area: "Building Area: 12,500 SF" or "Gross Building Area 12500"
+  const buildingAreaPatterns = [
+    /Building\s*Area[:\s]*([\d,]+)\s*(?:SF|sq\s*ft)?/i,
+    /Gross\s*Building\s*Area[:\s]*([\d,]+)/i,
+    /Total\s*Building\s*(?:Area|SF)[:\s]*([\d,]+)/i,
+  ];
+
+  for (const pattern of buildingAreaPatterns) {
+    const match = text.match(pattern);
+    if (match && data.buildingInfo) {
+      const area = parseInt(match[1].replace(/,/g, ''), 10);
+      if (area > 100 && area < 10000000) {
+        data.buildingInfo.buildingArea = area;
+        break;
+      }
+    }
+  }
+
   return data;
 }
 
 /**
  * Convert ZIMAS data to DealInputs fields
+ * Maps all extractable ZIMAS data to the form inputs
  */
 export function zimasToInputs(zimas: Partial<ZIMASData>): Record<string, unknown> {
   const inputs: Record<string, unknown> = {};
@@ -277,39 +355,105 @@ export function zimasToInputs(zimas: Partial<ZIMASData>): Record<string, unknown
     inputs.propertyAddress = zimas.propertyAddress;
   }
 
+  // APN - format with dashes for display (2421022003 → 2421-022-003)
+  if (zimas.apn) {
+    const apn = zimas.apn.replace(/\D/g, ''); // Remove non-digits
+    if (apn.length === 10) {
+      inputs.apn = `${apn.slice(0, 4)}-${apn.slice(4, 7)}-${apn.slice(7)}`;
+    } else {
+      inputs.apn = zimas.apn;
+    }
+  }
+
   // Lot Size
   if (zimas.lotSizeSF) {
     inputs.lotSize = zimas.lotSizeSF;
   }
 
-  // Zoning
+  // Zoning - map ZIMAS zoning to form zoning types
+  // ZIMAS format: R3-1, C2-1VL, etc. Map to base zone: R3, C2, etc.
   if (zimas.zoning) {
-    inputs.zoning = zimas.zoning;
+    const zoningMap: Record<string, string> = {
+      'R1': 'R1', 'R2': 'R2', 'R3': 'R3', 'R4': 'R4', 'R5': 'R5',
+      'RD1.5': 'RD1.5', 'RD2': 'RD2', 'RD3': 'RD3', 'RD4': 'RD4', 'RD5': 'RD5', 'RD6': 'RD6',
+      'C1': 'C1', 'C2': 'C2', 'C4': 'C4', 'C5': 'C5', 'CM': 'CM',
+      'M1': 'M1', 'M2': 'M2', 'MR1': 'MR1', 'MR2': 'MR2',
+      'P': 'P', 'PF': 'PF', 'OS': 'OS',
+      'A1': 'A1', 'A2': 'A2', 'RA': 'RA', 'RE': 'RE', 'RS': 'RS',
+    };
+
+    // Extract base zone (e.g., R3-1 → R3, C2-1VL → C2)
+    const baseZoneMatch = zimas.zoning.match(/^([A-Z]+\d*\.?\d*)/i);
+    if (baseZoneMatch) {
+      const baseZone = baseZoneMatch[1].toUpperCase();
+      // Check for LAR3 special case
+      if (baseZone === 'R3' && zimas.zoning.includes('LA')) {
+        inputs.zoning = 'LAR3';
+      } else if (zoningMap[baseZone]) {
+        inputs.zoning = zoningMap[baseZone];
+      } else {
+        inputs.zoning = 'Other';
+      }
+    }
   }
 
-  // TOC Tier - map to inputs
+  // TOC Tier - map to density bonus program
   if (zimas.tocTier) {
     const tierMatch = zimas.tocTier.match(/Tier\s*(\d+)/i);
     if (tierMatch) {
-      inputs.tocTier = parseInt(tierMatch[1], 10);
+      const tier = parseInt(tierMatch[1], 10);
+      if (tier >= 1 && tier <= 4) {
+        inputs.densityBonusProgram = `TOC Tier ${tier}`;
+      }
     } else if (/not\s*in\s*toc/i.test(zimas.tocTier)) {
-      inputs.tocTier = 0;
+      inputs.densityBonusProgram = 'None';
     }
   }
 
-  // AHLF Market Area - determine fee rate
+  // AHLF Market Area - map to form enum values
   if (zimas.ahlfMarketArea) {
     const area = zimas.ahlfMarketArea.toLowerCase();
-    if (area.includes('high')) {
-      inputs.ahlfRate = area.includes('medium') ? 15 : 18; // Medium-High vs High
+    inputs.ahlfApplies = true;
+
+    if (area.includes('high') && area.includes('medium')) {
+      inputs.ahlfMarketArea = 'Medium-High';
+    } else if (area.includes('high')) {
+      inputs.ahlfMarketArea = 'High';
     } else if (area.includes('medium')) {
-      inputs.ahlfRate = 12;
+      inputs.ahlfMarketArea = 'Medium';
     } else if (area.includes('low')) {
-      inputs.ahlfRate = 8;
+      inputs.ahlfMarketArea = 'Low';
     }
   }
 
-  // Hazard flags that might affect costs
+  // Jurisdiction - ZIMAS is always City of Los Angeles
+  inputs.jurisdiction = 'City of Los Angeles';
+
+  // ULA applies for City of LA
+  inputs.applyULA = true;
+
+  // Building Info - extract units and stories if available
+  if (zimas.buildingInfo) {
+    if (zimas.buildingInfo.numberOfUnits && zimas.buildingInfo.numberOfUnits > 0) {
+      inputs.units = zimas.buildingInfo.numberOfUnits;
+    }
+    if (zimas.buildingInfo.numberOfStories && zimas.buildingInfo.numberOfStories > 0) {
+      inputs.stories = zimas.buildingInfo.numberOfStories;
+    }
+    if (zimas.buildingInfo.buildingArea && zimas.buildingInfo.buildingArea > 0) {
+      // Can use building area to estimate avgUnitSF if we have units
+      if (zimas.buildingInfo.numberOfUnits && zimas.buildingInfo.numberOfUnits > 0) {
+        inputs.avgUnitSF = Math.round(zimas.buildingInfo.buildingArea / zimas.buildingInfo.numberOfUnits);
+      }
+    }
+  }
+
+  // RSO Area - informational (affects rental strategy)
+  if (zimas.rsoArea !== undefined) {
+    inputs.rsoArea = zimas.rsoArea;
+  }
+
+  // Hazard flags (informational for user awareness)
   if (zimas.hillsideArea) {
     inputs.hillsideArea = true;
   }
@@ -322,8 +466,39 @@ export function zimasToInputs(zimas: Partial<ZIMASData>): Record<string, unknown
     inputs.fireHazardZone = true;
   }
 
-  if (zimas.rsoArea !== undefined) {
-    inputs.rsoArea = zimas.rsoArea;
+  // Community Plan Area (informational)
+  if (zimas.communityPlanArea) {
+    inputs.communityPlanArea = zimas.communityPlanArea;
+  }
+
+  // Council District (informational)
+  if (zimas.councilDistrict) {
+    inputs.councilDistrict = zimas.councilDistrict;
+  }
+
+  // General Plan Land Use (informational)
+  if (zimas.generalPlanLandUse) {
+    inputs.generalPlanLandUse = zimas.generalPlanLandUse;
+  }
+
+  // Specific Plan Area (informational)
+  if (zimas.specificPlanArea) {
+    inputs.specificPlanArea = zimas.specificPlanArea;
+  }
+
+  // Coastal Zone (informational)
+  if (zimas.coastalZone) {
+    inputs.coastalZone = zimas.coastalZone;
+  }
+
+  // Airport Hazard Area (informational)
+  if (zimas.airportHazardArea) {
+    inputs.airportHazardArea = zimas.airportHazardArea;
+  }
+
+  // Seismic hazards (informational)
+  if (zimas.seismicHazards) {
+    inputs.seismicHazards = zimas.seismicHazards;
   }
 
   return inputs;
