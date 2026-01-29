@@ -10,9 +10,6 @@ interface PasswordGateProps {
 const AUTH_KEY = 'laaa_auth';
 const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 
-// Default password - in production, use environment variable
-const TEAM_PASSWORD = process.env.NEXT_PUBLIC_TEAM_PASSWORD || 'laaa2025';
-
 export function PasswordGate({ children }: PasswordGateProps) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [password, setPassword] = useState('');
@@ -34,16 +31,26 @@ export function PasswordGate({ children }: PasswordGateProps) {
     setIsLoading(true);
     setError('');
 
-    // Simulate a slight delay for UX
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    try {
+      // Verify password via server-side API (reads env var at runtime)
+      const response = await fetch('/api/auth/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
 
-    if (password === TEAM_PASSWORD) {
-      const session = { expiry: Date.now() + SESSION_DURATION };
-      setToStorage(AUTH_KEY, session);
-      setIsAuthenticated(true);
-    } else {
-      setError('Incorrect password. Please try again.');
-      setPassword('');
+      const data = await response.json();
+
+      if (data.success) {
+        const session = { expiry: Date.now() + SESSION_DURATION };
+        setToStorage(AUTH_KEY, session);
+        setIsAuthenticated(true);
+      } else {
+        setError('Incorrect password. Please try again.');
+        setPassword('');
+      }
+    } catch {
+      setError('Connection error. Please try again.');
     }
 
     setIsLoading(false);
