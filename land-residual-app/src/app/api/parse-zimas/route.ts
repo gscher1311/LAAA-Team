@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { parseZIMASText, zimasToInputs, validateZIMASData } from '@/lib/zimas-parser';
+import { extractText } from 'unpdf';
 
 // Force dynamic to avoid build-time evaluation
 export const dynamic = 'force-dynamic';
@@ -8,11 +9,9 @@ export const runtime = 'nodejs';
 // PDF parsing function with graceful error handling
 async function extractTextFromPDF(buffer: Buffer): Promise<string> {
   try {
-    // Dynamic import to load pdf-parse at runtime
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const pdfParse = require('pdf-parse');
-    const data = await pdfParse(buffer);
-    return data.text;
+    const { text } = await extractText(buffer);
+    // unpdf returns text as array of strings (one per page), join them
+    return Array.isArray(text) ? text.join('\n') : text;
   } catch (error) {
     console.error('PDF parse library error:', error);
     throw new Error('PDF parsing failed');
