@@ -36,10 +36,26 @@ function getParkingCostPerSpace(inputs: DealInputs): number {
   return inputs.parkingCostPerSpace; // Subterranean default
 }
 
+// Safe division helper to prevent division by zero
+function safeDivide(numerator: number, denominator: number, fallback: number = 0): number {
+  if (denominator === 0 || !isFinite(denominator)) return fallback;
+  const result = numerator / denominator;
+  return isFinite(result) ? result : fallback;
+}
+
 export function calculateDeal(inputs: DealInputs): DealCalculations {
+  // ========== INPUT VALIDATION ==========
+  // Ensure critical inputs have minimum values to prevent calculation errors
+  const safeUnits = Math.max(inputs.units, 1);
+  const safeLotSize = Math.max(inputs.lotSize, 1);
+  const safeCommonAreaFactor = Math.min(inputs.commonAreaFactor, 0.99); // Prevent 100% common area
+  const safeExitCapRate = Math.max(inputs.exitCapRate, 0.001); // Minimum 0.1%
+  const safeYocTarget = Math.max(inputs.yocTarget, 0.001);
+  const safeUnleveredROCTarget = Math.max(inputs.unleveredROCTarget, 0.001);
+
   // ========== BUILDING METRICS ==========
-  const totalSellableSF = inputs.units * inputs.avgUnitSF;
-  const grossBuildingSF = totalSellableSF / (1 - inputs.commonAreaFactor);
+  const totalSellableSF = safeUnits * inputs.avgUnitSF;
+  const grossBuildingSF = safeDivide(totalSellableSF, (1 - safeCommonAreaFactor), totalSellableSF);
   const effectiveParkingSpaces = inputs.parkingSpacesOverride ?? inputs.parkingSpacesBase;
 
   // ========== MODULE 1: COST STACK BUILD-UP ==========
@@ -64,8 +80,8 @@ export function calculateDeal(inputs: DealInputs): DealCalculations {
   let parkFees = 0;
   if (inputs.parkFeeApplies) {
     parkFees = inputs.parkFeeType === 'Non-Subdivision'
-      ? inputs.parkFeeNonSub * inputs.units
-      : inputs.parkFeeSub * inputs.units;
+      ? inputs.parkFeeNonSub * safeUnits
+      : inputs.parkFeeSub * safeUnits;
   }
 
   // AHLF (Affordable Housing Linkage Fee)
@@ -137,6 +153,7 @@ export function calculateDeal(inputs: DealInputs): DealCalculations {
   const totalDevCostExLand = totalHardCosts + totalSoftCosts + totalFinancingCarry;
 
   // ========== MODULE 2: FOR-SALE CONDO RESIDUAL ==========
+  // Note: Using safeUnits from input validation above
   const grossSalesRevenue = totalSellableSF * inputs.salePricePSF;
   const totalSellingCostsPct = inputs.brokerCommission + inputs.transferTaxClosing + inputs.marketingSales;
   const totalSellingCosts = grossSalesRevenue * totalSellingCostsPct;
@@ -145,8 +162,8 @@ export function calculateDeal(inputs: DealInputs): DealCalculations {
   const residualLandCondo = netSalesRevenue - totalDevCostExLand - developerProfitCondo;
 
   // ========== MODULE 3: RENTAL NOI BUILD ==========
-  const affordableUnits = Math.floor(inputs.units * inputs.affordablePct);
-  const marketUnits = inputs.units - affordableUnits;
+  const affordableUnits = Math.floor(safeUnits * inputs.affordablePct);
+  const marketUnits = safeUnits - affordableUnits;
 
   // Affordable Rent Calculation
   const incomeMultiplier = getAffordableIncomeMultiplier(inputs.affordableLevel);
@@ -170,12 +187,12 @@ export function calculateDeal(inputs: DealInputs): DealCalculations {
 
   // ========== MODULE 4: OPERATING EXPENSES ==========
   const managementExpense = egi * inputs.propertyManagement;
-  const insuranceExpense = inputs.insurancePerUnit * inputs.units;
-  const repairsMaintenanceExpense = inputs.repairsMaintenancePerUnit * inputs.units;
-  const utilitiesExpense = inputs.utilitiesCommonPerUnit * inputs.units;
-  const turnoverExpense = inputs.turnoverPerUnit * inputs.units;
-  const generalAdminExpense = inputs.generalAdminPerUnit * inputs.units;
-  const reservesExpense = inputs.reservesPerUnit * inputs.units;
+  const insuranceExpense = inputs.insurancePerUnit * safeUnits;
+  const repairsMaintenanceExpense = inputs.repairsMaintenancePerUnit * safeUnits;
+  const utilitiesExpense = inputs.utilitiesCommonPerUnit * safeUnits;
+  const turnoverExpense = inputs.turnoverPerUnit * safeUnits;
+  const generalAdminExpense = inputs.generalAdminPerUnit * safeUnits;
+  const reservesExpense = inputs.reservesPerUnit * safeUnits;
 
   const totalOpExBeforeTax =
     managementExpense +
@@ -199,7 +216,7 @@ export function calculateDeal(inputs: DealInputs): DealCalculations {
   // Value * (Cap Rate + Tax Rate) = NOI_before_tax
   // Value = NOI_before_tax / (Cap Rate + Tax Rate)
 
-  const stabilizedValue = noiBeforeTax / (inputs.exitCapRate + inputs.propertyTaxRate);
+  const stabilizedValue = safeDivide(noiBeforeTax, (safeExitCapRate + inputs.propertyTaxRate), 0);
   const propertyTaxAnnual = stabilizedValue * inputs.propertyTaxRate;
   const noiAfterTax = noiBeforeTax - propertyTaxAnnual;
 
@@ -225,7 +242,7 @@ export function calculateDeal(inputs: DealInputs): DealCalculations {
   // ========== MODULE 6: RENTAL RESIDUALS (5 Methods) ==========
 
   // Method 1: Yield-on-Cost
-  const residualYOC = (noiAfterTax / inputs.yocTarget) - totalDevCostExLand;
+  const residualYOC = safeDivide(noiAfterTax, safeYocTarget, 0) - totalDevCostExLand;
 
   // Method 2: Development Profit Margin
   // Residual = Net Proceeds - (Gross Value * Margin Target) - Dev Cost
@@ -236,18 +253,20 @@ export function calculateDeal(inputs: DealInputs): DealCalculations {
   // Residual = Net Proceeds / (1 - e + EM * e) - Dev Cost
   const e = inputs.equityPctOfTotalCost;
   const em = inputs.targetEquityMultiple;
-  const residualEquityMultiple = netExitProceeds / (1 - e + em * e) - totalDevCostExLand;
+  const equityDenominator = 1 - e + em * e;
+  const residualEquityMultiple = safeDivide(netExitProceeds, equityDenominator, 0) - totalDevCostExLand;
 
   // Method 4: Levered IRR (Simplified)
   // n = total project duration in years
   // Residual = Net Proceeds / (1 - e + (1 + IRR)^n * e) - Dev Cost
   const n = (inputs.constructionMonths + inputs.selloutLeaseUpMonths) / 12;
   const irr = inputs.targetLeveredIRR;
-  const residualLeveredIRR = netExitProceeds / (1 - e + Math.pow(1 + irr, n) * e) - totalDevCostExLand;
+  const irrDenominator = 1 - e + Math.pow(1 + irr, n) * e;
+  const residualLeveredIRR = safeDivide(netExitProceeds, irrDenominator, 0) - totalDevCostExLand;
 
   // Method 5: Unlevered ROC
   // Residual = (NOI After Tax / ROC Target) - Dev Cost
-  const residualUnleveredROC = (noiAfterTax / inputs.unleveredROCTarget) - totalDevCostExLand;
+  const residualUnleveredROC = safeDivide(noiAfterTax, safeUnleveredROCTarget, 0) - totalDevCostExLand;
 
   // ========== MODULE 7: HBU DETERMINATION ==========
   let primaryResidual: number;
@@ -286,31 +305,31 @@ export function calculateDeal(inputs: DealInputs): DealCalculations {
   const fullBuyerSpectrumLow = Math.min(...allResiduals);
   const fullBuyerSpectrumHigh = Math.max(...allResiduals);
 
-  // Per-unit and per-SF metrics
-  const primaryPerUnit = primaryResidual / inputs.units;
-  const primaryPerSFLand = primaryResidual / inputs.lotSize;
-  const primaryPerBuildableSF = primaryResidual / grossBuildingSF;
+  // Per-unit and per-SF metrics (using safe divisors)
+  const primaryPerUnit = safeDivide(primaryResidual, safeUnits, 0);
+  const primaryPerSFLand = safeDivide(primaryResidual, safeLotSize, 0);
+  const primaryPerBuildableSF = safeDivide(primaryResidual, grossBuildingSF, 0);
 
   // ========== KEY METRICS ==========
 
   // YOC at primary residual
   const totalProjectCostAtResidual = totalDevCostExLand + primaryResidual;
-  const yocAtResidual = noiAfterTax / totalProjectCostAtResidual;
+  const yocAtResidual = safeDivide(noiAfterTax, totalProjectCostAtResidual, 0);
 
   // Dev Spread (YOC - Exit Cap)
-  const devSpreadBps = (yocAtResidual - inputs.exitCapRate) * 10000;
+  const devSpreadBps = (yocAtResidual - safeExitCapRate) * 10000;
 
   // NOI per unit
-  const noiPerUnit = noiAfterTax / inputs.units;
+  const noiPerUnit = safeDivide(noiAfterTax, safeUnits, 0);
 
   // Expense Ratio
-  const expenseRatio = totalOpExBeforeTax / egi;
+  const expenseRatio = safeDivide(totalOpExBeforeTax, egi, 0);
 
   // GRM (Gross Rent Multiplier)
-  const grm = stabilizedValue / gpr;
+  const grm = safeDivide(stabilizedValue, gpr, 0);
 
   // Land as % of Total Cost
-  const landPctOfTotalCost = primaryResidual / (totalDevCostExLand + primaryResidual);
+  const landPctOfTotalCost = safeDivide(primaryResidual, (totalDevCostExLand + primaryResidual), 0);
 
   return {
     // Building metrics
@@ -451,8 +470,8 @@ export function generateSanityChecks(inputs: DealInputs, calcs: DealCalculations
   }
 
   // Hard cost range check
-  const hardCostPSF = calcs.totalHardCosts / calcs.grossBuildingSF;
-  if (hardCostPSF < 240 || hardCostPSF > 600) {
+  const hardCostPSF = calcs.grossBuildingSF > 0 ? calcs.totalHardCosts / calcs.grossBuildingSF : 0;
+  if (hardCostPSF > 0 && (hardCostPSF < 240 || hardCostPSF > 600)) {
     checks.push({
       id: 'hard-cost-range',
       type: 'warning',
@@ -461,8 +480,8 @@ export function generateSanityChecks(inputs: DealInputs, calcs: DealCalculations
     });
   }
 
-  // Expense ratio check
-  if (calcs.expenseRatio > 0.40) {
+  // Expense ratio check (only if EGI > 0)
+  if (calcs.egi > 0 && calcs.expenseRatio > 0.40) {
     checks.push({
       id: 'expense-ratio-high',
       type: 'warning',
@@ -471,8 +490,8 @@ export function generateSanityChecks(inputs: DealInputs, calcs: DealCalculations
     });
   }
 
-  // GRM check
-  if (calcs.grm < 10 || calcs.grm > 18) {
+  // GRM check (only if GPR > 0)
+  if (calcs.gpr > 0 && (calcs.grm < 10 || calcs.grm > 18)) {
     checks.push({
       id: 'grm-range',
       type: 'warning',
