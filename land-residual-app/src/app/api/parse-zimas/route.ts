@@ -9,7 +9,9 @@ export const runtime = 'nodejs';
 // PDF parsing function with graceful error handling
 async function extractTextFromPDF(buffer: Buffer): Promise<string> {
   try {
-    const { text } = await extractText(buffer);
+    // Convert Buffer to Uint8Array as required by unpdf
+    const uint8Array = new Uint8Array(buffer);
+    const { text } = await extractText(uint8Array);
     // unpdf returns text as array of strings (one per page), join them
     return Array.isArray(text) ? text.join('\n') : text;
   } catch (error) {
