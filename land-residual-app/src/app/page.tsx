@@ -7,9 +7,13 @@ import { DealForm } from '@/components/forms/DealForm';
 import { ExecutiveSummary } from '@/components/outputs/ExecutiveSummary';
 import { SensitivityTables } from '@/components/outputs/SensitivityTables';
 import { DealManager } from '@/components/DealManager';
+import { ZIMASUpload } from '@/components/uploads/FileUpload';
+import { ShareManager } from '@/components/sharing/ShareManager';
+import { DealComparison } from '@/components/comparison/DealComparison';
 import { exportToPDF, printReport } from '@/lib/pdfExport';
 import { formatCurrency } from '@/lib/utils';
 import { cn } from '@/lib/utils';
+import { DealInputs } from '@/types/deal';
 
 type ViewMode = 'inputs' | 'summary' | 'sensitivity';
 
@@ -21,11 +25,25 @@ function AppContent() {
     updateInput,
     saveDeal,
     isDirty,
+    savedDeals,
   } = useDeal();
 
   const [viewMode, setViewMode] = useState<ViewMode>('inputs');
   const [showDealManager, setShowDealManager] = useState(false);
+  const [showShareManager, setShowShareManager] = useState(false);
+  const [showComparison, setShowComparison] = useState(false);
+  const [showZimasUpload, setShowZimasUpload] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+
+  // Handle ZIMAS data extraction
+  const handleZimasData = (data: Record<string, unknown>) => {
+    Object.entries(data).forEach(([key, value]) => {
+      if (key in inputs) {
+        updateInput(key as keyof DealInputs, value as DealInputs[keyof DealInputs]);
+      }
+    });
+    setShowZimasUpload(false);
+  };
 
   const handleExportPDF = async () => {
     setIsExporting(true);
@@ -82,6 +100,22 @@ function AppContent() {
               >
                 Deals
               </button>
+              {savedDeals.length >= 2 && (
+                <button
+                  onClick={() => setShowComparison(true)}
+                  className="px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  title="Compare Deals"
+                >
+                  Compare
+                </button>
+              )}
+              <button
+                onClick={() => setShowShareManager(true)}
+                className="px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                title="Share Deal"
+              >
+                Share
+              </button>
               <button
                 onClick={() => saveDeal()}
                 disabled={!isDirty}
@@ -125,14 +159,37 @@ function AppContent() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-6">
         {viewMode === 'inputs' && (
-          <DealForm
-            inputs={inputs}
-            onChange={updateInput}
-            calculations={{
-              totalSellableSF: calculations.totalSellableSF,
-              grossBuildingSF: calculations.grossBuildingSF,
-            }}
-          />
+          <div className="space-y-6">
+            {/* ZIMAS Upload Section */}
+            <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm p-4 border border-gray-200 dark:border-gray-800">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-medium text-gray-900 dark:text-gray-100">Import from ZIMAS</h3>
+                  <p className="text-sm text-gray-500">Upload a ZIMAS Parcel Profile PDF to auto-fill property data</p>
+                </div>
+                <button
+                  onClick={() => setShowZimasUpload(!showZimasUpload)}
+                  className="px-4 py-2 text-sm bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+                >
+                  {showZimasUpload ? 'Hide' : 'Upload ZIMAS'}
+                </button>
+              </div>
+              {showZimasUpload && (
+                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <ZIMASUpload onDataExtracted={handleZimasData} />
+                </div>
+              )}
+            </div>
+
+            <DealForm
+              inputs={inputs}
+              onChange={updateInput}
+              calculations={{
+                totalSellableSF: calculations.totalSellableSF,
+                grossBuildingSF: calculations.grossBuildingSF,
+              }}
+            />
+          </div>
         )}
 
         {viewMode === 'summary' && (
@@ -170,6 +227,23 @@ function AppContent() {
       {/* Deal Manager Modal */}
       {showDealManager && (
         <DealManager onClose={() => setShowDealManager(false)} />
+      )}
+
+      {/* Share Manager Modal */}
+      {showShareManager && inputs.id && (
+        <ShareManager
+          dealId={inputs.id}
+          dealName={inputs.name || 'Untitled Deal'}
+          onClose={() => setShowShareManager(false)}
+        />
+      )}
+
+      {/* Deal Comparison Modal */}
+      {showComparison && (
+        <DealComparison
+          savedDeals={savedDeals}
+          onClose={() => setShowComparison(false)}
+        />
       )}
     </div>
   );
