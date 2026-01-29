@@ -8,9 +8,9 @@ export const runtime = 'nodejs';
 // PDF parsing function with graceful error handling
 async function extractTextFromPDF(buffer: Buffer): Promise<string> {
   try {
-    // Dynamic require to avoid build-time issues
+    // Dynamic import to load pdf-parse at runtime
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const pdfParse = require('pdf-parse/lib/pdf-parse.js');
+    const pdfParse = require('pdf-parse');
     const data = await pdfParse(buffer);
     return data.text;
   } catch (error) {

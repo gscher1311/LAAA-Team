@@ -4,6 +4,9 @@ const nextConfig: NextConfig = {
   // Enable standalone output for Docker deployments
   output: 'standalone',
 
+  // Exclude pdf-parse from bundling - load at runtime
+  serverExternalPackages: ['pdf-parse'],
+
   // Security headers for production
   async headers() {
     return [
