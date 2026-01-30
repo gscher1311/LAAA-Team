@@ -741,8 +741,14 @@ function calculateByRight(site: SiteInput): DevelopmentPotential {
   const qdtResult = getQDTModifiedStandards(site);
   let qdtNotes: string[] = [];
 
-  let effectiveHeightFeet = height.maxFeet || 999;
-  let effectiveStories = height.maxStories || 99;
+  // Derive max height - if null, use a reasonable default based on construction limits
+  // (Type I-A is unlimited, but practical limit for LA is ~550 ft / 50 stories)
+  let effectiveHeightFeet = height.maxFeet ?? 550;
+
+  // Derive max stories from height if not explicitly set
+  // Standard floor-to-floor height in LA multifamily: 11 ft residential
+  const FLOOR_HEIGHT_FT = 11;
+  let effectiveStories = height.maxStories ?? Math.floor(effectiveHeightFeet / FLOOR_HEIGHT_FT);
 
   if (qdtResult.modified) {
     // Apply Q/D/T height restrictions
