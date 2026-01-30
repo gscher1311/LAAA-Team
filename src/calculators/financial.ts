@@ -3,7 +3,7 @@
  * Revenue, costs, and land residual calculations
  */
 
-import { MarketArea, IncomeLevel, DevelopmentPotential, IncentiveProgram } from '../types';
+import { MarketArea, IncomeLevel, DevelopmentPotential, IncentiveProgram, EntitlementStage } from '../types';
 import { calculateAHLFFee, isHighMarketArea } from '../data/amiAndFees';
 import { UnitMixWithRents, generateUnitMixFromPotential } from './unitMix';
 import {
@@ -22,6 +22,12 @@ import {
   identifySubmarket,
   formatSubmarketSummary
 } from '../data/submarketRents';
+import {
+  ENTITLEMENT_STAGES,
+  getSoftCostPercent,
+  calculateSpaceBreakdown,
+  calculateDetailedCosts,
+} from '../data/costModel';
 
 // ============================================================================
 // TYPES
@@ -38,7 +44,8 @@ export interface FinancialAssumptions {
   parkingCostPerSpace: number;    // Cost per parking space (used as fallback)
 
   // Soft Costs
-  softCostPercent: number;        // % of hard costs (25-30% typical)
+  softCostPercent: number;        // % of hard costs (25-30% typical) - used when entitlementStage not provided
+  entitlementStage?: EntitlementStage; // If provided, soft costs calculated from costModel.ts
 
   // Financing
   constructionLoanRate: number;   // Annual rate (e.g., 0.07 for 7%)
@@ -96,6 +103,12 @@ export interface CostStack {
   ahlfFee: number;
   permitFees: number;
   totalSoftCosts: number;
+
+  // Entitlement stage details
+  entitlementStage: EntitlementStage;
+  softCostPercent: number;        // Actual soft cost percent used (from stage or override)
+  carryingCosts: number;          // Pre-construction holding costs
+  monthsToConstruction: number;   // Months until construction can start
 
   // Financing
   constructionInterest: number;
@@ -226,10 +239,17 @@ export function calculateRevenue(
  *
  * Uses construction type multiplier to adjust hard costs based on building height/stories.
  * Per IBC 2024/CBC 2025:
- * - Type V-A (wood frame): Baseline cost ($350/SF)
+ * - Type V-A (wood frame): Baseline cost ($320/SF)
  * - Type III-A (5-over-1 podium): ~14% premium
  * - Type I-B (high-rise): ~43% premium
  * - Type I-A (tall high-rise): ~57% premium
+ *
+ * Soft costs are calculated based on entitlement stage:
+ * - RAW_LAND: 28-35% (full entitlement process)
+ * - ENTITLED: 22-28% (discretionary done, permits pending)
+ * - PLAN_CHECK: 15-22% (plans submitted)
+ * - RTI: 8-15% (ready to issue)
+ * - PERMITTED: 5-8% (permits in hand)
  *
  * Parking costs are calculated based on project characteristics:
  * - Stories and density determine parking type (surface/tuck-under/podium/subterranean)
@@ -275,26 +295,53 @@ export function calculateCostStack(
 
   const totalHardCosts = constructionCost + parkingCost;
 
-  // Soft Costs
-  const softCosts = totalHardCosts * assumptions.softCostPercent;
+  // Determine entitlement stage and soft cost percent
+  const entitlementStage = assumptions.entitlementStage ?? EntitlementStage.RAW_LAND;
+  const stageDetails = ENTITLEMENT_STAGES[entitlementStage];
+
+  // Use entitlement stage soft cost percent if available, otherwise use assumptions
+  const softCostPercent = stageDetails
+    ? stageDetails.softCostPercentTypical
+    : assumptions.softCostPercent;
+
+  // Soft Costs based on entitlement stage
+  const softCosts = totalHardCosts * softCostPercent;
   const ahlfFee = calculateAHLFFee(
     unitMix.totalSF,
     marketArea,
     unitMix.totalUnits,
     0  // No commercial SF
   );
-  const permitFees = unitMix.totalSF * 15;  // ~$15/SF for permits in LA
+
+  // Permit fees depend on stage - if already in plan check or later, some are paid
+  let permitFees: number;
+  if (entitlementStage === EntitlementStage.PERMITTED) {
+    permitFees = 0;  // All permits paid
+  } else if (entitlementStage === EntitlementStage.RTI) {
+    permitFees = unitMix.totalSF * 5;  // Just issuance fees
+  } else if (entitlementStage === EntitlementStage.PLAN_CHECK) {
+    permitFees = unitMix.totalSF * 8;  // Some remaining fees
+  } else {
+    permitFees = unitMix.totalSF * 15;  // Full permit fees
+  }
+
   const totalSoftCosts = softCosts + ahlfFee + permitFees;
 
+  // Carrying costs during pre-construction (entitlement period)
+  const monthsToConstruction = stageDetails?.monthsToBreakGround ?? 18;
+  const carryRate = 0.06;  // 6% annual carry rate on invested capital
+  const estimatedPreConstructionInvestment = totalHardCosts * 0.10;  // ~10% predevelopment
+  const carryingCosts = estimatedPreConstructionInvestment * carryRate * (monthsToConstruction / 12);
+
   // Financing (construction interest)
-  const totalCostsBeforeInterest = totalHardCosts + totalSoftCosts;
+  const totalCostsBeforeInterest = totalHardCosts + totalSoftCosts + carryingCosts;
   // Average outstanding = 60% of total (draw schedule)
   const avgOutstanding = totalCostsBeforeInterest * 0.60;
   const constructionInterest = avgOutstanding * assumptions.constructionLoanRate *
     (assumptions.constructionMonths / 12);
 
   // Totals
-  const totalDevelopmentCost = totalHardCosts + totalSoftCosts + constructionInterest;
+  const totalDevelopmentCost = totalHardCosts + totalSoftCosts + carryingCosts + constructionInterest;
   const totalProjectCost = totalDevelopmentCost + landCost;
 
   return {
@@ -310,6 +357,10 @@ export function calculateCostStack(
     ahlfFee,
     permitFees,
     totalSoftCosts,
+    entitlementStage,
+    softCostPercent,
+    carryingCosts,
+    monthsToConstruction,
     constructionInterest,
     totalDevelopmentCost,
     totalProjectCost,

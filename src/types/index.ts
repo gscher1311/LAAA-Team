@@ -167,6 +167,24 @@ export enum AHIPProjectType {
   SHARED_EQUITY = 'SHARED_EQUITY'
 }
 
+/**
+ * Entitlement Stage
+ * Determines what soft costs have already been paid and timeline to construction
+ *
+ * RAW_LAND: No plans, full entitlement process required (soft costs 28-35%)
+ * ENTITLED: Discretionary approvals done, permits pending (soft costs 22-28%)
+ * PLAN_CHECK: Plans submitted to LADBS, awaiting approval (soft costs 15-22%)
+ * RTI: Ready to Issue, plans approved (soft costs 8-15%)
+ * PERMITTED: Permits issued, ready to break ground (soft costs 5-8%)
+ */
+export enum EntitlementStage {
+  RAW_LAND = 'RAW_LAND',
+  ENTITLED = 'ENTITLED',
+  PLAN_CHECK = 'PLAN_CHECK',
+  RTI = 'RTI',
+  PERMITTED = 'PERMITTED',
+}
+
 export enum UnitType {
   STUDIO = 'STUDIO',
   ONE_BR = '1BR',
@@ -242,6 +260,11 @@ export interface SiteInput {
   // Data Quality Flags
   zimasVerified?: boolean;           // Was this data verified against ZIMAS?
   zimasDate?: string;                // Date of ZIMAS lookup
+
+  // Entitlement Status
+  // Determines soft cost assumptions and timeline
+  // See costModel.ts for soft cost percentages by stage
+  entitlementStage?: EntitlementStage;  // Default: RAW_LAND if not specified
 }
 
 // ============================================================================

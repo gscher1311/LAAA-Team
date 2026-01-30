@@ -31,3 +31,6 @@ export * from './submarketRents';
 
 // Input Guide and Validation
 export * from './inputGuide';
+
+// Comprehensive Cost Model (Entitlement Stages, Space Types)
+export * from './costModel';

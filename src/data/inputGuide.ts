@@ -37,7 +37,7 @@
  * ============================================================================
  */
 
-import { SiteInput, ZoneType, HeightDistrict, MarketArea, TCACOpportunityArea } from '../types';
+import { SiteInput, ZoneType, HeightDistrict, MarketArea, TCACOpportunityArea, EntitlementStage } from '../types';
 
 // ============================================================================
 // INPUT CATEGORIES
@@ -54,6 +54,10 @@ export interface InputField {
   usedBy: string[];  // Which programs use this input
   example?: string;
   validValues?: string[];
+  // Inline hints for UI display
+  inlineHint?: string;           // Short hint shown next to input field
+  quickLink?: string;            // Direct link to open data source
+  quickLinkLabel?: string;       // Label for the quick link button
 }
 
 // ============================================================================
@@ -71,6 +75,7 @@ export const REQUIRED_INPUTS: InputField[] = [
     howToFind: 'Use the legal address from title report or assessor records',
     usedBy: ['All Programs'],
     example: '1234 Wilshire Blvd, Los Angeles, CA 90017',
+    inlineHint: 'Use the exact legal address from title report',
   },
   {
     name: 'lotSizeSF',
@@ -82,6 +87,9 @@ export const REQUIRED_INPUTS: InputField[] = [
     howToFind: 'Enter APN in ZIMAS → Property Info tab → "Lot Size"',
     usedBy: ['All Programs - Density Calculation'],
     example: '15000',
+    inlineHint: 'ZIMAS Property Info → "Lot Size" (in SF)',
+    quickLink: 'https://planning.lacity.gov/zimas/',
+    quickLinkLabel: 'Open ZIMAS',
   },
   {
     name: 'baseZone',
@@ -94,6 +102,9 @@ export const REQUIRED_INPUTS: InputField[] = [
     usedBy: ['All Programs - Density, FAR, Height Limits'],
     example: 'R4',
     validValues: Object.values(ZoneType),
+    inlineHint: 'ZIMAS Zoning tab → first part of zone code (e.g., "R4" from "R4-1L")',
+    quickLink: 'https://planning.lacity.gov/zimas/',
+    quickLinkLabel: 'Open ZIMAS',
   },
   {
     name: 'heightDistrict',
@@ -106,6 +117,9 @@ export const REQUIRED_INPUTS: InputField[] = [
     usedBy: ['All Programs - FAR and Height Limits'],
     example: '1L',
     validValues: Object.values(HeightDistrict),
+    inlineHint: 'ZIMAS Zoning tab → second part of zone code (e.g., "1L" from "R4-1L")',
+    quickLink: 'https://planning.lacity.gov/zimas/',
+    quickLinkLabel: 'Open ZIMAS',
   },
   {
     name: 'marketArea',
@@ -118,6 +132,9 @@ export const REQUIRED_INPUTS: InputField[] = [
     usedBy: ['All Programs - AHLF Fee', 'MIIP - Affordability Requirements'],
     example: 'HIGH',
     validValues: Object.values(MarketArea),
+    inlineHint: 'Based on Community Plan area (HIGH/MED_HIGH in Westside, MED/LOW elsewhere)',
+    quickLink: 'https://housing.lacity.org/developers/incentive-programs/inclusionary-housing',
+    quickLinkLabel: 'LAHD Fee Schedule',
   },
   {
     name: 'tcacArea',
@@ -130,6 +147,9 @@ export const REQUIRED_INPUTS: InputField[] = [
     usedBy: ['MIIP Opportunity (OC tier)', 'AHIP', 'MIIP Transit (A/B variant)'],
     example: 'HIGH',
     validValues: Object.values(TCACOpportunityArea),
+    inlineHint: 'TCAC Map → "Resource Area" (HIGHEST/HIGH = OC-1, MODERATE = OC-2, LOW = OC-3)',
+    quickLink: 'https://belonging.berkeley.edu/2024-tcac-opportunity-map',
+    quickLinkLabel: 'Open TCAC Map',
   },
 ];
 
@@ -148,6 +168,9 @@ export const TRANSIT_INPUTS: InputField[] = [
     howToFind: 'Use Google Maps or LA Metro website. Major transit = Metro Rail/Metrolink station OR bus stop with 15-min frequency. Measure walking distance, not straight line.',
     usedBy: ['State Density Bonus (parking/FAR)', 'MIIP Transit', 'AHIP', 'SB 79'],
     example: '1320 (1/4 mile = 1,320 ft, 1/2 mile = 2,640 ft)',
+    inlineHint: '≤2,640 ft = no parking req (AB 2097). ≤1,320 ft = SB 79 Tier 1. Google Maps "walking" distance.',
+    quickLink: 'https://www.metro.net/riding/maps/',
+    quickLinkLabel: 'LA Metro Maps',
   },
   {
     name: 'distanceToMetroRailFeet',
@@ -159,6 +182,9 @@ export const TRANSIT_INPUTS: InputField[] = [
     howToFind: 'Find nearest Metro Rail station on LA Metro map. Measure walking distance.',
     usedBy: ['MIIP Transit Tier Calculation'],
     example: '1000',
+    inlineHint: '≤1,500 ft = T-1 tier. Includes A/B/C/D/E/K lines.',
+    quickLink: 'https://www.metro.net/riding/maps/',
+    quickLinkLabel: 'Metro Rail Map',
   },
   {
     name: 'distanceToMetrolinkFeet',
@@ -170,6 +196,9 @@ export const TRANSIT_INPUTS: InputField[] = [
     howToFind: 'Find nearest Metrolink station on their website. Measure walking distance.',
     usedBy: ['MIIP Transit Tier Calculation'],
     example: '1500',
+    inlineHint: '≤1,500 ft = T-1 tier. Commuter rail to OC, Riverside, Ventura, etc.',
+    quickLink: 'https://metrolinktrains.com/rider-info/general-info/maps/',
+    quickLinkLabel: 'Metrolink Map',
   },
   {
     name: 'distanceToBusRouteFeet',
@@ -181,6 +210,9 @@ export const TRANSIT_INPUTS: InputField[] = [
     howToFind: 'Check LA Metro bus schedules. Find stops with 15-minute or better peak frequency.',
     usedBy: ['MIIP Transit Tier Calculation'],
     example: '800',
+    inlineHint: 'Must have ≤15 min frequency. Rapid lines (7xx) typically qualify.',
+    quickLink: 'https://www.metro.net/riding/schedules/',
+    quickLinkLabel: 'Bus Schedules',
   },
   {
     name: 'inVeryLowVehicleTravelArea',
@@ -192,6 +224,9 @@ export const TRANSIT_INPUTS: InputField[] = [
     howToFind: 'Check CHIP map for VLVTA designation OR SCAG VMT screening tool',
     usedBy: ['MIIP Transit T-3 (alternative eligibility)', 'AHIP'],
     example: 'true/false',
+    inlineHint: 'Alternative eligibility for T-3 tier if not near rail/bus. Check CHIP map.',
+    quickLink: 'https://planning.lacity.gov/chip-map',
+    quickLinkLabel: 'CHIP Map',
   },
 ];
 
@@ -320,6 +355,72 @@ export const OVERLAY_INPUTS: InputField[] = [
 ];
 
 // ============================================================================
+// ENTITLEMENT STAGE INPUTS - AFFECTS SOFT COSTS
+// ============================================================================
+
+export const ENTITLEMENT_INPUTS: InputField[] = [
+  {
+    name: 'entitlementStage',
+    displayName: 'Entitlement Stage',
+    required: false,
+    source: 'Seller / Due Diligence',
+    sourceUrl: '',
+    description: 'Current stage of entitlement/permitting - affects soft cost calculations',
+    howToFind: 'Ask seller or check with LADBS for permit status. Default is RAW_LAND if unknown.',
+    usedBy: ['All Programs - Soft Cost Calculation', 'Carry Cost Calculation'],
+    example: 'RAW_LAND',
+    validValues: Object.values(EntitlementStage),
+    inlineHint: 'RAW=30%, ENTITLED=25%, PLAN_CHECK=18%, RTI=12%, PERMITTED=6% soft costs',
+  },
+];
+
+/**
+ * Entitlement stage descriptions for display
+ */
+export const ENTITLEMENT_STAGE_INFO = {
+  [EntitlementStage.RAW_LAND]: {
+    displayName: 'Raw Land (Unentitled)',
+    softCostRange: '28-35%',
+    typicalSoftCost: '30%',
+    monthsToConstruction: '18-20',
+    description: 'No plans submitted. Full entitlement process required.',
+    whatsIncluded: ['Architecture/Engineering', 'Entitlement', 'Environmental', 'Permits', 'Impact Fees'],
+  },
+  [EntitlementStage.ENTITLED]: {
+    displayName: 'Entitled',
+    softCostRange: '22-28%',
+    typicalSoftCost: '25%',
+    monthsToConstruction: '8-10',
+    description: 'Discretionary approvals done. Ready for permit submittal.',
+    whatsIncluded: ['Permit-ready drawings', 'Permits', 'Impact Fees', 'Bonds'],
+  },
+  [EntitlementStage.PLAN_CHECK]: {
+    displayName: 'In Plan Check',
+    softCostRange: '15-22%',
+    typicalSoftCost: '18%',
+    monthsToConstruction: '4-5',
+    description: 'Plans submitted to LADBS. Awaiting approval.',
+    whatsIncluded: ['Plan check corrections', 'Remaining permits', 'Impact Fees', 'Bonds'],
+  },
+  [EntitlementStage.RTI]: {
+    displayName: 'RTI (Ready to Issue)',
+    softCostRange: '8-15%',
+    typicalSoftCost: '12%',
+    monthsToConstruction: '1-2',
+    description: 'Plans approved. Permits ready upon fee payment.',
+    whatsIncluded: ['Permit issuance fees', 'Bonds', 'Insurance'],
+  },
+  [EntitlementStage.PERMITTED]: {
+    displayName: 'Permitted',
+    softCostRange: '5-8%',
+    typicalSoftCost: '6%',
+    monthsToConstruction: '0',
+    description: 'Permits issued. Ready to break ground.',
+    whatsIncluded: ['Insurance', 'Project management', 'Contingency'],
+  },
+};
+
+// ============================================================================
 // CONSTRAINT INPUTS - EXCLUSIONS
 // ============================================================================
 
@@ -334,6 +435,9 @@ export const CONSTRAINT_INPUTS: InputField[] = [
     howToFind: 'ZIMAS → General tab → "Fire District" section OR Cal Fire FHSZ map',
     usedBy: ['MIIP (exclusion)', 'AHIP (exclusion)'],
     example: 'true/false',
+    inlineHint: '⚠️ If TRUE, site is EXCLUDED from MIIP and AHIP programs',
+    quickLink: 'https://planning.lacity.gov/zimas/',
+    quickLinkLabel: 'Check ZIMAS',
   },
   {
     name: 'inCoastalZone',
@@ -345,6 +449,9 @@ export const CONSTRAINT_INPUTS: InputField[] = [
     howToFind: 'ZIMAS → General tab → Look for Coastal Zone designation',
     usedBy: ['MIIP (exclusion)', 'AHIP (exclusion)'],
     example: 'true/false',
+    inlineHint: '⚠️ If TRUE, site is EXCLUDED from MIIP and AHIP programs',
+    quickLink: 'https://planning.lacity.gov/zimas/',
+    quickLinkLabel: 'Check ZIMAS',
   },
   {
     name: 'inSeaLevelRiseArea',
@@ -356,6 +463,7 @@ export const CONSTRAINT_INPUTS: InputField[] = [
     howToFind: 'Check coastal hazard maps or ZIMAS',
     usedBy: ['AHIP (exclusion)'],
     example: 'true/false',
+    inlineHint: 'If TRUE, site is excluded from AHIP program',
   },
   {
     name: 'adjacentToR1R2',
@@ -367,6 +475,9 @@ export const CONSTRAINT_INPUTS: InputField[] = [
     howToFind: 'Check ZIMAS for adjacent parcel zoning',
     usedBy: ['All Programs - Transitional height limits may apply'],
     example: 'true/false',
+    inlineHint: 'Check ZIMAS for neighboring parcels. May trigger 45 ft / 6 story transitional limit.',
+    quickLink: 'https://planning.lacity.gov/zimas/',
+    quickLinkLabel: 'Check Neighbors',
   },
 ];
 
