@@ -701,3 +701,141 @@ export function hasRequiredInputsForProgram(site: Partial<SiteInput>, program: s
     missing,
   };
 }
+
+// ============================================================================
+// MULTI-PARCEL INPUT GUIDE
+// ============================================================================
+
+/**
+ * Parcel-specific inputs required for multi-parcel assemblages
+ */
+export const PARCEL_INPUTS: InputField[] = [
+  {
+    name: 'apn' as keyof SiteInput,
+    displayName: 'APN (Assessor Parcel Number)',
+    required: true,
+    source: 'ZIMAS or LA County Assessor',
+    sourceUrl: 'https://assessor.lacounty.gov/',
+    description: 'Unique parcel identifier from the County Assessor',
+    howToFind: 'ZIMAS → Property Info tab → "APN" field. Format: ####-###-###',
+    usedBy: ['Multi-Parcel Identification', 'Title/Due Diligence'],
+    example: '5544-018-015',
+    inlineHint: 'ZIMAS Property Info → APN (10-digit format)',
+    quickLink: 'https://planning.lacity.gov/zimas/',
+    quickLinkLabel: 'Open ZIMAS',
+  },
+];
+
+/**
+ * Shared inputs that apply to the entire assemblage
+ */
+export const SHARED_ASSEMBLY_INPUTS = [
+  'address',
+  'distanceToMajorTransitFeet',
+  'distanceToMetroRailFeet',
+  'distanceToMetrolinkFeet',
+  'distanceToBusRouteFeet',
+  'inVeryLowVehicleTravelArea',
+  'tcacArea',
+  'marketArea',
+  'inVHFHSZ',
+  'inCoastalZone',
+  'inSeaLevelRiseArea',
+  'adjacentToR1R2',
+  'entitlementStage',
+];
+
+/**
+ * Inputs that can vary per parcel
+ */
+export const PARCEL_SPECIFIC_INPUTS = [
+  'apn',
+  'lotSizeSF',
+  'lotWidthFeet',
+  'lotDepthFeet',
+  'baseZone',
+  'heightDistrict',
+  'hasQCondition',
+  'qConditionOrdinance',
+  'qConditionDescription',
+  'hasDLimitation',
+  'dLimitationDescription',
+  'specificPlan',
+  'specificPlanSubarea',
+  'inHPOZ',
+  'inNSO',
+  'inRFA',
+];
+
+/**
+ * Format multi-parcel input section for the input guide
+ */
+export function formatMultiParcelGuide(): string {
+  const lines: string[] = [];
+  const width = 100;
+
+  lines.push('');
+  lines.push('═'.repeat(width));
+  lines.push('MULTI-PARCEL ASSEMBLAGE INPUTS');
+  lines.push('═'.repeat(width));
+  lines.push('');
+
+  lines.push('Use multi-parcel mode when your land deal includes 2+ contiguous parcels.');
+  lines.push('');
+
+  lines.push('STEP 1: CHOOSE ANALYSIS TYPE');
+  lines.push('─'.repeat(width));
+  lines.push('• Single Parcel: One APN, one zone analysis');
+  lines.push('• Multi-Parcel:  2-10 APNs, combined or separate analysis');
+  lines.push('');
+
+  lines.push('STEP 2: FOR EACH PARCEL, ENTER:');
+  lines.push('─'.repeat(width));
+  lines.push('Required:');
+  lines.push('  • APN (from ZIMAS or County Assessor)');
+  lines.push('  • Lot Size SF (from ZIMAS Property Info)');
+  lines.push('  • Base Zone (from ZIMAS Zoning tab)');
+  lines.push('  • Height District (from ZIMAS Zoning tab)');
+  lines.push('');
+  lines.push('Optional (per parcel):');
+  lines.push('  • Q Condition (if shown in ZIMAS)');
+  lines.push('  • D Limitation (if shown in ZIMAS)');
+  lines.push('  • Specific Plan (if applicable)');
+  lines.push('  • HPOZ / NSO status');
+  lines.push('');
+
+  lines.push('STEP 3: ENTER SHARED INPUTS (same for all parcels):');
+  lines.push('─'.repeat(width));
+  lines.push('  • Primary Address (use main/corner address)');
+  lines.push('  • Transit Distances (measure from center of assembled site)');
+  lines.push('  • TCAC Opportunity Area');
+  lines.push('  • Market Area (for AHLF fee)');
+  lines.push('  • Fire Zone / Coastal Zone status');
+  lines.push('  • Entitlement Stage');
+  lines.push('');
+
+  lines.push('STEP 4: CHOOSE ANALYSIS MODE:');
+  lines.push('─'.repeat(width));
+  lines.push('');
+  lines.push('UNIFIED (Default - Best for most cases):');
+  lines.push('  ✓ Treats all parcels as single development site');
+  lines.push('  ✓ Uses most restrictive zoning across all parcels');
+  lines.push('  ✓ Density bonus applies to combined lot size');
+  lines.push('  ✓ Single land residual for entire assemblage');
+  lines.push('');
+  lines.push('PRO_RATA (When zones are similar):');
+  lines.push('  ✓ Calculates area-weighted average for density/FAR');
+  lines.push('  ✓ Good when parcels have slightly different zones');
+  lines.push('  ✓ Example: 60% R4-1L + 40% R3-1L');
+  lines.push('');
+  lines.push('SEPARATE (When zones are incompatible):');
+  lines.push('  ✓ Analyzes each parcel independently');
+  lines.push('  ✓ Use when parcels have very different zones');
+  lines.push('  ✓ Sums individual land values at end');
+  lines.push('  ✓ Example: R4 commercial + R1 residential');
+  lines.push('');
+
+  lines.push('═'.repeat(width));
+
+  return lines.join('\n');
+}

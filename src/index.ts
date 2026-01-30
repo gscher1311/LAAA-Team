@@ -56,6 +56,16 @@ import {
   toFinancialAssumptions,
   printAssumptionsSummary,
 } from './config/assumptions';
+import {
+  ParcelInput,
+  AssembledSite,
+  AssemblyAnalysisMode,
+  assembleParcels,
+  createSingleSite,
+  validateAssemblage,
+  formatAssemblageSummary,
+  formatParcelInputGuide,
+} from './data/parcelAssembly';
 
 // ============================================================================
 // TYPES
@@ -87,6 +97,14 @@ export interface AnalysisOptions {
   detailedOutput: boolean;
   showZoningBreakdown?: boolean;  // Show zoning analysis with sources (default: true)
   inDDAorQCT: boolean;  // DDA/QCT for LIHTC basis boost
+}
+
+/**
+ * Multi-parcel analysis result
+ */
+export interface MultiParcelAnalysisResult extends FullAnalysisResult {
+  assembledSite: AssembledSite;
+  assemblySummary: string;
 }
 
 // ============================================================================
@@ -281,6 +299,164 @@ export function runDetailedAnalysis(
   );
   console.log(output);
 }
+
+// ============================================================================
+// MULTI-PARCEL ANALYSIS
+// ============================================================================
+
+/**
+ * Run analysis for a multi-parcel assemblage
+ *
+ * @param parcels - Array of 2-10 parcels to combine
+ * @param sharedInputs - Inputs that apply to the entire assemblage
+ * @param mode - How to combine zones (UNIFIED, PRO_RATA, or SEPARATE)
+ * @param incomeLevel - Target income level for affordability
+ * @param assumptions - Financial assumptions
+ * @param options - Analysis options
+ * @param verbose - Whether to print output
+ */
+export function runMultiParcelAnalysis(
+  parcels: ParcelInput[],
+  sharedInputs: {
+    address: string;
+    distanceToMajorTransitFeet?: number;
+    distanceToMetroRailFeet?: number;
+    distanceToMetrolinkFeet?: number;
+    distanceToBusRouteFeet?: number;
+    inVeryLowVehicleTravelArea?: boolean;
+    tcacArea: TCACOpportunityArea;
+    marketArea: MarketArea;
+    inVHFHSZ?: boolean;
+    inCoastalZone?: boolean;
+    inSeaLevelRiseArea?: boolean;
+    adjacentToR1R2?: boolean;
+  },
+  mode: AssemblyAnalysisMode = AssemblyAnalysisMode.UNIFIED,
+  incomeLevel: IncomeLevel = IncomeLevel.VLI,
+  assumptions: FinancialAssumptions = LA_DEFAULT_ASSUMPTIONS,
+  options: AnalysisOptions = {
+    includeSubsidies: true,
+    includeLIHTC: true,
+    detailedOutput: false,
+    showZoningBreakdown: true,
+    inDDAorQCT: true,
+  },
+  verbose: boolean = true
+): MultiParcelAnalysisResult {
+  // Validate the assemblage
+  const validation = validateAssemblage(parcels);
+  if (!validation.valid) {
+    throw new Error(`Invalid assemblage: ${validation.errors.join(', ')}`);
+  }
+
+  // Assemble the parcels
+  const assembledSite = assembleParcels(parcels, sharedInputs, mode);
+  const assemblySummary = formatAssemblageSummary(assembledSite);
+
+  // Run analysis on the combined site
+  const result = runFullAnalysis(
+    assembledSite.asSiteInput,
+    incomeLevel,
+    assumptions,
+    options,
+    false  // Don't print yet
+  );
+
+  // Output
+  if (verbose) {
+    // Show assemblage summary first
+    console.log(assemblySummary);
+
+    // Show any warnings
+    if (validation.warnings.length > 0) {
+      console.log('\nWARNINGS:');
+      for (const warning of validation.warnings) {
+        console.log(`  ⚠️ ${warning}`);
+      }
+      console.log('');
+    }
+
+    // Show zoning breakdown
+    if (options.showZoningBreakdown) {
+      console.log(result.zoningBreakdown);
+      console.log(result.zoningReasoning);
+    }
+
+    // Show analysis results
+    console.log(result.summary);
+    console.log(result.subsidyComparisonTable);
+
+    if (options.detailedOutput && result.withSubsidies.length > 0) {
+      const best = result.withSubsidies[0];
+      console.log(generateFullAnalysisWithSubsidies(
+        best.analysis,
+        best.lihtc,
+        best.gap,
+        best.subsidizedLandValue
+      ));
+    }
+  }
+
+  return {
+    ...result,
+    assembledSite,
+    assemblySummary,
+  };
+}
+
+/**
+ * Quick helper: Run single parcel analysis with the same API
+ * (for consistency when switching between single and multi-parcel)
+ */
+export function runSingleParcelAnalysis(
+  parcel: ParcelInput,
+  sharedInputs: {
+    address: string;
+    distanceToMajorTransitFeet?: number;
+    distanceToMetroRailFeet?: number;
+    distanceToMetrolinkFeet?: number;
+    distanceToBusRouteFeet?: number;
+    inVeryLowVehicleTravelArea?: boolean;
+    tcacArea: TCACOpportunityArea;
+    marketArea: MarketArea;
+    inVHFHSZ?: boolean;
+    inCoastalZone?: boolean;
+    inSeaLevelRiseArea?: boolean;
+    adjacentToR1R2?: boolean;
+  },
+  incomeLevel: IncomeLevel = IncomeLevel.VLI,
+  assumptions: FinancialAssumptions = LA_DEFAULT_ASSUMPTIONS,
+  options: AnalysisOptions = {
+    includeSubsidies: true,
+    includeLIHTC: true,
+    detailedOutput: false,
+    showZoningBreakdown: true,
+    inDDAorQCT: true,
+  },
+  verbose: boolean = true
+): FullAnalysisResult {
+  const singleSite = createSingleSite(parcel, sharedInputs);
+
+  return runFullAnalysis(
+    singleSite.asSiteInput,
+    incomeLevel,
+    assumptions,
+    options,
+    verbose
+  );
+}
+
+// Re-export multi-parcel types and functions for convenience
+export {
+  ParcelInput,
+  AssembledSite,
+  AssemblyAnalysisMode,
+  assembleParcels,
+  createSingleSite,
+  validateAssemblage,
+  formatAssemblageSummary,
+  formatParcelInputGuide,
+};
 
 // ============================================================================
 // DEMO

@@ -34,3 +34,6 @@ export * from './inputGuide';
 
 // Comprehensive Cost Model (Entitlement Stages, Space Types)
 export * from './costModel';
+
+// Multi-Parcel Assembly
+export * from './parcelAssembly';
