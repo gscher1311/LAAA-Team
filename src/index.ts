@@ -458,6 +458,9 @@ export {
   formatParcelInputGuide,
 };
 
+// Export HTML report generator
+export { generateHTMLReport, saveHTMLReport } from './output';
+
 // ============================================================================
 // DEMO
 // ============================================================================
@@ -532,5 +535,18 @@ if (require.main === module) {
   console.log('9% Equity Pricing:  $0.94 per $1 credit');
   console.log('4% Equity Pricing:  $0.90 per $1 credit');
   console.log('DDA/QCT Boost:      +30% basis');
+  console.log('');
+
+  // Generate HTML report and open in browser
+  console.log('╔══════════════════════════════════════════════════════════════╗');
+  console.log('║         GENERATING HTML REPORT FOR BROWSER...                ║');
+  console.log('╚══════════════════════════════════════════════════════════════╝');
+
+  const { saveHTMLReport } = require('./output');
+  saveHTMLReport(result, undefined, true);
+
+  console.log('');
+  console.log('The HTML report has been opened in your browser.');
+  console.log('You can print this report (Ctrl+P) to show sellers.');
   console.log('');
 }
