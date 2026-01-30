@@ -28,3 +28,6 @@ export * from './parkingCosts';
 
 // Submarket Rent Data
 export * from './submarketRents';
+
+// Input Guide and Validation
+export * from './inputGuide';
