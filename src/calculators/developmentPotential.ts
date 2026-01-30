@@ -1,6 +1,58 @@
 /**
  * Development Potential Calculator
  * Calculates what can be built under each incentive program
+ *
+ * ============================================================================
+ * ROUNDING RULES - CRITICAL FOR ACCURATE CALCULATIONS
+ * ============================================================================
+ *
+ * BY-RIGHT CALCULATIONS (Conservative):
+ * - Base density: ROUND DOWN (Math.floor)
+ *   Source: LAMC 12.03 - standard density calculation
+ *   Rationale: Conservative approach for by-right entitlements
+ *
+ * DENSITY BONUS CALCULATIONS (Round UP per State Law):
+ * - Base density for bonus: ROUND UP (Math.ceil)
+ * - Bonus units: ROUND UP (Math.ceil)
+ * - Affordable set-aside: ROUND UP (Math.ceil)
+ *
+ *   Sources:
+ *   - CA Gov Code 65915(o)(5): "The number of units permitted...shall be
+ *     calculated based on the number of units permitted before the application
+ *     of any density bonus, with fractional results ROUNDED UP to the next
+ *     whole number."
+ *   - LA AHIP Guidelines (Dec 2024), Page 5: "Calculate density by dividing
+ *     lot area by minimum lot area per dwelling unit...ROUND UP."
+ *   - ABAG Model Density Bonus Guidelines (April 2025), Section 3.2
+ *
+ * PARKING CALCULATIONS:
+ * - Total parking spaces: ROUND UP (Math.ceil)
+ *   Source: LAMC 12.21 A.4 - parking cannot be fractional
+ *
+ * OPEN SPACE CALCULATIONS:
+ * - Total open space SF: ROUND UP (Math.ceil)
+ *   Source: LAMC 12.21 G - minimum must be met
+ *
+ * FAR-BASED UNIT ESTIMATES:
+ * - Units from envelope: ROUND DOWN (Math.floor)
+ *   Rationale: Conservative estimate; actual unit count requires architect
+ *
+ * ============================================================================
+ * EXAMPLE: 5,000 SF lot in R3 zone (800 SF/DU) with 35% density bonus
+ * ============================================================================
+ *
+ * BY-RIGHT:
+ *   Base density = 5,000 / 800 = 6.25 → FLOOR = 6 units
+ *
+ * DENSITY BONUS:
+ *   Base density = 5,000 / 800 = 6.25 → CEIL = 7 units (per State law)
+ *   Bonus units = 7 × 0.35 = 2.45 → CEIL = 3 units
+ *   Total = 7 + 3 = 10 units
+ *
+ * AFFORDABLE SET-ASIDE (11% VLI):
+ *   Required affordable = 10 × 0.11 = 1.1 → CEIL = 2 units
+ *
+ * ============================================================================
  */
 
 import {
@@ -17,6 +69,7 @@ import {
 import {
   getZoneStandards,
   calculateBaseDensity,
+  calculateBaseDensityForBonus,
   calculateEffectiveFAR,
   calculateEffectiveHeight,
   isCommercialZone,
@@ -173,31 +226,65 @@ function calculateBuildableFootprint(
 }
 
 /**
- * Calculate open space requirement
- * Source: LAMC 12.21.G
+ * Calculate Open Space Requirement per LAMC 12.21 G
+ *
+ * BY-RIGHT PROJECTS (LAMC 12.21 G):
+ * - <3 habitable rooms: 100 SF per unit
+ * - 3 habitable rooms: 125 SF per unit
+ * - >3 habitable rooms: 175 SF per unit
+ * - At least 50% must be common open space
+ * - Private open space: min 50 SF, min 6 ft dimension
+ * - Common open space: min 400 SF, min 15 ft dimension
+ *
+ * INCENTIVE PROGRAMS (MIIP/AHIP/State DB):
+ * - 15% of lot area OR 10% of floor area, whichever is GREATER
+ * - At least 25% must be common open space
+ * - Ground floor commercial can reduce requirement
+ *
+ * Source: LAMC 12.21 G; MIIP Guidelines (2024)
  */
 function calculateOpenSpaceRequirement(
   totalUnits: number,
-  isIncentiveProgram: boolean
+  isIncentiveProgram: boolean,
+  lotSizeSF: number = 0,
+  buildableSF: number = 0
 ): DevelopmentPotential['openSpace'] {
-  if (isIncentiveProgram) {
-    // MIIP/AHIP: 15% of lot OR 10% of floor area, whichever greater
+  if (isIncentiveProgram && lotSizeSF > 0 && buildableSF > 0) {
+    // MIIP/AHIP/State DB: 15% of lot OR 10% of floor area, whichever greater
+    const lotBasedOpenSpace = Math.ceil(lotSizeSF * 0.15);
+    const floorAreaBasedOpenSpace = Math.ceil(buildableSF * 0.10);
+    const totalRequired = Math.max(lotBasedOpenSpace, floorAreaBasedOpenSpace);
+    const governingMethod = lotBasedOpenSpace >= floorAreaBasedOpenSpace ? 'lot area' : 'floor area';
+
     return {
       required: true,
-      sqftPerUnit: 0,  // Calculated differently
-      totalRequired: 0,  // Depends on lot/floor area
-      method: '15% of lot area OR 10% of floor area (whichever greater)',
+      sqftPerUnit: Math.round(totalRequired / totalUnits),
+      totalRequired,
+      method: `${totalRequired.toLocaleString()} SF (15% lot = ${lotBasedOpenSpace.toLocaleString()} SF, 10% floor = ${floorAreaBasedOpenSpace.toLocaleString()} SF; ${governingMethod} governs)`,
     };
   }
 
-  // Standard requirement per LAMC 12.21.G
-  // 100 SF/unit (<3 hab rooms), 125 SF (3 hab rooms), 175 SF (>3 hab rooms)
-  const avgSqftPerUnit = 100;  // Conservative estimate
+  if (isIncentiveProgram) {
+    // Fallback for incentive programs without lot/floor data
+    return {
+      required: true,
+      sqftPerUnit: 0,
+      totalRequired: 0,
+      method: '15% of lot area OR 10% of floor area (whichever greater) - per MIIP Guidelines',
+    };
+  }
+
+  // BY-RIGHT: Standard requirement per LAMC 12.21 G
+  // Using weighted average: assume 60% studios/1BR (<3 hab), 30% 2BR (3 hab), 10% 3BR (>3 hab)
+  // Weighted: 0.6×100 + 0.3×125 + 0.1×175 = 60 + 37.5 + 17.5 = 115 SF avg
+  const avgSqftPerUnit = 115;
+  const totalRequired = Math.ceil(totalUnits * avgSqftPerUnit);
+
   return {
     required: true,
     sqftPerUnit: avgSqftPerUnit,
-    totalRequired: totalUnits * avgSqftPerUnit,
-    method: '100 SF/unit (<3 hab rooms), 125 SF (3 hab), 175 SF (>3 hab)',
+    totalRequired,
+    method: `${totalRequired.toLocaleString()} SF (LAMC 12.21 G: 100-175 SF/unit based on hab rooms; using 115 SF avg)`,
   };
 }
 
@@ -299,6 +386,114 @@ function createDensityCalculation(
 }
 
 /**
+ * Calculate lot coverage constraint
+ * Per LAMC 12.07-12.11, certain zones have explicit lot coverage limits
+ *
+ * @returns Maximum footprint allowed by lot coverage, or null if no limit
+ */
+function calculateLotCoverageLimit(
+  lotSizeSF: number,
+  zone: ZoneType
+): { maxFootprintSF: number; coveragePercent: number } | null {
+  const standards = getZoneStandards(zone);
+  if (!standards?.maxLotCoveragePercent) {
+    return null;  // No explicit lot coverage limit
+  }
+
+  const maxFootprintSF = Math.floor(lotSizeSF * (standards.maxLotCoveragePercent / 100));
+  return {
+    maxFootprintSF,
+    coveragePercent: standards.maxLotCoveragePercent,
+  };
+}
+
+/**
+ * Calculate FAR vs Density constraint analysis
+ * Critical for Brickwork-style analysis: determines which constraint governs
+ *
+ * METHODOLOGY:
+ * - Density-based: Units allowed by zoning density (with bonus if applicable)
+ * - FAR-based: Units that physically fit within the buildable envelope
+ *   Formula: (buildableSF × 0.85 efficiency) / avgUnitSF
+ * - Lot coverage: May limit footprint, affecting how many floors needed
+ *
+ * The LIMITING FACTOR is whichever produces fewer units
+ * This tells developers whether they're "leaving units on the table" due to FAR
+ */
+function calculateConstraintAnalysis(
+  densityBasedUnits: number,
+  buildableSF: number,
+  avgUnitSF: number = 750,  // More realistic avg (mix of studios to 2BR)
+  lotSizeSF: number = 0,
+  zone: ZoneType | null = null,
+  totalStories: number = 0
+): {
+  densityBasedUnits: number;
+  farBasedUnits: number;
+  effectiveUnits: number;
+  limitingFactor: 'density' | 'FAR' | 'equal';
+  limitingFactorNotes: string;
+} {
+  // Calculate FAR-based units (85% efficiency for common areas/circulation)
+  const netEfficiency = 0.85;
+  const netResidentialSF = buildableSF * netEfficiency;
+  let farBasedUnits = Math.floor(netResidentialSF / avgUnitSF);
+
+  // Check if lot coverage constrains the footprint
+  let lotCoverageNote = '';
+  if (lotSizeSF > 0 && zone) {
+    const lotCoverageLimit = calculateLotCoverageLimit(lotSizeSF, zone);
+    if (lotCoverageLimit) {
+      // If lot coverage limits footprint, check if we can achieve the FAR
+      const maxFootprint = lotCoverageLimit.maxFootprintSF;
+      const setbackBasedFootprint = buildableSF / Math.max(totalStories, 1);
+
+      if (maxFootprint < setbackBasedFootprint) {
+        // Lot coverage is more restrictive than setbacks
+        // Recalculate FAR-based units with constrained footprint
+        const adjustedBuildableSF = maxFootprint * Math.max(totalStories, 1);
+        const adjustedNetSF = adjustedBuildableSF * netEfficiency;
+        const adjustedFarUnits = Math.floor(adjustedNetSF / avgUnitSF);
+
+        if (adjustedFarUnits < farBasedUnits) {
+          farBasedUnits = adjustedFarUnits;
+          lotCoverageNote = ` (lot coverage ${lotCoverageLimit.coveragePercent}% limits footprint to ${maxFootprint.toLocaleString()} SF)`;
+        }
+      }
+    }
+  }
+
+  // Determine limiting factor
+  let limitingFactor: 'density' | 'FAR' | 'equal';
+  let effectiveUnits: number;
+  let limitingFactorNotes: string;
+
+  if (farBasedUnits < densityBasedUnits) {
+    limitingFactor = 'FAR';
+    effectiveUnits = farBasedUnits;
+    limitingFactorNotes = `FAR constrains: ${farBasedUnits} units fit in envelope vs ${densityBasedUnits} allowed by density${lotCoverageNote}. ` +
+      `Consider requesting FAR incentive or reducing unit sizes.`;
+  } else if (densityBasedUnits < farBasedUnits) {
+    limitingFactor = 'density';
+    effectiveUnits = densityBasedUnits;
+    limitingFactorNotes = `Density constrains: ${densityBasedUnits} units allowed vs ${farBasedUnits} that would fit. ` +
+      `Additional density bonus or larger units could utilize available FAR.`;
+  } else {
+    limitingFactor = 'equal';
+    effectiveUnits = densityBasedUnits;
+    limitingFactorNotes = `Density and FAR align at ${densityBasedUnits} units. Balanced development envelope.`;
+  }
+
+  return {
+    densityBasedUnits,
+    farBasedUnits,
+    effectiveUnits,
+    limitingFactor,
+    limitingFactorNotes,
+  };
+}
+
+/**
  * Add Brickwork-style fields to a partial DevelopmentPotential
  */
 function addBrickworkFields(
@@ -342,6 +537,10 @@ function addBrickworkFields(
     ];
   }
 
+  // Calculate FAR vs Density constraint analysis
+  // This is critical for brickwork-style analysis to show which constraint governs
+  const constraintAnalysis = calculateConstraintAnalysis(totalUnits, buildableSF);
+
   return {
     ...basePotential,
     ...partial,
@@ -350,7 +549,7 @@ function addBrickworkFields(
     commonAreaSF,
     netResidentialSF,
     setbacks: partial.setbacks || basePotential.setbacks,
-    openSpace: calculateOpenSpaceRequirement(totalUnits, isIncentiveProgram),
+    openSpace: calculateOpenSpaceRequirement(totalUnits, isIncentiveProgram, site.lotSizeSF, buildableSF),
     affordabilityOptions,
     parkingMethod: getParkingMethod(program, nearTransit, parkingRequired),
     bicycleParkingLongTerm: bikeParking.longTerm,
@@ -361,6 +560,7 @@ function addBrickworkFields(
     densityCalculation: createDensityCalculation(
       site.lotSizeSF, site.baseZone, buildableSF, totalUnits, program
     ),
+    constraintAnalysis,
   } as DevelopmentPotential;
 }
 
@@ -384,6 +584,9 @@ function calculateByRight(site: SiteInput): DevelopmentPotential {
   const parkingRequired = baseDensity * (zoneStandards?.parkingPerUnit || 1);
   const bikeParking = calculateBicycleParking(baseDensity);
   const openSpace = calculateOpenSpaceRequirement(baseDensity, false);
+
+  // Calculate FAR vs Density constraint analysis for by-right
+  const constraintAnalysis = calculateConstraintAnalysis(baseDensity, buildableSF);
 
   return {
     program: IncentiveProgram.BY_RIGHT,
@@ -422,6 +625,7 @@ function calculateByRight(site: SiteInput): DevelopmentPotential {
     densityCalculation: createDensityCalculation(
       site.lotSizeSF, site.baseZone, buildableSF, baseDensity, IncentiveProgram.BY_RIGHT
     ),
+    constraintAnalysis,
   };
 }
 
@@ -429,12 +633,28 @@ function calculateByRight(site: SiteInput): DevelopmentPotential {
 // STATE DENSITY BONUS CALCULATOR
 // ============================================================================
 
+/**
+ * STATE DENSITY BONUS ROUNDING RULES (Gov Code 65915; AHIP Guidelines Dec 2024)
+ *
+ * Per State law and LA AHIP Guidelines, all fractional numbers must be ROUNDED UP:
+ * - Base density: ROUND UP (calculateBaseDensityForBonus)
+ * - Bonus units: ROUND UP (Math.ceil)
+ * - Affordable set-aside: ROUND UP (Math.ceil)
+ *
+ * Example: 5,000 SF lot in R3 zone (800 SF/DU)
+ * - Base density: 5,000 / 800 = 6.25 → ROUND UP = 7 units
+ * - With 35% bonus: 7 × 0.35 = 2.45 → ROUND UP = 3 bonus units
+ * - Total: 7 + 3 = 10 units
+ * - 11% VLI set-aside: 10 × 0.11 = 1.1 → ROUND UP = 2 affordable units
+ */
 function calculateStateDensityBonusPotential(
   site: SiteInput,
   incomeLevel: IncomeLevel
 ): DevelopmentPotential {
   const basePotential = calculateByRight(site);
-  const baseDensity = basePotential.baseDensity;
+
+  // Use ROUND UP base density per State Density Bonus Law
+  const baseDensity = calculateBaseDensityForBonus(site.lotSizeSF, site.baseZone);
 
   // Determine affordability percentage (use minimum for max incentives at this income level)
   // For VLI: 5% minimum for 20% bonus, up to 24% for 50% bonus
@@ -445,8 +665,10 @@ function calculateStateDensityBonusPotential(
       incomeLevel === IncomeLevel.MODERATE ? 'MODERATE' : 'LOWER'
   );
 
-  const bonusDensity = Math.floor(baseDensity * (densityBonusPercent / 100));
+  // ROUND UP bonus density per State law (Gov Code 65915)
+  const bonusDensity = Math.ceil(baseDensity * (densityBonusPercent / 100));
   const totalUnits = baseDensity + bonusDensity;
+  // ROUND UP affordable units per State law
   const affordableUnits = Math.ceil(totalUnits * (affordablePercent / 100));
 
   // FAR bonus if near transit
@@ -507,7 +729,7 @@ function calculateStateDensityBonusPotential(
     bonusStories: heightBonus.additionalStories,
     totalStories: basePotential.baseStories + heightBonus.additionalStories,
     setbacks: basePotential.setbacks,
-    openSpace: calculateOpenSpaceRequirement(totalUnits, true),
+    openSpace: calculateOpenSpaceRequirement(totalUnits, true, site.lotSizeSF, buildableSF),
     affordableUnits,
     affordablePercent,
     incomeLevel,
@@ -527,6 +749,7 @@ function calculateStateDensityBonusPotential(
     densityCalculation: createDensityCalculation(
       site.lotSizeSF, site.baseZone, buildableSF, totalUnits, IncentiveProgram.STATE_DENSITY_BONUS
     ),
+    constraintAnalysis: calculateConstraintAnalysis(totalUnits, buildableSF),
   };
 }
 
@@ -534,6 +757,10 @@ function calculateStateDensityBonusPotential(
 // MIIP TRANSIT CALCULATOR
 // ============================================================================
 
+/**
+ * MIIP uses same rounding rules as State Density Bonus
+ * (MIIP is layered on top of State DB per LAMC 12.22 A.38)
+ */
 function calculateMIIPTransitPotential(
   site: SiteInput,
   tier: MIIPTransitTier,
@@ -546,7 +773,8 @@ function calculateMIIPTransitPotential(
     return { ...basePotential, program: IncentiveProgram.MIIP_TRANSIT, eligible: false };
   }
 
-  const baseDensity = basePotential.baseDensity;
+  // Use ROUND UP base density per State DB law (MIIP builds on State DB)
+  const baseDensity = calculateBaseDensityForBonus(site.lotSizeSF, site.baseZone);
 
   // Get affordability requirement
   const isHighMarket = isHighMarketArea(site.marketArea);
@@ -555,9 +783,9 @@ function calculateMIIPTransitPotential(
     (incomeLevel === IncomeLevel.VLI ? affordReq.vli :
       incomeLevel === IncomeLevel.ELI ? affordReq.eli : affordReq.lower) : 0;
 
-  // Density bonus (use max for calculation)
+  // Density bonus (use max for calculation) - ROUND UP per State law
   const densityBonusPercent = incentives.densityBonusMax;
-  const bonusDensity = Math.floor(baseDensity * (densityBonusPercent / 100));
+  const bonusDensity = Math.ceil(baseDensity * (densityBonusPercent / 100));
   const totalUnits = baseDensity + bonusDensity;
   const affordableUnits = Math.ceil(totalUnits * (affordablePercent / 100));
 
@@ -755,9 +983,17 @@ function calculateMIIPCorridorPotential(
 // AHIP CALCULATOR (100% Affordable)
 // ============================================================================
 
+/**
+ * AHIP ROUNDING RULES (Gov Code 65915; AHIP Guidelines Dec 2024)
+ * AHIP projects qualify for State Density Bonus, so all fractional
+ * numbers must be ROUNDED UP per State law.
+ * Source: LA AHIP Guidelines (Dec 2024), Page 5
+ */
 function calculateAHIPPotential(site: SiteInput): DevelopmentPotential {
   const basePotential = calculateByRight(site);
-  const baseDensity = basePotential.baseDensity;
+
+  // Use ROUND UP base density per State Density Bonus Law (AHIP qualifies for State DB)
+  const baseDensity = calculateBaseDensityForBonus(site.lotSizeSF, site.baseZone);
 
   // Determine subarea
   const nearTransit = (site.distanceToMajorTransitFeet || Infinity) <= 2640;
@@ -770,10 +1006,10 @@ function calculateAHIPPotential(site: SiteInput): DevelopmentPotential {
     site.inVeryLowVehicleTravelArea || false
   );
 
-  // AHIP uses State DB for density bonus - assume max (unlimited for 100% affordable)
-  // Per Gov Code 65915, 100% affordable gets 80% density bonus
+  // AHIP uses State DB for density bonus - 100% affordable gets 80% density bonus
+  // Per Gov Code 65915 and AHIP Guidelines, ROUND UP bonus density
   const densityBonusPercent = 80;
-  const bonusDensity = Math.floor(baseDensity * (densityBonusPercent / 100));
+  const bonusDensity = Math.ceil(baseDensity * (densityBonusPercent / 100));
   const totalUnits = baseDensity + bonusDensity;
 
   // 100% affordable

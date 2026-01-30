@@ -230,6 +230,15 @@ export interface ZoneStandards {
   allowsResidential: boolean;
   isCommercial: boolean;
   isManufacturing: boolean;
+  /**
+   * Maximum lot coverage percentage (building footprint / lot area)
+   * Per LAMC 12.08-12.11; null = no explicit limit (controlled by setbacks/FAR)
+   * - R1: 40-45% depending on lot size
+   * - R2: 45%
+   * - R3+: Generally no limit (setbacks govern)
+   * - Commercial: No limit (setbacks govern)
+   */
+  maxLotCoveragePercent: number | null;
 }
 
 export interface HeightDistrictLimits {
@@ -436,6 +445,16 @@ export interface DevelopmentPotential {
     method: string;  // e.g., "Lot SF / 400 SF per DU"
     formula: string;  // e.g., "15,000 SF / 400 = 37 units"
     notes: string;
+  };
+
+  // FAR vs Density Constraint Analysis
+  // Critical for Brickwork-style analysis: which constraint limits the project?
+  constraintAnalysis: {
+    densityBasedUnits: number;  // Units allowed by zoning density
+    farBasedUnits: number;      // Units that fit within FAR envelope
+    effectiveUnits: number;     // Min of the two (actual achievable)
+    limitingFactor: 'density' | 'FAR' | 'equal';  // Which constraint governs
+    limitingFactorNotes: string;  // Explanation for output
   };
 }
 

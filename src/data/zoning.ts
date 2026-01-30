@@ -41,6 +41,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: true,
     isCommercial: false,
     isManufacturing: false,
+    maxLotCoveragePercent: 40,  // Per LAMC 12.07.01
   },
   {
     zone: ZoneType.RE11,
@@ -55,6 +56,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: true,
     isCommercial: false,
     isManufacturing: false,
+    maxLotCoveragePercent: 40,  // Per LAMC 12.07.01
   },
   {
     zone: ZoneType.RE15,
@@ -69,6 +71,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: true,
     isCommercial: false,
     isManufacturing: false,
+    maxLotCoveragePercent: 35,  // Per LAMC 12.07.01
   },
   {
     zone: ZoneType.RE20,
@@ -83,6 +86,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: true,
     isCommercial: false,
     isManufacturing: false,
+    maxLotCoveragePercent: 35,  // Per LAMC 12.07.01
   },
   {
     zone: ZoneType.RE40,
@@ -97,6 +101,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: true,
     isCommercial: false,
     isManufacturing: false,
+    maxLotCoveragePercent: 30,  // Per LAMC 12.07.01
   },
   // ============================================================================
   // RS (Suburban Residential) - Source: Appendix E
@@ -114,6 +119,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: true,
     isCommercial: false,
     isManufacturing: false,
+    maxLotCoveragePercent: 45,  // Per LAMC 12.07.1
   },
   // ============================================================================
   // RU (Residential Urban - Small Lot) - Source: Appendix E
@@ -131,6 +137,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: true,
     isCommercial: false,
     isManufacturing: false,
+    maxLotCoveragePercent: null,
   },
   // ============================================================================
   // RZ ZONES (Residential Zero Side Yard) - Source: Appendix E
@@ -148,6 +155,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: true,
     isCommercial: false,
     isManufacturing: false,
+    maxLotCoveragePercent: null,
   },
   {
     zone: ZoneType.RZ3,
@@ -162,6 +170,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: true,
     isCommercial: false,
     isManufacturing: false,
+    maxLotCoveragePercent: null,
   },
   {
     zone: ZoneType.RZ4,
@@ -176,6 +185,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: true,
     isCommercial: false,
     isManufacturing: false,
+    maxLotCoveragePercent: null,
   },
   // Residential Agricultural (RA)
   {
@@ -191,6 +201,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: true,
     isCommercial: false,
     isManufacturing: false,
+    maxLotCoveragePercent: null,
   },
   // ============================================================================
   // SINGLE-FAMILY RESIDENTIAL (R1, R2)
@@ -209,6 +220,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: true,
     isCommercial: false,
     isManufacturing: false,
+    maxLotCoveragePercent: 45,  // Per LAMC 12.08 (varies by lot size; using typical)
   },
   // Two-Family Residential - Source: Appendix E
   {
@@ -224,6 +236,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: true,
     isCommercial: false,
     isManufacturing: false,
+    maxLotCoveragePercent: 45,  // Per LAMC 12.09; setbacks typically govern
   },
   // Multi-Family R3
   {
@@ -239,6 +252,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: true,
     isCommercial: false,
     isManufacturing: false,
+    maxLotCoveragePercent: null,
   },
   // Multi-Family R4
   {
@@ -254,6 +268,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: true,
     isCommercial: false,
     isManufacturing: false,
+    maxLotCoveragePercent: null,
   },
   // Multi-Family R5
   {
@@ -269,6 +284,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: true,
     isCommercial: false,
     isManufacturing: false,
+    maxLotCoveragePercent: null,
   },
   // Residential/Accessory Services RAS3
   {
@@ -284,6 +300,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: true,
     isCommercial: true,  // Allows ground floor commercial
     isManufacturing: false,
+    maxLotCoveragePercent: null,
   },
   // Residential/Accessory Services RAS4
   {
@@ -299,6 +316,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: true,
     isCommercial: true,
     isManufacturing: false,
+    maxLotCoveragePercent: null,
   },
   // ============================================================================
   // RD ZONES (Restricted Density) - Source: Appendix E
@@ -316,6 +334,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: true,
     isCommercial: false,
     isManufacturing: false,
+    maxLotCoveragePercent: null,
   },
   {
     zone: ZoneType.RD2,
@@ -330,6 +349,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: true,
     isCommercial: false,
     isManufacturing: false,
+    maxLotCoveragePercent: null,
   },
   {
     zone: ZoneType.RD3,
@@ -344,6 +364,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: true,
     isCommercial: false,
     isManufacturing: false,
+    maxLotCoveragePercent: null,
   },
   {
     zone: ZoneType.RD4,
@@ -358,6 +379,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: true,
     isCommercial: false,
     isManufacturing: false,
+    maxLotCoveragePercent: null,
   },
   {
     zone: ZoneType.RD5,
@@ -372,6 +394,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: true,
     isCommercial: false,
     isManufacturing: false,
+    maxLotCoveragePercent: null,
   },
   {
     zone: ZoneType.RD6,
@@ -386,6 +409,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: true,
     isCommercial: false,
     isManufacturing: false,
+    maxLotCoveragePercent: null,
   },
   // ============================================================================
   // RW ZONES (Residential Waterways) - Source: Appendix E
@@ -403,6 +427,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: true,
     isCommercial: false,
     isManufacturing: false,
+    maxLotCoveragePercent: null,
   },
   {
     zone: ZoneType.RW2,
@@ -417,6 +442,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: true,
     isCommercial: false,
     isManufacturing: false,
+    maxLotCoveragePercent: null,
   },
   // ============================================================================
   // RMP (Mobile Home Park) - Source: Appendix E
@@ -434,6 +460,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: true,
     isCommercial: false,
     isManufacturing: false,
+    maxLotCoveragePercent: null,
   },
   // Commercial Zones
   {
@@ -449,6 +476,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: true,  // By conditional use
     isCommercial: true,
     isManufacturing: false,
+    maxLotCoveragePercent: null,
   },
   {
     zone: ZoneType.C1_5,
@@ -463,6 +491,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: true,
     isCommercial: true,
     isManufacturing: false,
+    maxLotCoveragePercent: null,
   },
   {
     zone: ZoneType.C2,
@@ -477,6 +506,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: true,
     isCommercial: true,
     isManufacturing: false,
+    maxLotCoveragePercent: null,
   },
   {
     zone: ZoneType.C4,
@@ -491,6 +521,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: true,
     isCommercial: true,
     isManufacturing: false,
+    maxLotCoveragePercent: null,
   },
   {
     zone: ZoneType.C5,
@@ -505,6 +536,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: true,
     isCommercial: true,
     isManufacturing: false,
+    maxLotCoveragePercent: null,
   },
   // Commercial/Residential CR - Source: Appendix E
   {
@@ -520,6 +552,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: true,
     isCommercial: true,
     isManufacturing: false,
+    maxLotCoveragePercent: null,
   },
   // Commercial/Manufacturing CM - Source: Appendix E
   {
@@ -535,6 +568,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: true,  // R3 uses allowed
     isCommercial: true,
     isManufacturing: true,
+    maxLotCoveragePercent: null,
   },
   // Manufacturing Zones
   {
@@ -550,6 +584,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: false,  // Generally not allowed
     isCommercial: false,
     isManufacturing: true,
+    maxLotCoveragePercent: null,
   },
   {
     zone: ZoneType.M2,
@@ -564,6 +599,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: false,
     isCommercial: false,
     isManufacturing: true,
+    maxLotCoveragePercent: null,
   },
   {
     zone: ZoneType.M3,
@@ -578,6 +614,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: false,
     isCommercial: false,
     isManufacturing: true,
+    maxLotCoveragePercent: null,
   },
   // Hybrid Industrial
   {
@@ -593,6 +630,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: false,  // Per overlay only
     isCommercial: true,
     isManufacturing: true,
+    maxLotCoveragePercent: null,
   },
   {
     zone: ZoneType.MR2,
@@ -607,6 +645,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: false,  // Per overlay only
     isCommercial: true,
     isManufacturing: true,
+    maxLotCoveragePercent: null,
   },
   // Parking Zones
   {
@@ -622,6 +661,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: false,  // Use adjacent zone standards under CHIP
     isCommercial: false,
     isManufacturing: false,
+    maxLotCoveragePercent: null,
   },
   {
     zone: ZoneType.PB,
@@ -636,6 +676,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: false,
     isCommercial: false,
     isManufacturing: false,
+    maxLotCoveragePercent: null,
   },
   // ============================================================================
   // AGRICULTURAL ZONES - Source: Appendix E
@@ -653,6 +694,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: true,
     isCommercial: false,
     isManufacturing: false,
+    maxLotCoveragePercent: null,
   },
   {
     zone: ZoneType.A2,
@@ -667,6 +709,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: true,
     isCommercial: false,
     isManufacturing: false,
+    maxLotCoveragePercent: null,
   },
   // Open Space - Source: LAMC 12.04
   {
@@ -682,6 +725,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: false,  // Parks, recreation
     isCommercial: false,
     isManufacturing: false,
+    maxLotCoveragePercent: null,
   },
   // Public Facilities - Source: Appendix E
   {
@@ -697,6 +741,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: false,  // Government, schools, etc.
     isCommercial: false,
     isManufacturing: false,
+    maxLotCoveragePercent: null,
   },
   // Submerged Lands - Source: Appendix E
   {
@@ -712,6 +757,7 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     allowsResidential: false,  // Navigation, shipping, fishing, recreation
     isCommercial: false,
     isManufacturing: false,
+    maxLotCoveragePercent: null,
   },
 ];
 
@@ -794,7 +840,14 @@ export function getHeightDistrictLimits(district: HeightDistrict): HeightDistric
 }
 
 /**
- * Calculate base density for a site
+ * Calculate base density for a site (BY-RIGHT / conservative calculation)
+ *
+ * ROUNDING RULE: Math.floor (round DOWN) for by-right projects
+ * - For by-right development, you cannot build a fractional unit
+ * - This is the conservative calculation used for by-right analysis
+ *
+ * NOTE: For State Density Bonus projects, use calculateBaseDensityForBonus()
+ * which rounds UP per Gov Code 65915 and AHIP Guidelines (Dec 2024).
  */
 export function calculateBaseDensity(
   lotSizeSF: number,
@@ -803,10 +856,12 @@ export function calculateBaseDensity(
   const standards = getZoneStandards(zone);
   if (!standards) return 0;
 
-  // Handle fixed-unit zones (R1, R2)
+  // Handle fixed-unit zones (R1, R2, etc.)
   if (standards.densitySFperDU === null) {
-    if (zone === ZoneType.R1) return 1;
+    if (zone === ZoneType.R1 || zone === ZoneType.RU) return 1;
     if (zone === ZoneType.R2) return 2;
+    if ([ZoneType.RZ2_5, ZoneType.RZ3, ZoneType.RZ4].includes(zone)) return 1;
+    if (zone === ZoneType.RW1) return 1;
     // Commercial zones with no density limit - use a reasonable default
     // In practice, limited by FAR and unit size
     return Math.floor(lotSizeSF / 400);  // Assume 400 SF/unit as default
@@ -814,7 +869,45 @@ export function calculateBaseDensity(
 
   // Calculate density from SF/DU requirement
   const baseUnits = lotSizeSF / standards.densitySFperDU;
-  return Math.floor(baseUnits);  // Round down to whole units
+  return Math.floor(baseUnits);  // Round DOWN for by-right (conservative)
+}
+
+/**
+ * Calculate base density for DENSITY BONUS projects
+ *
+ * ROUNDING RULE: Math.ceil (round UP) per State Density Bonus Law
+ *
+ * Source: CA Gov Code 65915; LA AHIP Guidelines (Dec 2024), Page 5:
+ * "State law requires that all density and set-aside calculations
+ * resulting in a fractional number be rounded up to the next whole number.
+ * For example, a 5,000 square foot lot in the R3 zone would permit 7 units
+ * (not 6 since the maximum density is also 'rounded up')."
+ *
+ * This applies to:
+ * - Base density calculation (for bonus purposes)
+ * - Bonus density calculation
+ * - Affordable unit set-aside calculation
+ */
+export function calculateBaseDensityForBonus(
+  lotSizeSF: number,
+  zone: ZoneType
+): number {
+  const standards = getZoneStandards(zone);
+  if (!standards) return 0;
+
+  // Handle fixed-unit zones
+  if (standards.densitySFperDU === null) {
+    if (zone === ZoneType.R1 || zone === ZoneType.RU) return 1;
+    if (zone === ZoneType.R2) return 2;
+    if ([ZoneType.RZ2_5, ZoneType.RZ3, ZoneType.RZ4].includes(zone)) return 1;
+    if (zone === ZoneType.RW1) return 1;
+    // Commercial zones - round up
+    return Math.ceil(lotSizeSF / 400);
+  }
+
+  // Calculate density from SF/DU requirement - ROUND UP per State law
+  const baseUnits = lotSizeSF / standards.densitySFperDU;
+  return Math.ceil(baseUnits);
 }
 
 /**
