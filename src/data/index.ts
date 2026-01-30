@@ -1,0 +1,18 @@
+/**
+ * Data Layer - Export all lookup tables and helper functions
+ */
+
+// State Density Bonus
+export * from './stateDensityBonus';
+
+// MIIP (Mixed Income Incentive Program)
+export * from './miip';
+
+// AHIP (Affordable Housing Incentive Program)
+export * from './ahip';
+
+// Base Zoning
+export * from './zoning';
+
+// AMI, Rent Limits, and Fees
+export * from './amiAndFees';
