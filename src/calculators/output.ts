@@ -1162,3 +1162,110 @@ export function generateComparisonTableWithSubsidies(
 
   return lines.join('\n');
 }
+
+// ============================================================================
+// SELLER-FRIENDLY OUTPUT
+// ============================================================================
+
+/**
+ * Generate a simple, easy-to-understand summary for property sellers
+ * This is designed for non-technical audiences
+ */
+export function generateSellerSummary(
+  site: SiteInput,
+  analyses: FinancialAnalysis[]
+): string {
+  const lines: string[] = [];
+
+  // Sort by land value
+  const sorted = [...analyses]
+    .filter(a => a.recommendedLandValue > 0)
+    .sort((a, b) => b.recommendedLandValue - a.recommendedLandValue);
+
+  if (sorted.length === 0) {
+    return `
+┌──────────────────────────────────────────────────────────────┐
+│                  PROPERTY VALUE SUMMARY                      │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  Unable to determine positive land value with current        │
+│  market conditions and construction costs.                   │
+│                                                              │
+│  This may indicate:                                          │
+│  • Construction costs exceed achievable rents                │
+│  • Site may be better suited for other uses                  │
+│  • Consider development incentive programs                   │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+`;
+  }
+
+  const best = sorted[0];
+
+  // Calculate range based on best program value
+  // Conservative: 80% of best (accounts for negotiation, risk)
+  // Aggressive: 115% of best (motivated buyer)
+  const lowValue = Math.round(best.recommendedLandValue * 0.80);
+  const midValue = best.recommendedLandValue;
+  const highValue = Math.round(best.recommendedLandValue * 1.15);
+
+  // Format as millions or thousands
+  const formatSimple = (v: number): string => {
+    if (v >= 1000000) {
+      return `$${(v / 1000000).toFixed(2)}M`;
+    }
+    return `$${(v / 1000).toFixed(0)}K`;
+  };
+
+  const lotSizeAcres = (site.lotSizeSF / 43560).toFixed(2);
+  const pricePerSF = Math.round(midValue / site.lotSizeSF);
+
+  lines.push('');
+  lines.push('┌──────────────────────────────────────────────────────────────┐');
+  lines.push('│                  PROPERTY VALUE SUMMARY                      │');
+  lines.push('├──────────────────────────────────────────────────────────────┤');
+  lines.push('│                                                              │');
+  lines.push(`│  Address: ${site.address.substring(0, 48).padEnd(48)} │`);
+  lines.push(`│  Lot Size: ${formatNumber(site.lotSizeSF)} SF (${lotSizeAcres} acres)`.padEnd(63) + '│');
+  lines.push(`│  Zoning: ${site.baseZone}`.padEnd(63) + '│');
+  lines.push('│                                                              │');
+  lines.push('├──────────────────────────────────────────────────────────────┤');
+  lines.push('│                                                              │');
+  lines.push('│         ESTIMATED LAND VALUE RANGE                           │');
+  lines.push('│                                                              │');
+  lines.push(`│     Conservative:  ${formatSimple(lowValue).padEnd(12)} (lower offer)`.padEnd(63) + '│');
+  lines.push(`│     Most Likely:   ${formatSimple(midValue).padEnd(12)} ◀ TARGET`.padEnd(63) + '│');
+  lines.push(`│     Aggressive:    ${formatSimple(highValue).padEnd(12)} (strong buyer)`.padEnd(63) + '│');
+  lines.push('│                                                              │');
+  lines.push(`│     Price per SF:  $${pricePerSF}/SF`.padEnd(63) + '│');
+  lines.push('│                                                              │');
+  lines.push('├──────────────────────────────────────────────────────────────┤');
+  lines.push('│                                                              │');
+  lines.push('│  WHY THIS VALUE?                                             │');
+  lines.push('│                                                              │');
+  lines.push(`│  A developer can build approximately ${best.potential.totalUnits} apartments`.padEnd(63) + '│');
+  lines.push(`│  under the "${getProgramShortName(best.program)}" program.`.padEnd(63) + '│');
+  lines.push('│                                                              │');
+  lines.push(`│  • Total building size: ${formatNumber(Math.round(best.unitMix.totalSF))} SF`.padEnd(63) + '│');
+  lines.push(`│  • Construction cost: ${formatCurrency(best.costs.totalHardCosts)}`.padEnd(63) + '│');
+  lines.push(`│  • Expected rent: ${formatCurrency(best.revenue.grossPotentialRent)}/year`.padEnd(63) + '│');
+  lines.push('│                                                              │');
+  lines.push('│  After accounting for construction costs and developer       │');
+  lines.push('│  profit, your land is worth the amount above.                │');
+  lines.push('│                                                              │');
+  lines.push('├──────────────────────────────────────────────────────────────┤');
+  lines.push('│                                                              │');
+  lines.push('│  PRICING RECOMMENDATION                                      │');
+  lines.push('│                                                              │');
+  lines.push(`│     List Price:   ${formatSimple(Math.round(midValue * 1.05))}`.padEnd(63) + '│');
+  lines.push(`│     Target Sale:  ${formatSimple(midValue)}`.padEnd(63) + '│');
+  lines.push(`│     Walk-Away:    ${formatSimple(lowValue)}`.padEnd(63) + '│');
+  lines.push('│                                                              │');
+  lines.push('└──────────────────────────────────────────────────────────────┘');
+  lines.push('');
+  lines.push('NOTE: Based on current market conditions and zoning regulations.');
+  lines.push('Actual offers may vary. This is not an appraisal.');
+  lines.push('');
+
+  return lines.join('\n');
+}

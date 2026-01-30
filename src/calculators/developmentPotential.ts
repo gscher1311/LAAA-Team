@@ -828,7 +828,9 @@ function calculateSB79Potential(site: SiteInput): DevelopmentPotential {
     return { ...basePotential, program: IncentiveProgram.SB_79, eligible: false };
   }
 
-  const totalUnits = sb79.maxUnits;
+  // SB 79 allows MAX of base zoning density OR SB 79 density
+  // The benefit is by-right approval + no parking, not necessarily more units
+  const totalUnits = Math.max(sb79.maxUnits, basePotential.baseDensity);
   const bonusDensity = totalUnits - basePotential.baseDensity;
 
   // Estimate buildable SF (assume 800 SF/unit average)
