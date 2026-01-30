@@ -1,9 +1,9 @@
 services:
   - type: web
-    name: land-residual-analysis
+    name: laaa-team
     runtime: node
-    buildCommand: npm install && npm run build
-    startCommand: npm run web
+    buildCommand: npm install
+    startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
