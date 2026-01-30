@@ -1,6 +1,21 @@
 /**
  * Configurable Assumptions
  * Market-tuned defaults for LA real estate development
+ *
+ * SOURCES (2025):
+ * - RSMeans Construction Cost Data 2025
+ * - CBRE LA Construction Cost Survey Q4 2024
+ * - Turner & Townsend LA Market Report 2025
+ * - Rider Levett Bucknall Q4 2024 Quarterly Cost Report
+ * - LA County Building & Safety permit data
+ *
+ * NOTES:
+ * - LA construction costs are ~28-35% above national average
+ * - Podium (5-over-1) construction: $400-500/SF typical for mid-range
+ * - High-rise concrete: $550-700/SF depending on finishes
+ * - Labor rates in LA: $48-70/hr for skilled trades
+ * - Title 24 energy compliance adds ~$5-10/SF
+ * - Prevailing wage projects add ~15-20% to labor
  */
 
 import { MarketArea } from '../types';
@@ -76,27 +91,31 @@ export const LA_BASE_ASSUMPTIONS: MarketAssumptions = {
   vacancyRate: 0.05,
   operatingExpenseRatio: 0.35,
 
-  // Hard Costs (2025 LA market)
-  hardCostTypeI: 550,
-  hardCostTypeIII: 425,
-  hardCostTypeV: 350,
-  parkingCostSurface: 8000,
-  parkingCostPodium: 45000,
-  parkingCostSubterranean: 75000,
+  // Hard Costs (2025 LA market - mid-range finishes)
+  // Type I: Steel/concrete high-rise (20+ stories)
+  hardCostTypeI: 625,
+  // Type III: Steel/concrete mid-rise (6-12 stories)
+  hardCostTypeIII: 500,
+  // Type V: Wood frame podium (5-over-1, 5-over-2)
+  hardCostTypeV: 425,
+  // Parking costs per space
+  parkingCostSurface: 12000,
+  parkingCostPodium: 55000,
+  parkingCostSubterranean: 90000,
 
-  // Soft Costs
-  softCostPercent: 0.28,
+  // Soft Costs (2025 LA)
+  softCostPercent: 0.30,        // Increased due to entitlement complexity
   architectPercent: 0.06,
-  permitCostPSF: 15,
-  impactFeesPSF: 12,
+  permitCostPSF: 22,            // LA building permit fees have increased
+  impactFeesPSF: 18,            // School fees, park fees, AHLF, etc.
 
-  // Financing
-  constructionLoanRate: 0.08,
-  constructionLoanFee: 0.01,
-  constructionLoanLTC: 0.65,
-  constructionMonths: 20,
-  permanentLoanRate: 0.065,
-  permanentLoanDSCR: 1.20,
+  // Financing (2025 rate environment)
+  constructionLoanRate: 0.085,    // SOFR + 350-400bps typical
+  constructionLoanFee: 0.0125,    // 1-1.5 points
+  constructionLoanLTC: 0.60,      // More conservative post-rate hikes
+  constructionMonths: 24,         // Type V podium typical timeline
+  permanentLoanRate: 0.0625,      // Agency debt for stabilized multifamily
+  permanentLoanDSCR: 1.25,        // Lender requirement
   permanentLoanAmortYears: 35,
 
   // Return Targets
@@ -119,12 +138,15 @@ export const LA_BASE_ASSUMPTIONS: MarketAssumptions = {
 
 /**
  * West LA / Westside (high-cost market)
+ * Premium finishes, higher labor costs, stricter entitlements
  */
 export const WESTSIDE_ASSUMPTIONS: MarketAssumptions = {
   ...LA_BASE_ASSUMPTIONS,
   marketRentPSF: 5.50,
-  hardCostTypeV: 375,
-  hardCostTypeIII: 450,
+  hardCostTypeV: 475,      // Premium finishes
+  hardCostTypeIII: 550,
+  hardCostTypeI: 700,
+  parkingCostSubterranean: 100000,  // Tighter sites
   targetYieldOnCost: 0.050,
   exitCapRate: 0.040,
   salePricePSF: 1200,
@@ -132,11 +154,13 @@ export const WESTSIDE_ASSUMPTIONS: MarketAssumptions = {
 
 /**
  * Hollywood / Central LA
+ * Transit-rich, competitive market
  */
 export const HOLLYWOOD_ASSUMPTIONS: MarketAssumptions = {
   ...LA_BASE_ASSUMPTIONS,
   marketRentPSF: 4.75,
-  hardCostTypeV: 365,
+  hardCostTypeV: 440,
+  hardCostTypeIII: 525,
   targetYieldOnCost: 0.0525,
   exitCapRate: 0.0425,
   salePricePSF: 950,
@@ -144,13 +168,15 @@ export const HOLLYWOOD_ASSUMPTIONS: MarketAssumptions = {
 
 /**
  * DTLA / Arts District
+ * Urban infill, methane mitigation, high-rise potential
  */
 export const DTLA_ASSUMPTIONS: MarketAssumptions = {
   ...LA_BASE_ASSUMPTIONS,
   marketRentPSF: 4.50,
-  hardCostTypeV: 385,  // Higher due to urban constraints
-  hardCostTypeIII: 475,
-  parkingCostSubterranean: 85000,
+  hardCostTypeV: 460,      // Higher due to urban constraints, methane
+  hardCostTypeIII: 550,
+  hardCostTypeI: 675,
+  parkingCostSubterranean: 100000,  // Methane mitigation adds cost
   targetYieldOnCost: 0.0525,
   exitCapRate: 0.0425,
   salePricePSF: 1000,
@@ -158,11 +184,14 @@ export const DTLA_ASSUMPTIONS: MarketAssumptions = {
 
 /**
  * South LA / Opportunity Zones
+ * Lower rents but still LA construction costs, affordable focus
  */
 export const SOUTH_LA_ASSUMPTIONS: MarketAssumptions = {
   ...LA_BASE_ASSUMPTIONS,
   marketRentPSF: 3.25,
-  hardCostTypeV: 340,
+  hardCostTypeV: 400,      // Slightly lower finishes but still LA labor
+  hardCostTypeIII: 475,
+  parkingCostPodium: 50000,
   targetYieldOnCost: 0.060,
   exitCapRate: 0.050,
   salePricePSF: 600,
@@ -170,12 +199,15 @@ export const SOUTH_LA_ASSUMPTIONS: MarketAssumptions = {
 
 /**
  * Valley (SFV)
+ * More land, surface parking viable, moderate costs
  */
 export const VALLEY_ASSUMPTIONS: MarketAssumptions = {
   ...LA_BASE_ASSUMPTIONS,
   marketRentPSF: 3.75,
-  hardCostTypeV: 335,
-  parkingCostPodium: 40000,
+  hardCostTypeV: 410,
+  hardCostTypeIII: 490,
+  parkingCostPodium: 50000,
+  parkingCostSurface: 10000,  // More viable in Valley
   targetYieldOnCost: 0.055,
   exitCapRate: 0.0475,
   salePricePSF: 700,
@@ -183,11 +215,14 @@ export const VALLEY_ASSUMPTIONS: MarketAssumptions = {
 
 /**
  * Koreatown / Mid-Wilshire
+ * High density, transit-oriented, mid-rise predominant
  */
 export const KOREATOWN_ASSUMPTIONS: MarketAssumptions = {
   ...LA_BASE_ASSUMPTIONS,
   marketRentPSF: 4.00,
-  hardCostTypeV: 360,
+  hardCostTypeV: 435,
+  hardCostTypeIII: 515,
+  parkingCostSubterranean: 95000,  // Tight lots require subterranean
   targetYieldOnCost: 0.0525,
   exitCapRate: 0.0425,
   salePricePSF: 875,

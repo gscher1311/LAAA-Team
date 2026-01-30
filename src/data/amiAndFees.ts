@@ -1,30 +1,39 @@
 /**
  * AMI Tables, Rent Limits, and AHLF Fees
- * From 2025-Income-and-Rent-Schedules.pdf and AHLF_Updated_Fee_Sc.pdf
+ *
+ * SOURCES (2025):
+ * - TCAC 2025 Income and Rent Limits: https://www.treasurer.ca.gov/ctcac/2025/supplemental.asp
+ * - LAHD 2025 Rent and Income Schedules: https://housing.lacity.gov/wp-content/uploads/2025/07/2025-Income-and-Rent-Schedules.pdf
+ * - AHLF Fee Schedule (July 2025): https://planning.lacity.gov/odocument/02d304e1-f3ae-4e58-9437-66630079958e/
  */
 
 import { IncomeLevel, MarketArea, AHLFFees } from '../types';
 
 // ============================================================================
 // 2025 AREA MEDIAN INCOME (Los Angeles County)
+// Source: California TCAC, HCD State Income Limits 2025
 // ============================================================================
 
 export const AMI_2025 = {
   year: 2025,
   percentChangeFromPrior: 8.55,  // Up from 2024
+  // State AMI for 4-person household (reference point)
+  stateAMI4Person: 106600,
+  // HUD/TCAC Income Limits are based on HUD MFI adjusted for high-cost areas
   byHouseholdSize: {
-    1: 82700,
-    2: 94500,
-    3: 106300,
-    4: 106600,  // Reference point for most calculations
-    5: 115200,
-    6: 123700,
-    7: 132300,
-    8: 140800,
+    1: 74600,
+    2: 85300,
+    3: 95950,
+    4: 106600,
+    5: 115150,
+    6: 123650,
+    7: 132200,
+    8: 140700,
   },
 };
 
-// Household size assumptions by bedroom count
+// Household size assumptions by bedroom count (for rent calculations)
+// Per TCAC: Studio=1, 1BR=1.5, 2BR=3, 3BR=4.5, 4BR=6
 export const HOUSEHOLD_SIZE_BY_BEDROOM = {
   0: 1,   // Studio
   1: 1.5, // 1BR - interpolate between 1 and 2
@@ -35,107 +44,114 @@ export const HOUSEHOLD_SIZE_BY_BEDROOM = {
 
 // ============================================================================
 // 2025 INCOME LIMITS BY AMI LEVEL
+// Source: TCAC 2025 Income Limits for Los Angeles County
+// For projects placed in service on or after 4/1/2025
 // ============================================================================
 
 export const INCOME_LIMITS_2025 = {
   year: 2025,
-  // Based on 4-person household, adjust by household size
+  effectiveDate: '2025-04-01',
+  // Based on TCAC published limits
   byLevelAndSize: {
-    [IncomeLevel.ELI]: {  // 30% AMI
-      1: 24810,
-      2: 28350,
-      3: 31890,
-      4: 31980,
-      5: 34560,
-      6: 37110,
-      7: 39690,
-      8: 42240,
+    [IncomeLevel.ELI]: {  // 30% AMI (Extremely Low Income)
+      1: 31800,
+      2: 36360,
+      3: 40890,
+      4: 45450,
+      5: 49080,
+      6: 52710,
+      7: 56340,
+      8: 60000,
     },
-    [IncomeLevel.VLI]: {  // 50% AMI
-      1: 41350,
-      2: 47250,
-      3: 53150,
-      4: 53300,
-      5: 57600,
-      6: 61850,
-      7: 66150,
-      8: 70400,
+    [IncomeLevel.VLI]: {  // 50% AMI (Very Low Income)
+      1: 53000,
+      2: 60600,
+      3: 68150,
+      4: 75750,
+      5: 81800,
+      6: 87850,
+      7: 93900,
+      8: 100000,
     },
-    [IncomeLevel.LOW]: {  // 60% AMI
-      1: 49620,
-      2: 56700,
-      3: 63780,
-      4: 63960,
-      5: 69120,
-      6: 74220,
-      7: 79380,
-      8: 84480,
+    [IncomeLevel.LOW]: {  // 60% AMI (Lower Income)
+      1: 63600,
+      2: 72720,
+      3: 81780,
+      4: 90900,
+      5: 98160,
+      6: 105420,
+      7: 112680,
+      8: 120000,
     },
-    [IncomeLevel.LOW_80]: {  // 80% AMI
-      1: 66160,
-      2: 75600,
-      3: 85040,
-      4: 85280,
-      5: 92160,
-      6: 98960,
-      7: 105840,
-      8: 112640,
+    [IncomeLevel.LOW_80]: {  // 80% AMI (Low Income)
+      1: 84800,
+      2: 96960,
+      3: 109040,
+      4: 121200,
+      5: 130880,
+      6: 140560,
+      7: 150240,
+      8: 160000,
     },
-    [IncomeLevel.MODERATE]: {  // 120% AMI
-      1: 99240,
-      2: 113400,
-      3: 127560,
+    [IncomeLevel.MODERATE]: {  // 120% AMI (Moderate Income)
+      1: 89520,
+      2: 102240,
+      3: 115020,
       4: 127920,
-      5: 138240,
-      6: 148440,
-      7: 158760,
-      8: 168960,
+      5: 138180,
+      6: 148380,
+      7: 158640,
+      8: 168840,
     },
   },
 };
 
 // ============================================================================
 // 2025 MAXIMUM MONTHLY RENT LIMITS
+// Source: TCAC 2025 Rent Limits for Los Angeles County
+// For projects placed in service on or after 4/1/2025
+// Note: Subtract utility allowance from these amounts
 // ============================================================================
 
 export const RENT_LIMITS_2025 = {
   year: 2025,
+  effectiveDate: '2025-04-01',
   // By bedroom count and income level
   byBedroomAndLevel: {
     0: {  // Studio
-      [IncomeLevel.ELI]: 621,
-      [IncomeLevel.VLI]: 1035,
-      [IncomeLevel.LOW]: 1242,
-      [IncomeLevel.LOW_80]: 1656,
-      [IncomeLevel.MODERATE]: 2049,
+      [IncomeLevel.ELI]: 795,
+      [IncomeLevel.VLI]: 1325,
+      [IncomeLevel.LOW]: 1590,
+      [IncomeLevel.LOW_80]: 2120,
+      [IncomeLevel.MODERATE]: 2237,
     },
     1: {  // 1BR
-      [IncomeLevel.ELI]: 665,
-      [IncomeLevel.VLI]: 1108,
-      [IncomeLevel.LOW]: 1330,
-      [IncomeLevel.LOW_80]: 1773,
-      [IncomeLevel.MODERATE]: 2194,
+      [IncomeLevel.ELI]: 852,
+      [IncomeLevel.VLI]: 1420,
+      [IncomeLevel.LOW]: 1704,
+      [IncomeLevel.LOW_80]: 2272,
+      [IncomeLevel.MODERATE]: 2397,
     },
     2: {  // 2BR
-      [IncomeLevel.ELI]: 797,
-      [IncomeLevel.VLI]: 1330,
-      [IncomeLevel.LOW]: 1596,
-      [IncomeLevel.LOW_80]: 2128,
-      [IncomeLevel.MODERATE]: 2633,
+      [IncomeLevel.ELI]: 1022,
+      [IncomeLevel.VLI]: 1703,
+      [IncomeLevel.LOW]: 2044,
+      [IncomeLevel.LOW_80]: 2726,
+      [IncomeLevel.MODERATE]: 2876,
     },
     3: {  // 3BR
-      [IncomeLevel.ELI]: 921,
-      [IncomeLevel.VLI]: 1536,
-      [IncomeLevel.LOW]: 1843,
-      [IncomeLevel.LOW_80]: 2457,
-      [IncomeLevel.MODERATE]: 3042,
+      [IncomeLevel.ELI]: 1181,
+      [IncomeLevel.VLI]: 1969,
+      [IncomeLevel.LOW]: 2363,
+      [IncomeLevel.LOW_80]: 3150,
+      [IncomeLevel.MODERATE]: 3324,
     },
     4: {  // 4BR
-      [IncomeLevel.ELI]: 1028,
-      [IncomeLevel.VLI]: 1714,
-      [IncomeLevel.LOW]: 2056,
-      [IncomeLevel.LOW_80]: 2742,
-      [IncomeLevel.MODERATE]: 3394,
+      [IncomeLevel.ELI]: 1317,
+      [IncomeLevel.VLI]: 2196,
+      [IncomeLevel.LOW]: 2635,
+      [IncomeLevel.LOW_80]: 3514,
+      [IncomeLevel.MODERATE]: 3708,
     },
   },
 };

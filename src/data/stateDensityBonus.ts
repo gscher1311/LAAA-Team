@@ -1,85 +1,96 @@
 /**
- * State Density Bonus Law Data (Section 12.22 A.37)
- * Based on California Government Code 65915 as implemented in LA
+ * State Density Bonus Law Data (LAMC Section 12.22 A.37)
+ * Based on California Government Code 65915 (as amended by AB 2345, AB 1287)
+ *
+ * SOURCES:
+ * - CA Gov Code 65915: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=65915&lawCode=GOV
+ * - LA Implementation: LAMC 12.22 A.37
+ * - ABAG Model Guidelines (April 2025): https://abag.ca.gov/sites/default/files/documents/2025-04/Density-Bonus-Model-Program-Guidelines-04162025.pdf
  */
 
 import { DensityBonusTier, ParkingRatio, UnitType } from '../types';
 
-// TABLE 12.22 A.37(e)(1)(i)a - Density Bonus by Affordability Level
+// ============================================================================
+// DENSITY BONUS SLIDING SCALE TABLES
+// Per Gov Code 65915(f) as amended
+// ============================================================================
+
+/**
+ * Very Low Income (50% AMI) - Gov Code 65915(f)(2)
+ * Base: 5% VLI = 20% bonus
+ * Each additional 1% VLI = +3% bonus (post-AB 2345)
+ * Maximum: 15% VLI = 50% bonus
+ */
 export const VLI_DENSITY_BONUS_TIERS: DensityBonusTier[] = [
   { affordablePercent: 5, densityBonusPercent: 20 },
-  { affordablePercent: 6, densityBonusPercent: 22.5 },
-  { affordablePercent: 7, densityBonusPercent: 25 },
-  { affordablePercent: 8, densityBonusPercent: 27.5 },
-  { affordablePercent: 9, densityBonusPercent: 30 },
-  { affordablePercent: 10, densityBonusPercent: 32.5 },
-  { affordablePercent: 11, densityBonusPercent: 35 },
-  { affordablePercent: 12, densityBonusPercent: 36 },
-  { affordablePercent: 13, densityBonusPercent: 37 },
-  { affordablePercent: 14, densityBonusPercent: 38 },
-  { affordablePercent: 15, densityBonusPercent: 39 },
-  { affordablePercent: 16, densityBonusPercent: 40 },
-  { affordablePercent: 17, densityBonusPercent: 41 },
-  { affordablePercent: 18, densityBonusPercent: 42 },
-  { affordablePercent: 19, densityBonusPercent: 43 },
-  { affordablePercent: 20, densityBonusPercent: 44 },
-  { affordablePercent: 21, densityBonusPercent: 45 },
-  { affordablePercent: 22, densityBonusPercent: 46 },
-  { affordablePercent: 23, densityBonusPercent: 47 },
+  { affordablePercent: 6, densityBonusPercent: 23 },
+  { affordablePercent: 7, densityBonusPercent: 26 },
+  { affordablePercent: 8, densityBonusPercent: 29 },
+  { affordablePercent: 9, densityBonusPercent: 32 },
+  { affordablePercent: 10, densityBonusPercent: 35 },
+  { affordablePercent: 11, densityBonusPercent: 38 },
+  { affordablePercent: 12, densityBonusPercent: 41 },
+  { affordablePercent: 13, densityBonusPercent: 44 },
+  { affordablePercent: 14, densityBonusPercent: 47 },
+  { affordablePercent: 15, densityBonusPercent: 50 },  // Max base bonus
+];
+
+/**
+ * Lower Income (60-80% AMI) - Gov Code 65915(f)(1)
+ * Base: 10% Lower = 20% bonus
+ * Each additional 1% Lower = +2.14% bonus (approx)
+ * Maximum: 24% Lower = 50% bonus
+ */
+export const LOWER_INCOME_DENSITY_BONUS_TIERS: DensityBonusTier[] = [
+  { affordablePercent: 10, densityBonusPercent: 20 },
+  { affordablePercent: 11, densityBonusPercent: 22.14 },
+  { affordablePercent: 12, densityBonusPercent: 24.29 },
+  { affordablePercent: 13, densityBonusPercent: 26.43 },
+  { affordablePercent: 14, densityBonusPercent: 28.57 },
+  { affordablePercent: 15, densityBonusPercent: 30.71 },
+  { affordablePercent: 16, densityBonusPercent: 32.86 },
+  { affordablePercent: 17, densityBonusPercent: 35 },
+  { affordablePercent: 18, densityBonusPercent: 37.14 },
+  { affordablePercent: 19, densityBonusPercent: 39.29 },
+  { affordablePercent: 20, densityBonusPercent: 41.43 },
+  { affordablePercent: 21, densityBonusPercent: 43.57 },
+  { affordablePercent: 22, densityBonusPercent: 45.71 },
+  { affordablePercent: 23, densityBonusPercent: 47.86 },
   { affordablePercent: 24, densityBonusPercent: 50 },  // Max base bonus
 ];
 
-export const LOWER_INCOME_DENSITY_BONUS_TIERS: DensityBonusTier[] = [
-  { affordablePercent: 10, densityBonusPercent: 20 },
-  { affordablePercent: 11, densityBonusPercent: 22.5 },
-  { affordablePercent: 12, densityBonusPercent: 25 },
-  { affordablePercent: 13, densityBonusPercent: 27.5 },
-  { affordablePercent: 14, densityBonusPercent: 30 },
-  { affordablePercent: 15, densityBonusPercent: 32.5 },
-  { affordablePercent: 17, densityBonusPercent: 35 },
-  { affordablePercent: 19, densityBonusPercent: 36 },
-  { affordablePercent: 21, densityBonusPercent: 37 },
-  { affordablePercent: 23, densityBonusPercent: 38 },
-  { affordablePercent: 24, densityBonusPercent: 39 },
-  { affordablePercent: 26, densityBonusPercent: 40 },
-  { affordablePercent: 28, densityBonusPercent: 41 },
-  { affordablePercent: 30, densityBonusPercent: 42 },
-  { affordablePercent: 32, densityBonusPercent: 43 },
-  { affordablePercent: 34, densityBonusPercent: 44 },
-  { affordablePercent: 36, densityBonusPercent: 45 },
-  { affordablePercent: 38, densityBonusPercent: 46 },
-  { affordablePercent: 40, densityBonusPercent: 47 },
+/**
+ * Moderate Income (120% AMI, for-sale only) - Gov Code 65915(f)(4)
+ * Base: 10% Moderate = 5% bonus
+ * Each additional 1% Moderate = +1.32% bonus (approx)
+ * Maximum: 44% Moderate = 50% bonus
+ */
+export const MODERATE_INCOME_DENSITY_BONUS_TIERS: DensityBonusTier[] = [
+  { affordablePercent: 10, densityBonusPercent: 5 },
+  { affordablePercent: 15, densityBonusPercent: 11.6 },
+  { affordablePercent: 20, densityBonusPercent: 18.2 },
+  { affordablePercent: 25, densityBonusPercent: 24.8 },
+  { affordablePercent: 30, densityBonusPercent: 31.4 },
+  { affordablePercent: 35, densityBonusPercent: 38 },
+  { affordablePercent: 40, densityBonusPercent: 44.6 },
   { affordablePercent: 44, densityBonusPercent: 50 },  // Max base bonus
 ];
 
-export const MODERATE_INCOME_DENSITY_BONUS_TIERS: DensityBonusTier[] = [
-  { affordablePercent: 10, densityBonusPercent: 20 },
-  { affordablePercent: 11, densityBonusPercent: 22.5 },
-  { affordablePercent: 12, densityBonusPercent: 25 },
-  { affordablePercent: 13, densityBonusPercent: 27.5 },
-  { affordablePercent: 14, densityBonusPercent: 30 },
-  { affordablePercent: 15, densityBonusPercent: 32.5 },
-  { affordablePercent: 16, densityBonusPercent: 35 },
-  { affordablePercent: 17, densityBonusPercent: 36 },
-  { affordablePercent: 18, densityBonusPercent: 37 },
-  { affordablePercent: 19, densityBonusPercent: 38 },
-  { affordablePercent: 20, densityBonusPercent: 39 },
-  { affordablePercent: 21, densityBonusPercent: 40 },
-  { affordablePercent: 22, densityBonusPercent: 41 },
-  { affordablePercent: 23, densityBonusPercent: 42 },
-  { affordablePercent: 24, densityBonusPercent: 43 },
-  { affordablePercent: 25, densityBonusPercent: 44 },
-  { affordablePercent: 26, densityBonusPercent: 45 },
-  { affordablePercent: 27, densityBonusPercent: 46 },
-  { affordablePercent: 28, densityBonusPercent: 47 },
-  { affordablePercent: 40, densityBonusPercent: 50 },  // Max base bonus
-];
-
-// TABLE 12.22 A.37(e)(1)(ii)a - Additional Density Bonus per 1% affordable
+// ============================================================================
+// ADDITIONAL DENSITY BONUS (AB 1287 - Second Density Bonus)
+// Per Gov Code 65915(v) for projects that have already maxed base allocation
+// ============================================================================
 export const ADDITIONAL_BONUS_PER_PERCENT = {
-  vli: 2.5,       // +2.5% density bonus per additional 1% VLI
-  lower: 1.5,     // +1.5% density bonus per additional 1% Lower Income
-  moderate: 1.0,  // +1.0% density bonus per additional 1% Moderate
+  vli: 2.5,       // +2.5% density bonus per additional 1% VLI above 15%
+  lower: 1.5,     // +1.5% density bonus per additional 1% Lower above 24%
+  moderate: 1.0,  // +1.0% density bonus per additional 1% Moderate above 44%
+};
+
+// Maximum thresholds for base bonus (before additional bonus kicks in)
+export const BASE_BONUS_THRESHOLDS = {
+  vli: { minPercent: 5, maxPercent: 15, maxBonus: 50 },
+  lower: { minPercent: 10, maxPercent: 24, maxBonus: 50 },
+  moderate: { minPercent: 10, maxPercent: 44, maxBonus: 50 },
 };
 
 // TABLE 12.22 A.37(e)(2)(ii)a - Parking Ratios
@@ -122,6 +133,7 @@ export const INCENTIVES_BY_AFFORDABILITY = [
 
 /**
  * Calculate density bonus for a given affordability percentage
+ * Per Government Code 65915 as amended
  */
 export function calculateStateDensityBonus(
   affordablePercent: number,
@@ -129,28 +141,29 @@ export function calculateStateDensityBonus(
 ): number {
   let tiers: DensityBonusTier[];
   let additionalRate: number;
-  let baseMaxPercent: number;
-  let baseMaxBonus: number;
+  let thresholds: { minPercent: number; maxPercent: number; maxBonus: number };
 
   switch (incomeLevel) {
     case 'VLI':
       tiers = VLI_DENSITY_BONUS_TIERS;
       additionalRate = ADDITIONAL_BONUS_PER_PERCENT.vli;
-      baseMaxPercent = 24;
-      baseMaxBonus = 50;
+      thresholds = BASE_BONUS_THRESHOLDS.vli;
       break;
     case 'LOWER':
       tiers = LOWER_INCOME_DENSITY_BONUS_TIERS;
       additionalRate = ADDITIONAL_BONUS_PER_PERCENT.lower;
-      baseMaxPercent = 44;
-      baseMaxBonus = 50;
+      thresholds = BASE_BONUS_THRESHOLDS.lower;
       break;
     case 'MODERATE':
       tiers = MODERATE_INCOME_DENSITY_BONUS_TIERS;
       additionalRate = ADDITIONAL_BONUS_PER_PERCENT.moderate;
-      baseMaxPercent = 40;
-      baseMaxBonus = 50;
+      thresholds = BASE_BONUS_THRESHOLDS.moderate;
       break;
+  }
+
+  // Below minimum threshold - no bonus
+  if (affordablePercent < thresholds.minPercent) {
+    return 0;
   }
 
   // Find base bonus from tiers
@@ -161,11 +174,11 @@ export function calculateStateDensityBonus(
     }
   }
 
-  // Calculate additional bonus if above max tier threshold
-  if (affordablePercent > baseMaxPercent) {
-    const additionalPercent = affordablePercent - baseMaxPercent;
+  // Calculate additional bonus if above max tier threshold (AB 1287 second density bonus)
+  if (affordablePercent > thresholds.maxPercent) {
+    const additionalPercent = affordablePercent - thresholds.maxPercent;
     const additionalBonus = additionalPercent * additionalRate;
-    return baseMaxBonus + additionalBonus;
+    return thresholds.maxBonus + additionalBonus;
   }
 
   return baseBonus;
