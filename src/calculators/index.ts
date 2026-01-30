@@ -10,3 +10,4 @@ export * from './output';
 export * from './taxCredits';
 export * from './projectOptimization';
 export * from './highestBestUse';
+export * from './sellerAnalysis';

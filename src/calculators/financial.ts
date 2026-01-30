@@ -132,35 +132,61 @@ export interface FinancialAnalysis {
 // DEFAULT ASSUMPTIONS
 // ============================================================================
 
+/**
+ * LA Default Assumptions (2025)
+ *
+ * IMPORTANT NOTES:
+ * - These are STANDARD assumptions, not aggressive or conservative
+ * - Exit cap rate is 5.5% - LA multifamily caps are typically 5.0%-6.0%
+ *   NEVER use cap rates in the 4s for stabilized LA multifamily
+ * - Hard costs are for Type V-A wood frame (4 stories max)
+ * - For higher construction types, apply multiplier from constructionTypes.ts
+ *
+ * Users can override any assumption via UserAssumptionOverrides in sellerAnalysis.ts
+ *
+ * Sources:
+ * - CBRE LA Multifamily Market Report Q4 2024
+ * - RSMeans Construction Cost Data 2025
+ * - CoStar LA Market Analytics
+ */
 export const LA_DEFAULT_ASSUMPTIONS: FinancialAssumptions = {
-  // Revenue - LA market (2025)
-  marketRentPSF: 4.25,            // ~$2,760/mo for 650 SF 1BR
-  vacancyRate: 0.05,
-  operatingExpenseRatio: 0.35,
+  // Revenue - LA market average (2025)
+  // Note: Use submarket-specific rents for accuracy (see submarketRents.ts)
+  marketRentPSF: 4.25,            // ~$2,760/mo for 650 SF 1BR (LA average)
+  vacancyRate: 0.05,              // 5% stabilized vacancy
+  operatingExpenseRatio: 0.35,    // 35% of EGI
 
-  // Hard Costs - Type V wood frame (5 story)
-  hardCostPSF: 350,
-  parkingCostPerSpace: 45000,     // Podium parking
+  // Hard Costs - Type V-A wood frame baseline (2025)
+  // This is CONSTRUCTION ONLY - soft costs, fees, financing are separate
+  // Aggressive: $280/SF, Standard: $320/SF, Conservative: $360/SF
+  hardCostPSF: 320,               // Standard Type V-A (4 stories max)
+  parkingCostPerSpace: 45000,     // Podium parking (most common LA)
 
   // Soft Costs
+  // Aggressive: 22%, Standard: 28%, Conservative: 32%
   softCostPercent: 0.28,
 
   // Financing
-  constructionLoanRate: 0.08,
-  constructionMonths: 20,
-  loanToValue: 0.65,
+  constructionLoanRate: 0.08,     // 8% construction loan rate
+  constructionMonths: 20,         // 18-24 months typical
+  loanToValue: 0.65,              // 65% LTV
 
   // Return Targets
-  targetYieldOnCost: 0.055,
-  targetDevProfitMargin: 0.15,
-  targetUnleveredIRR: 0.12,
+  // YOC targets by buyer type:
+  // Institutional: 5.0%, PE: 5.5%, Regional: 6.0%, Opportunistic: 6.5%
+  targetYieldOnCost: 0.055,       // 5.5% - standard for PE/regional buyers
+  targetDevProfitMargin: 0.15,    // 15% - standard development margin
+  targetUnleveredIRR: 0.12,       // 12% unlevered IRR
 
-  // Exit
-  exitCapRate: 0.045,
+  // Exit Cap Rate
+  // LA multifamily caps by submarket (NEVER in the 4s):
+  // Premium (Westside): 5.0%, Strong (Hollywood): 5.25%
+  // Average (Valley/DTLA): 5.5%, Value (South LA): 5.75%, Emerging: 6.0%
+  exitCapRate: 0.055,             // 5.5% - LA market average
 
-  // For-Sale
-  salePricePSF: 850,
-  brokerFeePercent: 0.05,
+  // For-Sale (Condo)
+  salePricePSF: 850,              // LA condo avg $850/SF
+  brokerFeePercent: 0.05,         // 5% broker commission
 };
 
 // ============================================================================
