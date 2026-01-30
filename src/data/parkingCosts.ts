@@ -359,3 +359,171 @@ export function formatParkingCostSummary(recommendation: ParkingRecommendation):
 
   return lines.join('\n');
 }
+
+// ============================================================================
+// SUBTERRANEAN AVOIDANCE ANALYSIS
+// ============================================================================
+
+/**
+ * Check if parking configuration requires subterranean
+ */
+export function requiresSubterranean(recommendation: ParkingRecommendation): boolean {
+  return recommendation.spacesPerType.some(s =>
+    s.type === ParkingType.SUBTERRANEAN_1 ||
+    s.type === ParkingType.SUBTERRANEAN_2 ||
+    s.type === ParkingType.SUBTERRANEAN_3
+  );
+}
+
+/**
+ * Calculate subterranean spaces and cost from recommendation
+ */
+export function getSubterraneanDetails(recommendation: ParkingRecommendation): {
+  spaces: number;
+  cost: number;
+  levels: number;
+} {
+  let spaces = 0;
+  let cost = 0;
+  let levels = 0;
+
+  for (const item of recommendation.spacesPerType) {
+    if (item.type === ParkingType.SUBTERRANEAN_1) {
+      spaces += item.spaces;
+      cost += item.cost;
+      levels = Math.max(levels, 1);
+    } else if (item.type === ParkingType.SUBTERRANEAN_2) {
+      spaces += item.spaces;
+      cost += item.cost;
+      levels = Math.max(levels, 2);
+    } else if (item.type === ParkingType.SUBTERRANEAN_3) {
+      spaces += item.spaces;
+      cost += item.cost;
+      levels = Math.max(levels, 3);
+    }
+  }
+
+  return { spaces, cost, levels };
+}
+
+/**
+ * Calculate parking reduction needed to avoid subterranean
+ *
+ * Returns percentage reduction needed to fit all parking above grade
+ */
+export function calculateReductionToAvoidSubterranean(
+  totalSpacesRequired: number,
+  stories: number,
+  lotSizeSF: number
+): {
+  reductionNeeded: number;  // As decimal (0.20 = 20% reduction)
+  spacesToReduce: number;
+  currentCost: number;
+  costWithReduction: number;
+  savings: number;
+  feasible: boolean;
+  strategy: string;
+} {
+  // Calculate above-grade capacity
+  const parkingFootprintSF = lotSizeSF * 0.60;
+  const spacesPerLevel = Math.floor(parkingFootprintSF / 340);
+
+  // Determine above-grade capacity based on building type
+  let aboveGradeCapacity: number;
+  if (stories <= 3) {
+    // Tuck-under only
+    aboveGradeCapacity = spacesPerLevel;
+  } else if (stories <= 8) {
+    // Podium (1-2 levels)
+    const podiumLevels = stories <= 5 ? 1 : 2;
+    aboveGradeCapacity = spacesPerLevel * podiumLevels;
+  } else {
+    // High-rise - typically 2-3 podium levels max
+    aboveGradeCapacity = spacesPerLevel * 3;
+  }
+
+  // If we already fit, no reduction needed
+  if (totalSpacesRequired <= aboveGradeCapacity) {
+    const currentRec = recommendParkingType(totalSpacesRequired, stories, lotSizeSF, false);
+    return {
+      reductionNeeded: 0,
+      spacesToReduce: 0,
+      currentCost: currentRec.totalCost,
+      costWithReduction: currentRec.totalCost,
+      savings: 0,
+      feasible: true,
+      strategy: 'All parking fits above grade - no reduction needed',
+    };
+  }
+
+  // Calculate reduction needed
+  const spacesToReduce = totalSpacesRequired - aboveGradeCapacity;
+  const reductionNeeded = spacesToReduce / totalSpacesRequired;
+
+  // Calculate current cost (with subterranean)
+  const currentRec = recommendParkingType(totalSpacesRequired, stories, lotSizeSF, false);
+
+  // Calculate cost with reduction (all above grade)
+  const reducedRec = recommendParkingType(aboveGradeCapacity, stories, lotSizeSF, false);
+
+  const savings = currentRec.totalCost - reducedRec.totalCost;
+
+  // Determine if feasible (most programs allow 20-50% reduction)
+  const feasible = reductionNeeded <= 0.50;
+
+  let strategy = '';
+  if (reductionNeeded <= 0.20) {
+    strategy = `Request 20% parking reduction via density bonus incentive (need ${Math.round(reductionNeeded * 100)}%)`;
+  } else if (reductionNeeded <= 0.35) {
+    strategy = `Use MIIP/AHIP parking elimination or request 35% reduction (need ${Math.round(reductionNeeded * 100)}%)`;
+  } else if (reductionNeeded <= 0.50) {
+    strategy = `Combine density bonus + transit adjacency reductions (need ${Math.round(reductionNeeded * 100)}%)`;
+  } else {
+    strategy = `Reduction of ${Math.round(reductionNeeded * 100)}% unlikely achievable - subterranean may be required`;
+  }
+
+  return {
+    reductionNeeded,
+    spacesToReduce,
+    currentCost: currentRec.totalCost,
+    costWithReduction: reducedRec.totalCost,
+    savings,
+    feasible,
+    strategy,
+  };
+}
+
+/**
+ * Format subterranean avoidance analysis for output
+ */
+export function formatSubterraneanAvoidanceAnalysis(
+  totalSpacesRequired: number,
+  stories: number,
+  lotSizeSF: number
+): string {
+  const analysis = calculateReductionToAvoidSubterranean(totalSpacesRequired, stories, lotSizeSF);
+
+  const lines: string[] = [];
+  lines.push('');
+  lines.push('SUBTERRANEAN PARKING AVOIDANCE ANALYSIS');
+  lines.push('─'.repeat(50));
+
+  if (analysis.reductionNeeded === 0) {
+    lines.push('✓ All parking fits above grade');
+    lines.push(`  Parking cost: $${analysis.currentCost.toLocaleString()}`);
+  } else {
+    lines.push(`⚠ SUBTERRANEAN PARKING REQUIRED`);
+    lines.push(`  Current: ${totalSpacesRequired} spaces required`);
+    lines.push(`  Above-grade capacity: ${totalSpacesRequired - analysis.spacesToReduce} spaces`);
+    lines.push(`  Subterranean needed: ${analysis.spacesToReduce} spaces`);
+    lines.push('');
+    lines.push(`  Current cost: $${analysis.currentCost.toLocaleString()}`);
+    lines.push(`  Cost if reduced: $${analysis.costWithReduction.toLocaleString()}`);
+    lines.push(`  POTENTIAL SAVINGS: $${analysis.savings.toLocaleString()}`);
+    lines.push('');
+    lines.push(`  Reduction needed: ${Math.round(analysis.reductionNeeded * 100)}%`);
+    lines.push(`  ${analysis.feasible ? '✓ Feasible' : '✗ Difficult'}: ${analysis.strategy}`);
+  }
+
+  return lines.join('\n');
+}

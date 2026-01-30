@@ -6,6 +6,13 @@
 import { SiteInput, IncentiveProgram } from '../types';
 import { FinancialAnalysis, formatCurrency, formatPercent } from './financial';
 import { LIHTCCalculation, GapFinancing } from './taxCredits';
+import {
+  requiresSubterranean,
+  getSubterraneanDetails,
+  calculateReductionToAvoidSubterranean,
+  formatParkingCostSummary
+} from '../data/parkingCosts';
+import { getConstructionCostCliffs } from './projectOptimization';
 
 // ============================================================================
 // DATA QUALITY WARNINGS
@@ -1117,6 +1124,22 @@ export function generateDetailedAnalysis(analysis: FinancialAnalysis): string {
   lines.push('─'.repeat(50));
   lines.push(`Construction:          ${formatCurrency(a.costs.constructionCost)} ($${a.costs.hardCostPSF}/SF)`);
   lines.push(`Parking:               ${formatCurrency(a.costs.parkingCost)}`);
+
+  // Parking Details
+  if (a.costs.parkingRecommendation && a.potential.parkingRequired > 0) {
+    lines.push(`  Type:                ${a.costs.parkingTypeSummary}`);
+    lines.push(`  Avg Cost/Space:      $${Math.round(a.costs.parkingRecommendation.averageCostPerSpace).toLocaleString()}`);
+
+    // Check for subterranean - WARN user
+    if (requiresSubterranean(a.costs.parkingRecommendation)) {
+      const subDetails = getSubterraneanDetails(a.costs.parkingRecommendation);
+      lines.push('');
+      lines.push(`  ⚠ SUBTERRANEAN PARKING REQUIRED`);
+      lines.push(`    Subterranean:      ${subDetails.spaces} spaces ($${Math.round(subDetails.cost / 1000)}K)`);
+      lines.push(`    Levels below grade: ${subDetails.levels}`);
+    }
+  }
+
   lines.push(`Total Hard Costs:      ${formatCurrency(a.costs.totalHardCosts)}`);
   lines.push('');
   lines.push(`Soft Costs (28%):      ${formatCurrency(a.costs.softCosts)}`);
