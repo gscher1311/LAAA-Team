@@ -46,6 +46,13 @@ import {
   MarketArea,
   EntitlementStage,
 } from '../types';
+import {
+  getZoneStandards,
+  calculateBaseDensity,
+  calculateBaseDensityForBonus,
+  calculateEffectiveFAR,
+  calculateEffectiveHeight,
+} from './zoning';
 
 // ============================================================================
 // TYPES
@@ -137,6 +144,51 @@ export interface ZoneComparisonResult {
 }
 
 /**
+ * Per-parcel calculation results
+ * This is the CORRECT way to calculate - per parcel, then sum
+ */
+export interface ParcelCalculation {
+  apn: string;
+  lotSizeSF: number;
+  zone: ZoneType;
+  heightDistrict: HeightDistrict;
+
+  // Density calculated for THIS parcel
+  baseDensityByRight: number;      // Round DOWN for by-right
+  baseDensityForBonus: number;     // Round UP for density bonus
+
+  // FAR calculated for THIS parcel
+  baseFAR: number;
+  maxBuildableSF: number;
+
+  // Height calculated for THIS parcel
+  maxHeightFeet: number | null;
+  maxStories: number | null;
+}
+
+/**
+ * Combined calculation across all parcels
+ * This is what developers/architects actually do
+ */
+export interface CombinedCalculation {
+  // Sum of per-parcel densities (CORRECT method)
+  totalBaseDensityByRight: number;
+  totalBaseDensityForBonus: number;
+
+  // Sum of per-parcel buildable SF
+  totalMaxBuildableSF: number;
+  effectiveFAR: number;            // Total buildable / total lot
+
+  // Height - depends on design approach
+  maxHeightFeet: number | null;    // Most restrictive if uniform, or varies
+  maxStories: number | null;
+  heightNotes: string;             // Explains stepped massing if needed
+
+  // Per-parcel breakdown
+  parcelCalculations: ParcelCalculation[];
+}
+
+/**
  * Assembled site combining multiple parcels
  */
 export interface AssembledSite {
@@ -153,9 +205,12 @@ export interface AssembledSite {
   // Zone analysis
   zoneComparison: ZoneComparisonResult;
 
-  // Effective zoning (based on analysis mode)
+  // Effective zoning (based on analysis mode - for SiteInput compatibility)
   effectiveZone: ZoneType;
   effectiveHeightDistrict: HeightDistrict;
+
+  // CORRECT per-parcel calculations
+  combinedCalculation: CombinedCalculation;
 
   // Combined constraints
   hasAnyQCondition: boolean;
@@ -376,6 +431,115 @@ export function compareZones(parcels: ParcelInput[]): ZoneComparisonResult {
   };
 }
 
+// ============================================================================
+// PER-PARCEL CALCULATION (THE CORRECT WAY)
+// ============================================================================
+
+/**
+ * Calculate density, FAR, and height for a single parcel
+ * This is what developers/architects actually do before combining
+ */
+function calculateParcel(parcel: ParcelInput): ParcelCalculation {
+  // Calculate base density using the parcel's own zone
+  const baseDensityByRight = calculateBaseDensity(parcel.lotSizeSF, parcel.baseZone);
+  const baseDensityForBonus = calculateBaseDensityForBonus(parcel.lotSizeSF, parcel.baseZone);
+
+  // Calculate FAR from the parcel's zone + height district
+  const baseFAR = calculateEffectiveFAR(parcel.baseZone, parcel.heightDistrict);
+  const maxBuildableSF = parcel.lotSizeSF * baseFAR;
+
+  // Calculate height from the parcel's zone + height district
+  const height = calculateEffectiveHeight(parcel.baseZone, parcel.heightDistrict);
+
+  return {
+    apn: parcel.apn,
+    lotSizeSF: parcel.lotSizeSF,
+    zone: parcel.baseZone,
+    heightDistrict: parcel.heightDistrict,
+    baseDensityByRight,
+    baseDensityForBonus,
+    baseFAR,
+    maxBuildableSF,
+    maxHeightFeet: height.maxFeet,
+    maxStories: height.maxStories,
+  };
+}
+
+/**
+ * Calculate combined values across all parcels
+ * This is the CORRECT method:
+ * - Density: Sum of per-parcel densities (NOT lot total / single zone's SF/DU)
+ * - FAR: Sum of per-parcel buildable SF / total lot
+ * - Height: Varies by parcel (may require stepped massing)
+ */
+export function calculateCombinedParcels(parcels: ParcelInput[]): CombinedCalculation {
+  const parcelCalculations = parcels.map(calculateParcel);
+
+  // Sum densities across all parcels
+  const totalBaseDensityByRight = parcelCalculations.reduce(
+    (sum, p) => sum + p.baseDensityByRight, 0
+  );
+  const totalBaseDensityForBonus = parcelCalculations.reduce(
+    (sum, p) => sum + p.baseDensityForBonus, 0
+  );
+
+  // Sum buildable SF across all parcels
+  const totalMaxBuildableSF = parcelCalculations.reduce(
+    (sum, p) => sum + p.maxBuildableSF, 0
+  );
+  const totalLotSizeSF = parcels.reduce((sum, p) => sum + p.lotSizeSF, 0);
+  const effectiveFAR = totalMaxBuildableSF / totalLotSizeSF;
+
+  // Height analysis - check if all parcels have same height limits
+  const uniqueHeights = new Set(parcelCalculations.map(p => p.maxHeightFeet));
+  const uniqueStories = new Set(parcelCalculations.map(p => p.maxStories));
+  const allSameHeight = uniqueHeights.size === 1;
+
+  let maxHeightFeet: number | null;
+  let maxStories: number | null;
+  let heightNotes: string;
+
+  if (allSameHeight) {
+    // All parcels have same height limit - simple case
+    maxHeightFeet = parcelCalculations[0].maxHeightFeet;
+    maxStories = parcelCalculations[0].maxStories;
+    heightNotes = 'All parcels have uniform height limits';
+  } else {
+    // Mixed height limits - building may need stepped massing
+    const heights = parcelCalculations
+      .map(p => p.maxHeightFeet)
+      .filter((h): h is number => h !== null);
+    const stories = parcelCalculations
+      .map(p => p.maxStories)
+      .filter((s): s is number => s !== null);
+
+    // Report the range, but note that stepped massing may be required
+    maxHeightFeet = heights.length > 0 ? Math.min(...heights) : null;
+    maxStories = stories.length > 0 ? Math.min(...stories) : null;
+
+    const maxHeight = heights.length > 0 ? Math.max(...heights) : null;
+    const maxStory = stories.length > 0 ? Math.max(...stories) : null;
+
+    heightNotes = `Mixed height districts: ${maxHeightFeet ?? 'unlimited'}-${maxHeight ?? 'unlimited'} ft. ` +
+      `Building design should step down at zone boundaries per each parcel's height district.`;
+  }
+
+  return {
+    totalBaseDensityByRight,
+    totalBaseDensityForBonus,
+    totalMaxBuildableSF,
+    effectiveFAR,
+    maxHeightFeet,
+    maxStories,
+    heightNotes,
+    parcelCalculations,
+  };
+}
+
+// ============================================================================
+// PARCEL ASSEMBLY
+// ============================================================================
+
 /**
  * Assemble multiple parcels into a combined site
  */
@@ -478,6 +642,9 @@ export function assembleParcels(
     entitlementStage: sharedInputs.entitlementStage,
   };
 
+  // Calculate per-parcel values and combine (THE CORRECT WAY)
+  const combinedCalculation = calculateCombinedParcels(parcels);
+
   return {
     isMultiParcel: true,
     analysisMode: mode,
@@ -488,6 +655,7 @@ export function assembleParcels(
     zoneComparison,
     effectiveZone,
     effectiveHeightDistrict,
+    combinedCalculation,
     hasAnyQCondition,
     qConditionSummary,
     hasAnyDLimitation,
@@ -653,7 +821,8 @@ export function validateAssemblage(parcels: ParcelInput[]): ParcelValidationResu
  */
 export function formatAssemblageSummary(site: AssembledSite): string {
   const lines: string[] = [];
-  const width = 90;
+  const width = 100;
+  const calc = site.combinedCalculation;
 
   lines.push('');
   lines.push('═'.repeat(width));
@@ -667,71 +836,94 @@ export function formatAssemblageSummary(site: AssembledSite): string {
   lines.push(`Analysis Mode:  ${site.analysisMode}`);
   lines.push('');
 
-  lines.push('PARCELS:');
+  // Per-parcel density breakdown (THE CORRECT WAY)
+  lines.push('PER-PARCEL DENSITY CALCULATION:');
   lines.push('─'.repeat(width));
-  const header = 'APN'.padEnd(20) +
-    'Lot SF'.padStart(12) +
-    'Zone'.padStart(10) +
-    'Height'.padStart(10) +
-    'Q Cond'.padStart(10) +
-    '% of Site'.padStart(12);
+  const header = 'APN'.padEnd(18) +
+    'Lot SF'.padStart(10) +
+    'Zone'.padStart(8) +
+    'SF/DU'.padStart(8) +
+    'By-Right'.padStart(10) +
+    'For Bonus'.padStart(10) +
+    'FAR'.padStart(8) +
+    'Buildable'.padStart(12);
   lines.push(header);
   lines.push('─'.repeat(width));
 
-  for (const parcel of site.parcels) {
-    const pct = ((parcel.lotSizeSF / site.totalLotSizeSF) * 100).toFixed(1);
-    const row = parcel.apn.substring(0, 19).padEnd(20) +
-      parcel.lotSizeSF.toLocaleString().padStart(12) +
-      parcel.baseZone.padStart(10) +
-      parcel.heightDistrict.padStart(10) +
-      (parcel.hasQCondition ? 'Yes' : 'No').padStart(10) +
-      `${pct}%`.padStart(12);
+  for (const pc of calc.parcelCalculations) {
+    const zoneStandards = getZoneStandards(pc.zone);
+    const sfPerDU = zoneStandards?.densitySFperDU ?? 'N/A';
+    const row = pc.apn.substring(0, 17).padEnd(18) +
+      pc.lotSizeSF.toLocaleString().padStart(10) +
+      pc.zone.padStart(8) +
+      (typeof sfPerDU === 'number' ? sfPerDU.toLocaleString() : sfPerDU).toString().padStart(8) +
+      pc.baseDensityByRight.toString().padStart(10) +
+      pc.baseDensityForBonus.toString().padStart(10) +
+      pc.baseFAR.toFixed(2).padStart(8) +
+      pc.maxBuildableSF.toLocaleString().padStart(12);
     lines.push(row);
   }
   lines.push('─'.repeat(width));
 
+  // Totals
+  lines.push('TOTAL'.padEnd(18) +
+    site.totalLotSizeSF.toLocaleString().padStart(10) +
+    ''.padStart(8) +
+    ''.padStart(8) +
+    calc.totalBaseDensityByRight.toString().padStart(10) +
+    calc.totalBaseDensityForBonus.toString().padStart(10) +
+    calc.effectiveFAR.toFixed(2).padStart(8) +
+    calc.totalMaxBuildableSF.toLocaleString().padStart(12));
   lines.push('');
-  lines.push('ZONE ANALYSIS:');
-  lines.push('─'.repeat(width));
 
-  if (site.zoneComparison.isUniformSite) {
-    lines.push('✓ All parcels have identical zoning - simple unified analysis');
-  } else {
-    lines.push('⚠️ Mixed zoning detected:');
+  // Explain the calculation
+  lines.push('DENSITY CALCULATION METHOD:');
+  lines.push('─'.repeat(width));
+  lines.push('✓ Base density calculated per parcel using each parcel\'s zone');
+  lines.push('✓ Total base density = SUM of per-parcel densities');
+  lines.push('✓ Density bonus then applies to the combined base density');
+  lines.push('');
+  lines.push(`  Combined By-Right Base:  ${calc.totalBaseDensityByRight} units`);
+  lines.push(`  Combined For Bonus Base: ${calc.totalBaseDensityForBonus} units (rounded up per State law)`);
+  lines.push(`  Combined Max Buildable:  ${calc.totalMaxBuildableSF.toLocaleString()} SF`);
+  lines.push(`  Effective FAR:           ${calc.effectiveFAR.toFixed(2)}`);
+  lines.push('');
+
+  // Height analysis
+  lines.push('HEIGHT ANALYSIS:');
+  lines.push('─'.repeat(width));
+  lines.push(calc.heightNotes);
+  if (calc.maxHeightFeet !== null) {
+    lines.push(`  Conservative max height: ${calc.maxHeightFeet} ft / ${calc.maxStories ?? 'unlimited'} stories`);
+  }
+  lines.push('');
+
+  // Zone comparison (simplified)
+  if (!site.zoneComparison.isUniformSite) {
+    lines.push('ZONE BREAKDOWN:');
+    lines.push('─'.repeat(width));
     for (const breakdown of site.zoneComparison.zoneBreakdown) {
-      lines.push(`  • ${breakdown.zone}-${breakdown.heightDistrict}: ${breakdown.percentOfSite.toFixed(1)}% of site (${breakdown.totalSF.toLocaleString()} SF)`);
+      lines.push(`  • ${breakdown.zone}-${breakdown.heightDistrict}: ${breakdown.percentOfSite.toFixed(1)}% (${breakdown.totalSF.toLocaleString()} SF)`);
     }
+    lines.push('');
   }
 
-  lines.push('');
-  lines.push(`Effective Zone:           ${site.effectiveZone}`);
-  lines.push(`Effective Height District: ${site.effectiveHeightDistrict}`);
-
   if (site.zoneComparison.warnings.length > 0) {
-    lines.push('');
     lines.push('WARNINGS:');
     for (const warning of site.zoneComparison.warnings) {
       lines.push(`  ⚠️ ${warning}`);
     }
-  }
-
-  if (site.zoneComparison.recommendations.length > 0) {
     lines.push('');
-    lines.push('RECOMMENDATIONS:');
-    for (const rec of site.zoneComparison.recommendations) {
-      lines.push(`  → ${rec}`);
-    }
   }
 
   if (site.hasAnyQCondition) {
-    lines.push('');
     lines.push('Q CONDITIONS:');
     for (const qc of site.qConditionSummary) {
       lines.push(`  • ${qc}`);
     }
+    lines.push('');
   }
 
-  lines.push('');
   lines.push('═'.repeat(width));
 
   return lines.join('\n');
