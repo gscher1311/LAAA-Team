@@ -7,3 +7,4 @@ export * from './developmentPotential';
 export * from './unitMix';
 export * from './financial';
 export * from './output';
+export * from './taxCredits';

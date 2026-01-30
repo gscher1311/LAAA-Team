@@ -1,6 +1,6 @@
 /**
  * Land Residual Analysis App
- * Main entry point
+ * Main entry point with full LIHTC and subsidy integration
  */
 
 // Export types
@@ -12,7 +12,10 @@ export * from './data';
 // Export calculators
 export * from './calculators';
 
-// Imports for demo
+// Export config
+export * from './config';
+
+// Imports for analysis
 import {
   SiteInput,
   ZoneType,
@@ -31,13 +34,29 @@ import {
   FinancialAnalysis,
 } from './calculators/financial';
 import {
+  calculateLIHTC,
+  calculateGapFinancing,
+  calculateSubsidizedLandResidual,
+  LIHTCCalculation,
+  GapFinancing,
+} from './calculators/taxCredits';
+import {
   generateComparisonTable,
   generateSummary,
   generateDetailedAnalysis,
+  generateLIHTCOutput,
+  generateGapFinancingOutput,
+  generateFullAnalysisWithSubsidies,
+  generateComparisonTableWithSubsidies,
 } from './calculators/output';
+import {
+  MarketAssumptions,
+  toFinancialAssumptions,
+  printAssumptionsSummary,
+} from './config/assumptions';
 
 // ============================================================================
-// MAIN ANALYSIS FUNCTION
+// TYPES
 // ============================================================================
 
 export interface AnalysisResult {
@@ -47,6 +66,27 @@ export interface AnalysisResult {
   comparisonTable: string;
   summary: string;
 }
+
+export interface FullAnalysisResult extends AnalysisResult {
+  withSubsidies: Array<{
+    analysis: FinancialAnalysis;
+    lihtc: LIHTCCalculation;
+    gap: GapFinancing;
+    subsidizedLandValue: number;
+  }>;
+  subsidyComparisonTable: string;
+}
+
+export interface AnalysisOptions {
+  includeSubsidies: boolean;
+  includeLIHTC: boolean;
+  detailedOutput: boolean;
+  inDDAorQCT: boolean;  // DDA/QCT for LIHTC basis boost
+}
+
+// ============================================================================
+// MAIN ANALYSIS FUNCTION
+// ============================================================================
 
 /**
  * Run complete land residual analysis for a site
@@ -89,23 +129,139 @@ export function runAnalysis(
 }
 
 /**
- * Run detailed analysis for a specific program
+ * Run complete analysis with LIHTC and subsidies
+ */
+export function runFullAnalysis(
+  site: SiteInput,
+  incomeLevel: IncomeLevel = IncomeLevel.VLI,
+  assumptions: FinancialAssumptions = LA_DEFAULT_ASSUMPTIONS,
+  options: AnalysisOptions = {
+    includeSubsidies: true,
+    includeLIHTC: true,
+    detailedOutput: false,
+    inDDAorQCT: true,
+  },
+  verbose: boolean = true
+): FullAnalysisResult {
+  // Run base analysis
+  const baseResult = runAnalysis(site, incomeLevel, assumptions, false);
+
+  // Add LIHTC and subsidy analysis for each program
+  const withSubsidies = baseResult.analyses.map(analysis => {
+    // Calculate LIHTC
+    const lihtc = options.includeLIHTC
+      ? calculateLIHTC(
+          analysis.costs,
+          analysis.potential.affordablePercent,
+          analysis.potential.incomeLevel,
+          analysis.unitMix.totalUnits,
+          options.inDDAorQCT
+        )
+      : {
+          type: 'none' as const,
+          eligibleBasis: 0,
+          applicableFraction: 0,
+          qualifiedBasis: 0,
+          annualCredit: 0,
+          totalCredits: 0,
+          equityFromCredits: 0,
+          effectiveSubsidy: 0,
+          metrics: { creditRate: 0, equityPricing: 0, basisBoost: false },
+        };
+
+    // Calculate gap financing
+    const gap = options.includeSubsidies
+      ? calculateGapFinancing(
+          analysis.costs,
+          analysis.revenue,
+          lihtc,
+          analysis.potential.affordablePercent,
+          analysis.unitMix.totalUnits,
+          true
+        )
+      : {
+          totalDevelopmentCost: analysis.costs.totalDevelopmentCost,
+          permanentDebt: 0,
+          taxCreditEquity: 0,
+          deferredDeveloperFee: 0,
+          otherSubsidies: [],
+          totalSources: 0,
+          fundingGap: analysis.costs.totalDevelopmentCost,
+          gapAsPercentOfCost: 1,
+          isFeasible: false,
+        };
+
+    // Calculate subsidized land residual
+    const subsidizedResidual = calculateSubsidizedLandResidual(
+      analysis.costs,
+      lihtc,
+      gap
+    );
+
+    return {
+      analysis,
+      lihtc,
+      gap,
+      subsidizedLandValue: subsidizedResidual.landValue,
+    };
+  });
+
+  // Generate subsidy comparison table
+  const subsidyComparisonTable = generateComparisonTableWithSubsidies(withSubsidies);
+
+  // Output
+  if (verbose) {
+    console.log(baseResult.summary);
+    console.log(subsidyComparisonTable);
+
+    if (options.detailedOutput && withSubsidies.length > 0) {
+      const best = withSubsidies[0];
+      console.log(generateFullAnalysisWithSubsidies(
+        best.analysis,
+        best.lihtc,
+        best.gap,
+        best.subsidizedLandValue
+      ));
+    }
+  }
+
+  return {
+    ...baseResult,
+    withSubsidies,
+    subsidyComparisonTable,
+  };
+}
+
+/**
+ * Run detailed analysis for a specific program with subsidies
  */
 export function runDetailedAnalysis(
   site: SiteInput,
   programIndex: number = 0,
   incomeLevel: IncomeLevel = IncomeLevel.VLI,
-  assumptions: FinancialAssumptions = LA_DEFAULT_ASSUMPTIONS
+  assumptions: FinancialAssumptions = LA_DEFAULT_ASSUMPTIONS,
+  includeSubsidies: boolean = true
 ): void {
-  const result = runAnalysis(site, incomeLevel, assumptions, false);
+  const result = runFullAnalysis(site, incomeLevel, assumptions, {
+    includeSubsidies,
+    includeLIHTC: true,
+    detailedOutput: false,
+    inDDAorQCT: true,
+  }, false);
 
-  if (programIndex >= result.analyses.length) {
-    console.error(`Invalid program index. Max: ${result.analyses.length - 1}`);
+  if (programIndex >= result.withSubsidies.length) {
+    console.error(`Invalid program index. Max: ${result.withSubsidies.length - 1}`);
     return;
   }
 
-  const detailed = generateDetailedAnalysis(result.analyses[programIndex]);
-  console.log(detailed);
+  const program = result.withSubsidies[programIndex];
+  const output = generateFullAnalysisWithSubsidies(
+    program.analysis,
+    program.lihtc,
+    program.gap,
+    program.subsidizedLandValue
+  );
+  console.log(output);
 }
 
 // ============================================================================
@@ -115,8 +271,9 @@ export function runDetailedAnalysis(
 if (require.main === module) {
   console.log('\n');
   console.log('╔══════════════════════════════════════════════════════════════╗');
-  console.log('║         LAND RESIDUAL ANALYSIS APP - DEMO                    ║');
+  console.log('║         LAND RESIDUAL ANALYSIS APP - PRODUCTION DEMO         ║');
   console.log('║         LA Real Estate Development Tool                      ║');
+  console.log('║         With LIHTC Tax Credits & Gap Financing               ║');
   console.log('╚══════════════════════════════════════════════════════════════╝');
 
   // Sample site: 15,000 SF R3 lot near Metro Rail
@@ -133,17 +290,35 @@ if (require.main === module) {
     inCoastalZone: false,
   };
 
-  // Run analysis
-  const result = runAnalysis(sampleSite, IncomeLevel.VLI);
+  // Run full analysis with subsidies
+  const result = runFullAnalysis(
+    sampleSite,
+    IncomeLevel.VLI,
+    LA_DEFAULT_ASSUMPTIONS,
+    {
+      includeSubsidies: true,
+      includeLIHTC: true,
+      detailedOutput: false,
+      inDDAorQCT: true,
+    },
+    true
+  );
 
   // Show detailed analysis for best program
   console.log('\n');
   console.log('╔══════════════════════════════════════════════════════════════╗');
-  console.log('║         DETAILED ANALYSIS - BEST PROGRAM                     ║');
+  console.log('║         DETAILED ANALYSIS - BEST PROGRAM WITH SUBSIDIES      ║');
   console.log('╚══════════════════════════════════════════════════════════════╝');
 
-  const detailed = generateDetailedAnalysis(result.bestProgram);
-  console.log(detailed);
+  if (result.withSubsidies.length > 0) {
+    const best = result.withSubsidies[0];
+    console.log(generateFullAnalysisWithSubsidies(
+      best.analysis,
+      best.lihtc,
+      best.gap,
+      best.subsidizedLandValue
+    ));
+  }
 
   // Assumptions used
   console.log('\n');
@@ -155,5 +330,13 @@ if (require.main === module) {
   console.log(`Target YOC:         ${(LA_DEFAULT_ASSUMPTIONS.targetYieldOnCost * 100).toFixed(1)}%`);
   console.log(`Exit Cap Rate:      ${(LA_DEFAULT_ASSUMPTIONS.exitCapRate * 100).toFixed(1)}%`);
   console.log(`Dev Profit Target:  ${(LA_DEFAULT_ASSUMPTIONS.targetDevProfitMargin * 100).toFixed(0)}%`);
+  console.log('');
+  console.log('LIHTC ASSUMPTIONS:');
+  console.log('─'.repeat(50));
+  console.log('9% Credit Rate:     9.0%');
+  console.log('4% Credit Rate:     4.0%');
+  console.log('9% Equity Pricing:  $0.94 per $1 credit');
+  console.log('4% Equity Pricing:  $0.90 per $1 credit');
+  console.log('DDA/QCT Boost:      +30% basis');
   console.log('');
 }

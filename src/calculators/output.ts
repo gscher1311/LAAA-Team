@@ -5,6 +5,7 @@
 
 import { SiteInput, IncentiveProgram } from '../types';
 import { FinancialAnalysis, formatCurrency, formatPercent } from './financial';
+import { LIHTCCalculation, GapFinancing } from './taxCredits';
 
 // ============================================================================
 // FORMATTING HELPERS
@@ -285,12 +286,15 @@ export function generateSummary(
   if (baseline && baseline !== best) {
     const landUplift = best.recommendedLandValue - baseline.recommendedLandValue;
     const unitUplift = best.potential.totalUnits - baseline.potential.totalUnits;
+    const upliftPercent = baseline.recommendedLandValue > 0
+      ? formatPercent(landUplift / baseline.recommendedLandValue)
+      : 'N/A (baseline $0)';
 
     lines.push('─'.repeat(60));
     lines.push('VS. BY-RIGHT BASELINE');
     lines.push('─'.repeat(60));
     lines.push('');
-    lines.push(`Land Value Increase:  ${formatCurrency(landUplift)} (+${formatPercent(landUplift / baseline.recommendedLandValue)})`);
+    lines.push(`Land Value Increase:  ${formatCurrency(landUplift)} (+${upliftPercent})`);
     lines.push(`Additional Units:     +${unitUplift} units`);
     lines.push(`By-Right Land Value:  ${formatCurrency(baseline.recommendedLandValue)}`);
     lines.push('');
@@ -418,6 +422,261 @@ export function generateDetailedAnalysis(analysis: FinancialAnalysis): string {
   lines.push('═'.repeat(50));
   lines.push(`RECOMMENDED LAND VALUE: ${formatCurrency(a.recommendedLandValue)}`);
   lines.push('═'.repeat(50));
+
+  return lines.join('\n');
+}
+
+// ============================================================================
+// LIHTC AND SUBSIDY OUTPUT
+// ============================================================================
+
+/**
+ * Generate LIHTC analysis output
+ */
+export function generateLIHTCOutput(lihtc: LIHTCCalculation): string {
+  const lines: string[] = [];
+
+  lines.push('');
+  lines.push('═'.repeat(50));
+  lines.push('LIHTC TAX CREDIT ANALYSIS');
+  lines.push('═'.repeat(50));
+
+  if (lihtc.type === 'none') {
+    lines.push('');
+    lines.push('Not eligible for LIHTC');
+    lines.push('(Requires min 20% at VLI or 40% at 60% AMI)');
+    return lines.join('\n');
+  }
+
+  lines.push('');
+  lines.push(`Credit Type:           ${lihtc.type} LIHTC`);
+  lines.push(`Credit Rate:           ${formatPercent(lihtc.metrics.creditRate)}`);
+  lines.push(`Equity Pricing:        $${(lihtc.metrics.equityPricing).toFixed(2)} per $1 credit`);
+  lines.push(`Basis Boost (DDA/QCT): ${lihtc.metrics.basisBoost ? 'Yes (+30%)' : 'No'}`);
+  lines.push('');
+  lines.push('─'.repeat(50));
+  lines.push('');
+  lines.push(`Eligible Basis:        ${formatCurrency(lihtc.eligibleBasis)}`);
+  lines.push(`Applicable Fraction:   ${formatPercent(lihtc.applicableFraction)}`);
+  lines.push(`Qualified Basis:       ${formatCurrency(lihtc.qualifiedBasis)}`);
+  lines.push('');
+  lines.push(`Annual Credit:         ${formatCurrency(lihtc.annualCredit)}`);
+  lines.push(`Total Credits (10yr):  ${formatCurrency(lihtc.totalCredits)}`);
+  lines.push('');
+  lines.push('─'.repeat(50));
+  lines.push(`TAX CREDIT EQUITY:     ${formatCurrency(lihtc.equityFromCredits)}`);
+  lines.push(`As % of Dev Cost:      ${formatPercent(lihtc.effectiveSubsidy)}`);
+  lines.push('─'.repeat(50));
+
+  return lines.join('\n');
+}
+
+/**
+ * Generate gap financing / sources & uses output
+ */
+export function generateGapFinancingOutput(gap: GapFinancing): string {
+  const lines: string[] = [];
+
+  lines.push('');
+  lines.push('═'.repeat(50));
+  lines.push('SOURCES & USES / GAP ANALYSIS');
+  lines.push('═'.repeat(50));
+  lines.push('');
+
+  lines.push('USES');
+  lines.push('─'.repeat(50));
+  lines.push(`Total Development Cost:  ${formatCurrency(gap.totalDevelopmentCost)}`);
+  lines.push('');
+
+  lines.push('SOURCES');
+  lines.push('─'.repeat(50));
+  lines.push(`Permanent Debt:          ${formatCurrency(gap.permanentDebt)}`);
+  lines.push(`Tax Credit Equity:       ${formatCurrency(gap.taxCreditEquity)}`);
+
+  if (gap.deferredDeveloperFee > 0) {
+    lines.push(`Deferred Developer Fee:  ${formatCurrency(gap.deferredDeveloperFee)}`);
+  }
+
+  if (gap.otherSubsidies.length > 0) {
+    lines.push('');
+    lines.push('Other Subsidies:');
+    for (const subsidy of gap.otherSubsidies) {
+      const typeLabel = subsidy.type === 'debt' ? '(soft loan)' :
+                        subsidy.type === 'grant' ? '(grant)' : '';
+      lines.push(`  ${subsidy.name.padEnd(22)} ${formatCurrency(subsidy.amount)} ${typeLabel}`);
+    }
+  }
+
+  lines.push('─'.repeat(50));
+  lines.push(`TOTAL SOURCES:           ${formatCurrency(gap.totalSources)}`);
+  lines.push('');
+
+  const gapStatus = gap.isFeasible ? '✓ FEASIBLE' : '✗ GAP TOO LARGE';
+  lines.push(`FUNDING GAP:             ${formatCurrency(gap.fundingGap)} (${formatPercent(gap.gapAsPercentOfCost)})`);
+  lines.push(`STATUS:                  ${gapStatus}`);
+  lines.push('═'.repeat(50));
+
+  return lines.join('\n');
+}
+
+/**
+ * Generate full analysis with subsidies
+ */
+export function generateFullAnalysisWithSubsidies(
+  analysis: FinancialAnalysis,
+  lihtc: LIHTCCalculation,
+  gap: GapFinancing,
+  subsidizedLandValue: number
+): string {
+  const lines: string[] = [];
+
+  // Standard detailed analysis
+  lines.push(generateDetailedAnalysis(analysis));
+
+  // LIHTC section
+  lines.push(generateLIHTCOutput(lihtc));
+
+  // Gap financing section
+  lines.push(generateGapFinancingOutput(gap));
+
+  // Subsidized land value
+  if (lihtc.type !== 'none') {
+    lines.push('');
+    lines.push('═'.repeat(50));
+    lines.push('SUBSIDIZED LAND RESIDUAL');
+    lines.push('═'.repeat(50));
+    lines.push('');
+    lines.push(`Standard Land Value (YOC):     ${formatCurrency(analysis.recommendedLandValue)}`);
+    lines.push(`With Tax Credits/Subsidies:    ${formatCurrency(subsidizedLandValue)}`);
+    const uplift = subsidizedLandValue - analysis.recommendedLandValue;
+    if (uplift > 0) {
+      lines.push(`Subsidy Uplift:                +${formatCurrency(uplift)}`);
+    }
+    lines.push('═'.repeat(50));
+  }
+
+  return lines.join('\n');
+}
+
+/**
+ * Generate comparison table with subsidies
+ */
+export function generateComparisonTableWithSubsidies(
+  analyses: Array<{
+    analysis: FinancialAnalysis;
+    lihtc: LIHTCCalculation;
+    gap: GapFinancing;
+    subsidizedLandValue: number;
+  }>
+): string {
+  const lines: string[] = [];
+  const colWidth = 14;
+  const labelWidth = 22;
+
+  lines.push('');
+  lines.push('═'.repeat(labelWidth + (colWidth * analyses.length) + 4));
+  lines.push('PROGRAM COMPARISON WITH SUBSIDIES');
+  lines.push('═'.repeat(labelWidth + (colWidth * analyses.length) + 4));
+
+  // Program names header
+  let header = padRight('', labelWidth);
+  for (const a of analyses) {
+    header += padLeft(getProgramShortName(a.analysis.program), colWidth);
+  }
+  lines.push(header);
+  lines.push('─'.repeat(labelWidth + (colWidth * analyses.length)));
+
+  // Basic metrics
+  lines.push('');
+  lines.push('DEVELOPMENT');
+
+  let row = padRight('Total Units', labelWidth);
+  for (const a of analyses) {
+    row += padLeft(a.analysis.potential.totalUnits.toString(), colWidth);
+  }
+  lines.push(row);
+
+  row = padRight('Affordable %', labelWidth);
+  for (const a of analyses) {
+    row += padLeft(`${a.analysis.potential.affordablePercent}%`, colWidth);
+  }
+  lines.push(row);
+
+  row = padRight('NOI', labelWidth);
+  for (const a of analyses) {
+    row += padLeft(formatCurrency(a.analysis.revenue.netOperatingIncome), colWidth);
+  }
+  lines.push(row);
+
+  row = padRight('Total Dev Cost', labelWidth);
+  for (const a of analyses) {
+    row += padLeft(formatCurrency(a.analysis.costs.totalDevelopmentCost), colWidth);
+  }
+  lines.push(row);
+
+  // Tax Credits
+  lines.push('');
+  lines.push('TAX CREDITS');
+
+  row = padRight('LIHTC Type', labelWidth);
+  for (const a of analyses) {
+    row += padLeft(a.lihtc.type === 'none' ? 'N/A' : a.lihtc.type, colWidth);
+  }
+  lines.push(row);
+
+  row = padRight('TC Equity', labelWidth);
+  for (const a of analyses) {
+    row += padLeft(formatCurrency(a.lihtc.equityFromCredits), colWidth);
+  }
+  lines.push(row);
+
+  // Gap Financing
+  lines.push('');
+  lines.push('SOURCES & USES');
+
+  row = padRight('Perm Debt', labelWidth);
+  for (const a of analyses) {
+    row += padLeft(formatCurrency(a.gap.permanentDebt), colWidth);
+  }
+  lines.push(row);
+
+  row = padRight('Total Sources', labelWidth);
+  for (const a of analyses) {
+    row += padLeft(formatCurrency(a.gap.totalSources), colWidth);
+  }
+  lines.push(row);
+
+  row = padRight('Gap', labelWidth);
+  for (const a of analyses) {
+    row += padLeft(formatCurrency(a.gap.fundingGap), colWidth);
+  }
+  lines.push(row);
+
+  row = padRight('Feasible?', labelWidth);
+  for (const a of analyses) {
+    row += padLeft(a.gap.isFeasible ? 'YES' : 'NO', colWidth);
+  }
+  lines.push(row);
+
+  // Land Residuals
+  lines.push('');
+  lines.push('═'.repeat(labelWidth + (colWidth * analyses.length)));
+  lines.push('LAND RESIDUAL');
+  lines.push('═'.repeat(labelWidth + (colWidth * analyses.length)));
+
+  row = padRight('Standard (YOC)', labelWidth);
+  for (const a of analyses) {
+    row += padLeft(formatCurrency(a.analysis.recommendedLandValue), colWidth);
+  }
+  lines.push(row);
+
+  row = padRight('With Subsidies', labelWidth);
+  for (const a of analyses) {
+    row += padLeft(formatCurrency(a.subsidizedLandValue), colWidth);
+  }
+  lines.push(row);
+
+  lines.push('═'.repeat(labelWidth + (colWidth * analyses.length)));
 
   return lines.join('\n');
 }
