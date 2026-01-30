@@ -322,9 +322,10 @@ export function getHardCostForHeight(
 }
 
 /**
- * Get parking cost based on type
+ * Get parking cost based on type from market assumptions
+ * Note: For more detailed parking cost analysis, use data/parkingCosts.ts
  */
-export function getParkingCost(
+export function getBasicParkingCost(
   type: 'surface' | 'podium' | 'subterranean',
   assumptions: MarketAssumptions
 ): number {
@@ -354,7 +355,7 @@ export function toFinancialAssumptions(market: MarketAssumptions, parkingType: '
     vacancyRate: market.vacancyRate,
     operatingExpenseRatio: market.operatingExpenseRatio,
     hardCostPSF: market.hardCostTypeV,  // Default to Type V
-    parkingCostPerSpace: getParkingCost(parkingType, market),
+    parkingCostPerSpace: getBasicParkingCost(parkingType, market),
     softCostPercent: market.softCostPercent,
     constructionLoanRate: market.constructionLoanRate,
     constructionMonths: market.constructionMonths,

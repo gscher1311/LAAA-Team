@@ -22,3 +22,9 @@ export * from './constructionTypes';
 
 // Q/D/T Conditions
 export * from './qdtConditions';
+
+// Parking Costs
+export * from './parkingCosts';
+
+// Submarket Rent Data
+export * from './submarketRents';
