@@ -63,6 +63,10 @@ export interface CostStack {
   parkingCost: number;
   totalHardCosts: number;
 
+  // Construction type cost adjustment
+  hardCostPSF: number;            // Adjusted hard cost per SF (includes construction type multiplier)
+  constructionCostMultiplier: number;  // Multiplier applied (1.0 = Type V-A baseline)
+
   // Soft Costs
   softCosts: number;
   ahlfFee: number;
@@ -169,6 +173,13 @@ export function calculateRevenue(
 
 /**
  * Calculate development cost stack
+ *
+ * Uses construction type multiplier to adjust hard costs based on building height/stories.
+ * Per IBC 2024/CBC 2025:
+ * - Type V-A (wood frame): Baseline cost ($350/SF)
+ * - Type III-A (5-over-1 podium): ~14% premium
+ * - Type I-B (high-rise): ~43% premium
+ * - Type I-A (tall high-rise): ~57% premium
  */
 export function calculateCostStack(
   potential: DevelopmentPotential,
@@ -177,8 +188,12 @@ export function calculateCostStack(
   assumptions: FinancialAssumptions,
   landCost: number = 0
 ): CostStack {
-  // Hard Costs
-  const constructionCost = unitMix.totalSF * assumptions.hardCostPSF;
+  // Apply construction type cost multiplier if available
+  const constructionCostMultiplier = potential.constructionCostMultiplier ?? 1.0;
+  const adjustedHardCostPSF = Math.round(assumptions.hardCostPSF * constructionCostMultiplier);
+
+  // Hard Costs (adjusted for construction type)
+  const constructionCost = unitMix.totalSF * adjustedHardCostPSF;
   const parkingCost = potential.parkingRequired * assumptions.parkingCostPerSpace;
   const totalHardCosts = constructionCost + parkingCost;
 
@@ -209,6 +224,8 @@ export function calculateCostStack(
     constructionCost,
     parkingCost,
     totalHardCosts,
+    hardCostPSF: adjustedHardCostPSF,
+    constructionCostMultiplier,
     softCosts,
     ahlfFee,
     permitFees,

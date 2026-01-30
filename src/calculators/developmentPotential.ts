@@ -64,6 +64,7 @@ import {
   MIIPOpportunityTier,
   MIIPCorridorTier,
   ZoneType,
+  ConstructionType,
 } from '../types';
 
 import {
@@ -102,7 +103,111 @@ import {
   calculateSB79Density,
 } from '../data/amiAndFees';
 
+import {
+  determineRequiredConstructionType,
+  getConstructionTypeLimits,
+  getRecommendedConfiguration,
+} from '../data/constructionTypes';
+
+import {
+  parseQConditionDescription,
+  parseDLimitationDescription,
+  applyQDTModifications,
+  QDTCondition,
+  ModifiedStandards,
+} from '../data/qdtConditions';
+
 import { checkAllProgramEligibility } from './eligibility';
+
+// ============================================================================
+// Q/D/T CONDITION HELPERS
+// ============================================================================
+
+/**
+ * Parse Q/D/T conditions from site input into structured conditions
+ * Returns modified standards that should override base zoning
+ */
+function getQDTModifiedStandards(site: SiteInput): {
+  modified: ModifiedStandards | null;
+  conditions: QDTCondition[];
+  warnings: string[];
+} {
+  const conditions: QDTCondition[] = [];
+  const warnings: string[] = [];
+
+  // Parse Q conditions
+  if (site.hasQCondition && site.qConditionDescription) {
+    const qConditions = parseQConditionDescription(
+      site.qConditionDescription,
+      site.qConditionOrdinance
+    );
+    conditions.push(...qConditions);
+
+    if (qConditions.length > 0) {
+      warnings.push(`Q Condition present (${site.qConditionOrdinance || 'no ordinance #'})`);
+    }
+  }
+
+  // Parse D limitations
+  if (site.hasDLimitation && site.dLimitationDescription) {
+    const dConditions = parseDLimitationDescription(site.dLimitationDescription);
+    conditions.push(...dConditions);
+
+    if (dConditions.length > 0) {
+      warnings.push('D Limitation present - development may be restricted');
+    }
+  }
+
+  // Add T classification warning
+  if (site.hasTClassification) {
+    warnings.push('T Classification - zoning status may be pending');
+  }
+
+  // No Q/D/T conditions
+  if (conditions.length === 0) {
+    return { modified: null, conditions: [], warnings };
+  }
+
+  // Apply modifications to get effective limits
+  // Use null as placeholders since we'll apply to specific zone standards later
+  const modified = applyQDTModifications(
+    {
+      maxHeightFeet: null,
+      maxStories: null,
+      maxFAR: null,
+      maxUnits: null,
+      minSFperDU: null,
+      parkingPerUnit: null,
+    },
+    conditions
+  );
+
+  return { modified, conditions, warnings };
+}
+
+/**
+ * Apply Q/D/T restrictions to calculated values
+ * Returns the minimum of the calculated value and any Q/D/T restriction
+ */
+function applyQDTRestriction<T extends number | null>(
+  calculatedValue: T,
+  qdtValue: number | null,
+  isMoreRestrictive: 'lower' | 'higher'
+): T {
+  if (qdtValue === null || calculatedValue === null) {
+    return calculatedValue;
+  }
+
+  const calcNum = calculatedValue as number;
+
+  if (isMoreRestrictive === 'lower') {
+    // For height, stories, FAR, units - lower is more restrictive
+    return Math.min(calcNum, qdtValue) as T;
+  } else {
+    // For density SF/DU - higher is more restrictive (fewer units)
+    return Math.max(calcNum, qdtValue) as T;
+  }
+}
 
 // ============================================================================
 // MAIN CALCULATOR
@@ -408,6 +513,55 @@ function calculateLotCoverageLimit(
 }
 
 /**
+ * Determine required construction type based on height and stories
+ * Uses IBC 2024 / CBC 2025 limits for R-2 multifamily with NFPA 13 sprinklers
+ *
+ * @param totalHeightFeet - Total building height in feet
+ * @param totalStories - Total number of stories
+ * @returns Construction type info for the development potential
+ */
+function determineConstructionTypeInfo(
+  totalHeightFeet: number,
+  totalStories: number
+): {
+  constructionType: ConstructionType | undefined;
+  constructionNotes: string;
+  constructionCostMultiplier: number;
+} {
+  const constructionType = determineRequiredConstructionType(totalHeightFeet, totalStories);
+
+  if (!constructionType) {
+    return {
+      constructionType: undefined,
+      constructionNotes: 'Building exceeds all IBC construction type limits',
+      constructionCostMultiplier: 1.0,
+    };
+  }
+
+  const limits = getConstructionTypeLimits(constructionType);
+  const config = getRecommendedConfiguration(totalStories);
+
+  let notes = `${limits?.name || constructionType}: `;
+  if (limits) {
+    notes += `${limits.structuralSystem}. `;
+    notes += `Max ${limits.maxHeightFeet ?? 'unlimited'} ft / ${limits.maxStories ?? 'unlimited'} stories. `;
+    notes += `Fire rating: ${limits.fireRating}. `;
+    notes += `Cost: ${((limits.costFactorMultiplier - 1) * 100).toFixed(0)}% ${limits.costFactorMultiplier > 1 ? 'above' : 'below'} Type V-A baseline.`;
+  }
+
+  // Add configuration recommendation
+  if (config.configuration !== `Type V-A wood frame` && totalStories >= 5) {
+    notes += ` Recommended: ${config.configuration}. ${config.notes}`;
+  }
+
+  return {
+    constructionType,
+    constructionNotes: notes,
+    constructionCostMultiplier: limits?.costFactorMultiplier ?? 1.0,
+  };
+}
+
+/**
  * Calculate FAR vs Density constraint analysis
  * Critical for Brickwork-style analysis: determines which constraint governs
  *
@@ -541,6 +695,11 @@ function addBrickworkFields(
   // This is critical for brickwork-style analysis to show which constraint governs
   const constraintAnalysis = calculateConstraintAnalysis(totalUnits, buildableSF);
 
+  // Determine required construction type based on height/stories
+  const totalHeightFeet = partial.totalHeightFeet || basePotential.totalHeightFeet;
+  const totalStories = partial.totalStories || basePotential.totalStories;
+  const constructionInfo = determineConstructionTypeInfo(totalHeightFeet, totalStories);
+
   return {
     ...basePotential,
     ...partial,
@@ -561,6 +720,10 @@ function addBrickworkFields(
       site.lotSizeSF, site.baseZone, buildableSF, totalUnits, program
     ),
     constraintAnalysis,
+    // Construction type determination
+    constructionType: constructionInfo.constructionType,
+    constructionNotes: constructionInfo.constructionNotes,
+    constructionCostMultiplier: constructionInfo.constructionCostMultiplier,
   } as DevelopmentPotential;
 }
 
@@ -570,9 +733,57 @@ function addBrickworkFields(
 
 function calculateByRight(site: SiteInput): DevelopmentPotential {
   const zoneStandards = getZoneStandards(site.baseZone);
-  const baseDensity = calculateBaseDensity(site.lotSizeSF, site.baseZone);
-  const baseFAR = calculateEffectiveFAR(site.baseZone, site.heightDistrict);
+  let baseDensity = calculateBaseDensity(site.lotSizeSF, site.baseZone);
+  let baseFAR = calculateEffectiveFAR(site.baseZone, site.heightDistrict);
   const height = calculateEffectiveHeight(site.baseZone, site.heightDistrict);
+
+  // Get Q/D/T conditions and apply restrictions
+  const qdtResult = getQDTModifiedStandards(site);
+  let qdtNotes: string[] = [];
+
+  let effectiveHeightFeet = height.maxFeet || 999;
+  let effectiveStories = height.maxStories || 99;
+
+  if (qdtResult.modified) {
+    // Apply Q/D/T height restrictions
+    if (qdtResult.modified.maxHeightFeet !== null) {
+      const oldHeight = effectiveHeightFeet;
+      effectiveHeightFeet = Math.min(effectiveHeightFeet, qdtResult.modified.maxHeightFeet);
+      if (effectiveHeightFeet < oldHeight) {
+        qdtNotes.push(`Height limited to ${effectiveHeightFeet} ft by Q/D/T`);
+      }
+    }
+
+    // Apply Q/D/T story restrictions
+    if (qdtResult.modified.maxStories !== null) {
+      const oldStories = effectiveStories;
+      effectiveStories = Math.min(effectiveStories, qdtResult.modified.maxStories);
+      if (effectiveStories < oldStories) {
+        qdtNotes.push(`Stories limited to ${effectiveStories} by Q/D/T`);
+      }
+    }
+
+    // Apply Q/D/T FAR restrictions
+    if (qdtResult.modified.maxFAR !== null) {
+      const oldFAR = baseFAR;
+      baseFAR = Math.min(baseFAR, qdtResult.modified.maxFAR);
+      if (baseFAR < oldFAR) {
+        qdtNotes.push(`FAR limited to ${baseFAR.toFixed(2)} by Q/D/T`);
+      }
+    }
+
+    // Apply Q/D/T unit cap
+    if (qdtResult.modified.maxUnits !== null) {
+      const oldDensity = baseDensity;
+      baseDensity = Math.min(baseDensity, qdtResult.modified.maxUnits);
+      if (baseDensity < oldDensity) {
+        qdtNotes.push(`Units capped at ${baseDensity} by Q/D/T`);
+      }
+    }
+  }
+
+  // Add Q/D/T warnings to notes
+  qdtNotes.push(...qdtResult.warnings);
 
   const buildableSF = site.lotSizeSF * baseFAR;
   const setbacks = getSetbackRequirements(site.baseZone);
@@ -588,6 +799,17 @@ function calculateByRight(site: SiteInput): DevelopmentPotential {
   // Calculate FAR vs Density constraint analysis for by-right
   const constraintAnalysis = calculateConstraintAnalysis(baseDensity, buildableSF);
 
+  // Determine construction type based on effective height/stories (after Q/D/T)
+  const totalHeightFeet = effectiveHeightFeet;
+  const totalStories = effectiveStories;
+  const constructionInfo = determineConstructionTypeInfo(totalHeightFeet, totalStories);
+
+  // Add Q/D/T notes to construction notes
+  let constructionNotes = constructionInfo.constructionNotes;
+  if (qdtNotes.length > 0) {
+    constructionNotes += ` Q/D/T: ${qdtNotes.join('; ')}.`;
+  }
+
   return {
     program: IncentiveProgram.BY_RIGHT,
     eligible: true,
@@ -602,12 +824,12 @@ function calculateByRight(site: SiteInput): DevelopmentPotential {
     buildableFootprintSF,
     commonAreaSF,
     netResidentialSF,
-    baseHeightFeet: height.maxFeet || 999,
+    baseHeightFeet: totalHeightFeet,
     bonusHeightFeet: 0,
-    totalHeightFeet: height.maxFeet || 999,
-    baseStories: height.maxStories || 99,
+    totalHeightFeet,
+    baseStories: totalStories,
     bonusStories: 0,
-    totalStories: height.maxStories || 99,
+    totalStories,
     setbacks,
     openSpace,
     affordableUnits: 0,
@@ -626,6 +848,10 @@ function calculateByRight(site: SiteInput): DevelopmentPotential {
       site.lotSizeSF, site.baseZone, buildableSF, baseDensity, IncentiveProgram.BY_RIGHT
     ),
     constraintAnalysis,
+    // Construction type (with Q/D/T notes if applicable)
+    constructionType: constructionInfo.constructionType,
+    constructionNotes: constructionNotes,
+    constructionCostMultiplier: constructionInfo.constructionCostMultiplier,
   };
 }
 
@@ -708,6 +934,11 @@ function calculateStateDensityBonusPotential(
   const estimatedUnits = Math.floor(netResidentialSF / 400);
   const bikeParking = calculateBicycleParking(totalUnits);
 
+  // Calculate total height/stories for construction type determination
+  const totalHeightFeet = basePotential.baseHeightFeet + heightBonus.additionalFeet;
+  const totalStories = basePotential.baseStories + heightBonus.additionalStories;
+  const constructionInfo = determineConstructionTypeInfo(totalHeightFeet, totalStories);
+
   return {
     program: IncentiveProgram.STATE_DENSITY_BONUS,
     eligible: true,
@@ -724,10 +955,10 @@ function calculateStateDensityBonusPotential(
     netResidentialSF,
     baseHeightFeet: basePotential.baseHeightFeet,
     bonusHeightFeet: heightBonus.additionalFeet,
-    totalHeightFeet: basePotential.baseHeightFeet + heightBonus.additionalFeet,
+    totalHeightFeet,
     baseStories: basePotential.baseStories,
     bonusStories: heightBonus.additionalStories,
-    totalStories: basePotential.baseStories + heightBonus.additionalStories,
+    totalStories,
     setbacks: basePotential.setbacks,
     openSpace: calculateOpenSpaceRequirement(totalUnits, true, site.lotSizeSF, buildableSF),
     affordableUnits,
@@ -750,6 +981,10 @@ function calculateStateDensityBonusPotential(
       site.lotSizeSF, site.baseZone, buildableSF, totalUnits, IncentiveProgram.STATE_DENSITY_BONUS
     ),
     constraintAnalysis: calculateConstraintAnalysis(totalUnits, buildableSF),
+    // Construction type
+    constructionType: constructionInfo.constructionType,
+    constructionNotes: constructionInfo.constructionNotes,
+    constructionCostMultiplier: constructionInfo.constructionCostMultiplier,
   };
 }
 

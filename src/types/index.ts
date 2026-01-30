@@ -98,6 +98,37 @@ export enum HeightDistrict {
   HD_4 = '4'
 }
 
+/**
+ * IBC Construction Types (2024 IBC / 2025 CBC)
+ * Determines max height, stories, and construction cost
+ *
+ * Source: IBC 2024 Tables 504.3 (Height) and 504.4 (Stories)
+ * For R-2 Multifamily with NFPA 13 sprinkler system
+ */
+export enum ConstructionType {
+  // Type I: Non-combustible (steel/concrete)
+  TYPE_IA = 'I-A',   // Unlimited height/stories - High-rise 20+
+  TYPE_IB = 'I-B',   // 180 ft / 12 stories - High-rise
+
+  // Type II: Non-combustible (lighter)
+  TYPE_IIA = 'II-A', // 85 ft / 5 stories
+  TYPE_IIB = 'II-B', // 75 ft / 4 stories
+
+  // Type III: Exterior non-combustible, interior combustible
+  TYPE_IIIA = 'III-A', // 85 ft / 5 stories - Common "5-over-1" podium
+  TYPE_IIIB = 'III-B', // 75 ft / 4 stories
+
+  // Type IV: Mass Timber (2021 IBC additions)
+  TYPE_IVA = 'IV-A',   // 270 ft / 18 stories - Tall timber
+  TYPE_IVB = 'IV-B',   // 180 ft / 12 stories
+  TYPE_IVC = 'IV-C',   // 85 ft / 8 stories
+  TYPE_IVHT = 'IV-HT', // 85 ft / 5 stories - Heavy timber
+
+  // Type V: Combustible (wood frame) - Most common in LA
+  TYPE_VA = 'V-A',   // 60 ft / 4 stories (with NFPA 13)
+  TYPE_VB = 'V-B',   // 50 ft / 3 stories
+}
+
 export enum IncentiveProgram {
   BY_RIGHT = 'BY_RIGHT',
   STATE_DENSITY_BONUS = 'STATE_DENSITY_BONUS',
@@ -456,6 +487,12 @@ export interface DevelopmentPotential {
     limitingFactor: 'density' | 'FAR' | 'equal';  // Which constraint governs
     limitingFactorNotes: string;  // Explanation for output
   };
+
+  // Construction Type (IBC 2024 / CBC 2025)
+  // Determines structural requirements and cost based on height/stories
+  constructionType?: ConstructionType;
+  constructionNotes?: string;
+  constructionCostMultiplier?: number;  // Relative to Type V-A baseline (1.0)
 }
 
 // Note: UnitMix, FinancialInputs, LandResidualResult, and ProgramComparison

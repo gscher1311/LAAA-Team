@@ -313,6 +313,21 @@ export function generateComparisonTable(analyses: FinancialAnalysis[]): string {
   }
   lines.push(row);
 
+  // Construction Type
+  row = padRight('Construction Type', labelWidth);
+  for (const a of analyses) {
+    const type = a.potential.constructionType || 'V-A';
+    row += padLeft(type, colWidth);
+  }
+  lines.push(row);
+
+  // Hard Cost/SF
+  row = padRight('Hard Cost/SF', labelWidth);
+  for (const a of analyses) {
+    row += padLeft(`$${a.costs.hardCostPSF}`, colWidth);
+  }
+  lines.push(row);
+
   // Revenue Section
   lines.push('');
   lines.push('REVENUE (Annual)');
@@ -727,6 +742,30 @@ export function generateZoningBreakdown(
   }
   lines.push(row);
 
+  // CONSTRUCTION TYPE SECTION (IBC 2024 / CBC 2025)
+  lines.push('');
+  lines.push('CONSTRUCTION TYPE (IBC 2024)');
+
+  row = padRight('  Type', labelWidth);
+  for (const a of analyses) {
+    const type = a.potential.constructionType || 'V-A';
+    row += padLeft(type, colWidth);
+  }
+  lines.push(row);
+
+  row = padRight('  Cost Multiplier', labelWidth);
+  for (const a of analyses) {
+    const mult = a.potential.constructionCostMultiplier ?? 1.0;
+    row += padLeft(`${mult.toFixed(2)}x`, colWidth);
+  }
+  lines.push(row);
+
+  row = padRight('  Hard Cost/SF', labelWidth);
+  for (const a of analyses) {
+    row += padLeft(`$${a.costs.hardCostPSF}`, colWidth);
+  }
+  lines.push(row);
+
   lines.push('');
   lines.push('═'.repeat(labelWidth + (colWidth * analyses.length)));
 
@@ -1049,11 +1088,34 @@ export function generateDetailedAnalysis(analysis: FinancialAnalysis): string {
   lines.push(`Avg Rent/Unit/Mo:      ${formatCurrency(a.revenue.rentPerUnitMonth)}`);
   lines.push(`NOI/Unit:              ${formatCurrency(a.revenue.noiPerUnit)}`);
 
+  // Construction Type
+  if (a.potential.constructionType) {
+    lines.push('');
+    lines.push('CONSTRUCTION TYPE');
+    lines.push('─'.repeat(50));
+    lines.push(`Type:                  ${a.potential.constructionType}`);
+    lines.push(`Cost Multiplier:       ${(a.potential.constructionCostMultiplier ?? 1.0).toFixed(2)}x baseline`);
+    lines.push(`Hard Cost/SF:          $${a.costs.hardCostPSF}/SF`);
+    if (a.potential.constructionNotes) {
+      // Wrap long notes
+      const notes = a.potential.constructionNotes;
+      const maxLen = 48;
+      for (let i = 0; i < notes.length; i += maxLen) {
+        const chunk = notes.substring(i, i + maxLen);
+        if (i === 0) {
+          lines.push(`Notes:                 ${chunk}`);
+        } else {
+          lines.push(`                       ${chunk}`);
+        }
+      }
+    }
+  }
+
   // Costs
   lines.push('');
   lines.push('DEVELOPMENT COSTS');
   lines.push('─'.repeat(50));
-  lines.push(`Construction:          ${formatCurrency(a.costs.constructionCost)}`);
+  lines.push(`Construction:          ${formatCurrency(a.costs.constructionCost)} ($${a.costs.hardCostPSF}/SF)`);
   lines.push(`Parking:               ${formatCurrency(a.costs.parkingCost)}`);
   lines.push(`Total Hard Costs:      ${formatCurrency(a.costs.totalHardCosts)}`);
   lines.push('');
