@@ -32,6 +32,16 @@ import {
 
 // ============================================================================
 // TRANSIT ORIENTED INCENTIVE AREA (TABLE 12.22 A.38(e)(2)(i))
+//
+// Source: CHIP Maps and Memo for Implementation (Feb 2025)
+//
+// Per the CHIP Maps Memo, Transit tiers have A/B variants based on TCAC area:
+// - T-1A, T-2A, T-3A = Higher Opportunity Areas (High, Highest Resource)
+// - T-1B, T-2B, T-3B = Lower and Moderate Opportunity Areas (Low, Moderate Resource)
+//
+// The A/B distinction affects ONLY affordability requirements, not physical incentives.
+// Same transit tier incentives apply; affordability varies by TCAC resource area.
+// This is handled via AFFORDABILITY_HIGH_MARKET (A) vs AFFORDABILITY_LOW_MARKET (B).
 // ============================================================================
 
 export const TRANSIT_INCENTIVES: MIIPTransitIncentives[] = [
@@ -435,4 +445,37 @@ export function getOpportunityIncentives(tier: MIIPOpportunityTier): MIIPOpportu
  */
 export function getCorridorIncentives(tier: MIIPCorridorTier): MIIPCorridorIncentives | null {
   return CORRIDOR_INCENTIVES.find(i => i.tier === tier) || null;
+}
+
+/**
+ * Get transit tier display name with A/B variant based on TCAC area
+ * Per CHIP Maps Memo (Feb 2025):
+ * - A variants: High/Highest Resource Areas
+ * - B variants: Low/Moderate Resource Areas
+ */
+export function getTransitTierDisplayName(
+  tier: MIIPTransitTier,
+  tcacArea: string
+): string {
+  const isHighResource = tcacArea === 'HIGH' || tcacArea === 'HIGHEST';
+  const variant = isHighResource ? 'A' : 'B';
+
+  switch (tier) {
+    case MIIPTransitTier.T1:
+      return `T-1${variant}`;
+    case MIIPTransitTier.T2:
+      return `T-2${variant}`;
+    case MIIPTransitTier.T3:
+      return `T-3${variant}`;
+    default:
+      return tier;
+  }
+}
+
+/**
+ * Check if site is in a "Higher Opportunity Area" (for transit tier A/B determination)
+ * Higher Opportunity = TCAC High or Highest Resource
+ */
+export function isHigherOpportunityArea(tcacArea: string): boolean {
+  return tcacArea === 'HIGH' || tcacArea === 'HIGHEST';
 }

@@ -17,46 +17,50 @@ import { DensityBonusTier, ParkingRatio, UnitType } from '../types';
 
 /**
  * Very Low Income (50% AMI) - Gov Code 65915(f)(2)
+ * Source: LA Affordable Housing Incentives Guidelines (Dec 2024), Appendix
  * Base: 5% VLI = 20% bonus
- * Each additional 1% VLI = +3% bonus (post-AB 2345)
+ * 5-11% VLI: +2.5% per 1% additional VLI
+ * 12-15% VLI: +3.75% per 1% additional VLI
  * Maximum: 15% VLI = 50% bonus
  */
 export const VLI_DENSITY_BONUS_TIERS: DensityBonusTier[] = [
-  { affordablePercent: 5, densityBonusPercent: 20 },
-  { affordablePercent: 6, densityBonusPercent: 23 },
-  { affordablePercent: 7, densityBonusPercent: 26 },
-  { affordablePercent: 8, densityBonusPercent: 29 },
-  { affordablePercent: 9, densityBonusPercent: 32 },
-  { affordablePercent: 10, densityBonusPercent: 35 },
-  { affordablePercent: 11, densityBonusPercent: 38 },
-  { affordablePercent: 12, densityBonusPercent: 41 },
-  { affordablePercent: 13, densityBonusPercent: 44 },
-  { affordablePercent: 14, densityBonusPercent: 47 },
-  { affordablePercent: 15, densityBonusPercent: 50 },  // Max base bonus
+  { affordablePercent: 5, densityBonusPercent: 20.00 },
+  { affordablePercent: 6, densityBonusPercent: 22.50 },
+  { affordablePercent: 7, densityBonusPercent: 25.00 },
+  { affordablePercent: 8, densityBonusPercent: 27.50 },
+  { affordablePercent: 9, densityBonusPercent: 30.00 },
+  { affordablePercent: 10, densityBonusPercent: 32.50 },
+  { affordablePercent: 11, densityBonusPercent: 35.00 },
+  { affordablePercent: 12, densityBonusPercent: 38.75 },
+  { affordablePercent: 13, densityBonusPercent: 42.50 },
+  { affordablePercent: 14, densityBonusPercent: 46.25 },
+  { affordablePercent: 15, densityBonusPercent: 50.00 },  // Max base bonus
 ];
 
 /**
  * Lower Income (60-80% AMI) - Gov Code 65915(f)(1)
+ * Source: LA Affordable Housing Incentives Guidelines (Dec 2024), Appendix
  * Base: 10% Lower = 20% bonus
- * Each additional 1% Lower = +2.14% bonus (approx)
+ * 10-20% Lower: +1.5% per 1% additional Lower
+ * 21-24% Lower: +3.75% per 1% additional Lower
  * Maximum: 24% Lower = 50% bonus
  */
 export const LOWER_INCOME_DENSITY_BONUS_TIERS: DensityBonusTier[] = [
-  { affordablePercent: 10, densityBonusPercent: 20 },
-  { affordablePercent: 11, densityBonusPercent: 22.14 },
-  { affordablePercent: 12, densityBonusPercent: 24.29 },
-  { affordablePercent: 13, densityBonusPercent: 26.43 },
-  { affordablePercent: 14, densityBonusPercent: 28.57 },
-  { affordablePercent: 15, densityBonusPercent: 30.71 },
-  { affordablePercent: 16, densityBonusPercent: 32.86 },
-  { affordablePercent: 17, densityBonusPercent: 35 },
-  { affordablePercent: 18, densityBonusPercent: 37.14 },
-  { affordablePercent: 19, densityBonusPercent: 39.29 },
-  { affordablePercent: 20, densityBonusPercent: 41.43 },
-  { affordablePercent: 21, densityBonusPercent: 43.57 },
-  { affordablePercent: 22, densityBonusPercent: 45.71 },
-  { affordablePercent: 23, densityBonusPercent: 47.86 },
-  { affordablePercent: 24, densityBonusPercent: 50 },  // Max base bonus
+  { affordablePercent: 10, densityBonusPercent: 20.00 },
+  { affordablePercent: 11, densityBonusPercent: 21.50 },
+  { affordablePercent: 12, densityBonusPercent: 23.00 },
+  { affordablePercent: 13, densityBonusPercent: 24.50 },
+  { affordablePercent: 14, densityBonusPercent: 26.00 },
+  { affordablePercent: 15, densityBonusPercent: 27.50 },
+  { affordablePercent: 16, densityBonusPercent: 29.00 },
+  { affordablePercent: 17, densityBonusPercent: 30.50 },
+  { affordablePercent: 18, densityBonusPercent: 32.00 },
+  { affordablePercent: 19, densityBonusPercent: 33.50 },
+  { affordablePercent: 20, densityBonusPercent: 35.00 },
+  { affordablePercent: 21, densityBonusPercent: 38.75 },
+  { affordablePercent: 22, densityBonusPercent: 42.50 },
+  { affordablePercent: 23, densityBonusPercent: 46.25 },
+  { affordablePercent: 24, densityBonusPercent: 50.00 },  // Max base bonus
 ];
 
 /**

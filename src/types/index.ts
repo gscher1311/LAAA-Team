@@ -35,12 +35,17 @@ export enum ZoneType {
   R1 = 'R1',
   R2 = 'R2',
   RS = 'RS',        // Suburban
+  RU = 'RU',        // Residential Urban (small lot)
   RE9 = 'RE9',      // Residential Estate 9,000 SF
   RE11 = 'RE11',    // Residential Estate 11,000 SF
   RE15 = 'RE15',    // Residential Estate 15,000 SF
   RE20 = 'RE20',    // Residential Estate 20,000 SF
   RE40 = 'RE40',    // Residential Estate 40,000 SF
   RA = 'RA',        // Residential Agricultural
+  // Residential - Zero Side Yard
+  RZ2_5 = 'RZ2.5',  // Residential Zero Side Yard 2,500 SF
+  RZ3 = 'RZ3',      // Residential Zero Side Yard 3,000 SF
+  RZ4 = 'RZ4',      // Residential Zero Side Yard 4,000 SF
   // Residential - Multi-Family
   R3 = 'R3',
   R4 = 'R4',
@@ -55,6 +60,7 @@ export enum ZoneType {
   RD6 = 'RD6',
   RW1 = 'RW1',
   RW2 = 'RW2',
+  RMP = 'RMP',      // Mobile Home Park
   // Commercial
   C1 = 'C1',
   C1_5 = 'C1.5',
@@ -75,6 +81,7 @@ export enum ZoneType {
   // Open Space / Public
   OS = 'OS',
   PF = 'PF',
+  SL = 'SL',        // Submerged Lands
   // Parking
   P = 'P',
   PB = 'PB'
