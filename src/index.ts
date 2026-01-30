@@ -48,6 +48,8 @@ import {
   generateGapFinancingOutput,
   generateFullAnalysisWithSubsidies,
   generateComparisonTableWithSubsidies,
+  generateZoningBreakdown,
+  generateZoningReasoning,
 } from './calculators/output';
 import {
   MarketAssumptions,
@@ -75,12 +77,15 @@ export interface FullAnalysisResult extends AnalysisResult {
     subsidizedLandValue: number;
   }>;
   subsidyComparisonTable: string;
+  zoningBreakdown: string;
+  zoningReasoning: string;
 }
 
 export interface AnalysisOptions {
   includeSubsidies: boolean;
   includeLIHTC: boolean;
   detailedOutput: boolean;
+  showZoningBreakdown?: boolean;  // Show zoning analysis with sources (default: true)
   inDDAorQCT: boolean;  // DDA/QCT for LIHTC basis boost
 }
 
@@ -139,6 +144,7 @@ export function runFullAnalysis(
     includeSubsidies: true,
     includeLIHTC: true,
     detailedOutput: false,
+    showZoningBreakdown: true,
     inDDAorQCT: true,
   },
   verbose: boolean = true
@@ -209,8 +215,18 @@ export function runFullAnalysis(
   // Generate subsidy comparison table
   const subsidyComparisonTable = generateComparisonTableWithSubsidies(withSubsidies);
 
+  // Generate zoning breakdown with sources
+  const zoningBreakdown = generateZoningBreakdown(site, baseResult.analyses);
+  const zoningReasoning = generateZoningReasoning(site, baseResult.analyses);
+
   // Output
   if (verbose) {
+    // Show zoning breakdown first (Brickwork-style)
+    if (options.showZoningBreakdown) {
+      console.log(zoningBreakdown);
+      console.log(zoningReasoning);
+    }
+
     console.log(baseResult.summary);
     console.log(subsidyComparisonTable);
 
@@ -229,6 +245,8 @@ export function runFullAnalysis(
     ...baseResult,
     withSubsidies,
     subsidyComparisonTable,
+    zoningBreakdown,
+    zoningReasoning,
   };
 }
 

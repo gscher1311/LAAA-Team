@@ -11,6 +11,7 @@ import {
   MIIPTransitTier,
   MIIPOpportunityTier,
   MIIPCorridorTier,
+  ZoneType,
 } from '../types';
 
 import {
@@ -106,6 +107,264 @@ export function calculateAllProgramPotential(
 }
 
 // ============================================================================
+// HELPER: Calculate Brickwork-style data points
+// Source: LAMC 12.21 (Yard requirements), LAMC 12.21.G (Open space)
+// ============================================================================
+
+/**
+ * Get setback requirements based on zone
+ * Source: LAMC 12.08-12.14 (Zone regulations)
+ */
+function getSetbackRequirements(zone: ZoneType): DevelopmentPotential['setbacks'] {
+  // Default R-zone setbacks per LAMC 12.11 (R3/R4/R5)
+  const rZoneSetbacks = {
+    front: 15,
+    side: 5,
+    sidePerStory: 1,  // +1 ft per story over 2nd
+    sideMax: 16,
+    rear: 15,
+    rearPerStory: 1,  // +1 ft per story over 3rd
+    rearMax: 20,
+  };
+
+  // Commercial zone setbacks per LAMC 12.14
+  const cZoneSetbacks = {
+    front: 0,
+    side: 0,
+    sidePerStory: 0,
+    sideMax: 0,
+    rear: 0,  // 20 ft if abutting R zone
+    rearPerStory: 0,
+    rearMax: 20,
+  };
+
+  // Single-family zones
+  const sfSetbacks = {
+    front: 20,
+    side: 5,
+    sidePerStory: 0,
+    sideMax: 5,
+    rear: 15,
+    rearPerStory: 0,
+    rearMax: 25,
+  };
+
+  if (zone.startsWith('C') || zone === ZoneType.CM || zone === ZoneType.CR) {
+    return cZoneSetbacks;
+  } else if (zone === ZoneType.R1 || zone === ZoneType.R2 || zone.startsWith('RD')) {
+    return sfSetbacks;
+  }
+  return rZoneSetbacks;
+}
+
+/**
+ * Calculate buildable footprint (lot area - setbacks)
+ * Assumes rectangular lot for simplicity
+ */
+function calculateBuildableFootprint(
+  lotSizeSF: number,
+  setbacks: DevelopmentPotential['setbacks']
+): number {
+  // Rough estimate: assume square lot, deduct setbacks from each side
+  const lotSide = Math.sqrt(lotSizeSF);
+  const effectiveWidth = lotSide - setbacks.side * 2;
+  const effectiveDepth = lotSide - setbacks.front - setbacks.rear;
+  return Math.max(0, effectiveWidth * effectiveDepth);
+}
+
+/**
+ * Calculate open space requirement
+ * Source: LAMC 12.21.G
+ */
+function calculateOpenSpaceRequirement(
+  totalUnits: number,
+  isIncentiveProgram: boolean
+): DevelopmentPotential['openSpace'] {
+  if (isIncentiveProgram) {
+    // MIIP/AHIP: 15% of lot OR 10% of floor area, whichever greater
+    return {
+      required: true,
+      sqftPerUnit: 0,  // Calculated differently
+      totalRequired: 0,  // Depends on lot/floor area
+      method: '15% of lot area OR 10% of floor area (whichever greater)',
+    };
+  }
+
+  // Standard requirement per LAMC 12.21.G
+  // 100 SF/unit (<3 hab rooms), 125 SF (3 hab rooms), 175 SF (>3 hab rooms)
+  const avgSqftPerUnit = 100;  // Conservative estimate
+  return {
+    required: true,
+    sqftPerUnit: avgSqftPerUnit,
+    totalRequired: totalUnits * avgSqftPerUnit,
+    method: '100 SF/unit (<3 hab rooms), 125 SF (3 hab), 175 SF (>3 hab)',
+  };
+}
+
+/**
+ * Calculate bicycle parking requirement
+ * Source: LAMC 12.21.A.16
+ */
+function calculateBicycleParking(totalUnits: number): { longTerm: number; shortTerm: number } {
+  // Long-term: 1/unit (0-25), 1/1.5 units (26-100), 1/2 units (101-200), 1/4 units (201+)
+  let longTerm = 0;
+  if (totalUnits <= 25) {
+    longTerm = totalUnits;
+  } else if (totalUnits <= 100) {
+    longTerm = 25 + Math.ceil((totalUnits - 25) / 1.5);
+  } else if (totalUnits <= 200) {
+    longTerm = 25 + 50 + Math.ceil((totalUnits - 100) / 2);
+  } else {
+    longTerm = 25 + 50 + 50 + Math.ceil((totalUnits - 200) / 4);
+  }
+
+  // Short-term: 1/10 units (0-25), 1/15 units (26-100), 1/20 units (101-200), 1/40 units (201+)
+  let shortTerm = 0;
+  if (totalUnits <= 25) {
+    shortTerm = Math.ceil(totalUnits / 10);
+  } else if (totalUnits <= 100) {
+    shortTerm = 3 + Math.ceil((totalUnits - 25) / 15);
+  } else if (totalUnits <= 200) {
+    shortTerm = 3 + 5 + Math.ceil((totalUnits - 100) / 20);
+  } else {
+    shortTerm = 3 + 5 + 5 + Math.ceil((totalUnits - 200) / 40);
+  }
+
+  return { longTerm, shortTerm };
+}
+
+/**
+ * Get parking method description based on program and location
+ */
+function getParkingMethod(
+  program: IncentiveProgram,
+  nearTransit: boolean,
+  parkingRequired: number
+): string {
+  if (parkingRequired === 0) {
+    if (nearTransit) {
+      return 'No Parking per AB 2097 (within 1/2 mi of transit)';
+    }
+    return 'No Parking Required';
+  }
+
+  switch (program) {
+    case IncentiveProgram.BY_RIGHT:
+      return '1-2 spaces per unit per LAMC 12.21.A.4';
+    case IncentiveProgram.STATE_DENSITY_BONUS:
+      return nearTransit ? 'No Parking per AB 2097' : '0.5-1.5 spaces per unit per Gov Code 65915';
+    case IncentiveProgram.MIIP_TRANSIT:
+    case IncentiveProgram.MIIP_OPPORTUNITY:
+      return 'No Parking per LAMC 12.22.A.38';
+    case IncentiveProgram.AHIP:
+      return 'No Parking per AB 2097';
+    case IncentiveProgram.SB_79:
+      return 'No Parking per SB 79';
+    default:
+      return `${parkingRequired} spaces required`;
+  }
+}
+
+/**
+ * Create density calculation explanation
+ */
+function createDensityCalculation(
+  lotSizeSF: number,
+  zone: ZoneType,
+  buildableSF: number,
+  totalUnits: number,
+  program: IncentiveProgram
+): DevelopmentPotential['densityCalculation'] {
+  const zoneStandards = getZoneStandards(zone);
+  const sfPerDU = zoneStandards?.densitySFperDU;
+
+  if (program === IncentiveProgram.BY_RIGHT && sfPerDU) {
+    return {
+      method: `Lot SF / ${sfPerDU} SF per DU`,
+      formula: `${lotSizeSF.toLocaleString()} SF / ${sfPerDU} = ${totalUnits} units`,
+      notes: 'Per LAMC 12.03 density table',
+    };
+  }
+
+  // For incentive programs with no max density
+  const commonAreaPercent = 15;
+  const netSF = Math.round(buildableSF * (1 - commonAreaPercent / 100));
+  const avgUnitSF = 400;  // Typical studio/1BR average
+
+  return {
+    method: 'Buildable envelope / avg unit size',
+    formula: `${buildableSF.toLocaleString()} SF × 0.85 (net) / ${avgUnitSF} SF = ${Math.floor(netSF / avgUnitSF)} units`,
+    notes: `Assumes ${commonAreaPercent}% common areas, ${avgUnitSF} SF avg unit. Consult architect for massing study.`,
+  };
+}
+
+/**
+ * Add Brickwork-style fields to a partial DevelopmentPotential
+ */
+function addBrickworkFields(
+  partial: Partial<DevelopmentPotential>,
+  site: SiteInput,
+  basePotential: DevelopmentPotential
+): DevelopmentPotential {
+  const buildableSF = partial.buildableSF || basePotential.buildableSF;
+  const totalUnits = partial.totalUnits || basePotential.totalUnits;
+  const program = partial.program || basePotential.program;
+  const affordablePercent = partial.affordablePercent || 0;
+  const incomeLevel = partial.incomeLevel || basePotential.incomeLevel;
+  const parkingRequired = partial.parkingRequired ?? basePotential.parkingRequired;
+  const nearTransit = (site.distanceToMajorTransitFeet || Infinity) <= 2640;
+
+  const commonAreaSF = Math.round(buildableSF * 0.15);
+  const netResidentialSF = buildableSF - commonAreaSF;
+  const estimatedUnits = Math.floor(netResidentialSF / 400);
+  const bikeParking = calculateBicycleParking(totalUnits);
+  const isIncentiveProgram = program !== IncentiveProgram.BY_RIGHT;
+
+  // Get affordability options for MIIP programs
+  let affordabilityOptions: string[] = [];
+  if (affordablePercent > 0) {
+    affordabilityOptions = [`${affordablePercent}% at ${incomeLevel}`];
+  } else {
+    affordabilityOptions = ['None required'];
+  }
+
+  // Get available incentives
+  let availableIncentives: string[] = [];
+  const numIncentives = partial.additionalIncentivesAvailable || 0;
+  if (numIncentives > 0) {
+    availableIncentives = [
+      'Setback reductions (up to 30%)',
+      'Open space reduction',
+      'Transitional height exemption',
+      'Ground floor height reduction (20%)',
+      'Lot width reduction (25%)',
+      `Choose up to ${numIncentives} from menu`,
+    ];
+  }
+
+  return {
+    ...basePotential,
+    ...partial,
+    estimatedUnits: partial.estimatedUnits || estimatedUnits,
+    buildableFootprintSF: partial.buildableFootprintSF || basePotential.buildableFootprintSF,
+    commonAreaSF,
+    netResidentialSF,
+    setbacks: partial.setbacks || basePotential.setbacks,
+    openSpace: calculateOpenSpaceRequirement(totalUnits, isIncentiveProgram),
+    affordabilityOptions,
+    parkingMethod: getParkingMethod(program, nearTransit, parkingRequired),
+    bicycleParkingLongTerm: bikeParking.longTerm,
+    bicycleParkingShortTerm: bikeParking.shortTerm,
+    transitionalHeightApplies: partial.transitionalHeightApplies ?? false,
+    transitionalHeightNotes: partial.transitionalHeightNotes || 'N/A',
+    availableIncentives,
+    densityCalculation: createDensityCalculation(
+      site.lotSizeSF, site.baseZone, buildableSF, totalUnits, program
+    ),
+  } as DevelopmentPotential;
+}
+
+// ============================================================================
 // BY-RIGHT CALCULATOR
 // ============================================================================
 
@@ -116,6 +375,15 @@ function calculateByRight(site: SiteInput): DevelopmentPotential {
   const height = calculateEffectiveHeight(site.baseZone, site.heightDistrict);
 
   const buildableSF = site.lotSizeSF * baseFAR;
+  const setbacks = getSetbackRequirements(site.baseZone);
+  const buildableFootprintSF = calculateBuildableFootprint(site.lotSizeSF, setbacks);
+  const commonAreaSF = Math.round(buildableSF * 0.15);
+  const netResidentialSF = buildableSF - commonAreaSF;
+  const estimatedUnits = Math.floor(netResidentialSF / 400);  // Avg 400 SF/unit
+
+  const parkingRequired = baseDensity * (zoneStandards?.parkingPerUnit || 1);
+  const bikeParking = calculateBicycleParking(baseDensity);
+  const openSpace = calculateOpenSpaceRequirement(baseDensity, false);
 
   return {
     program: IncentiveProgram.BY_RIGHT,
@@ -123,21 +391,37 @@ function calculateByRight(site: SiteInput): DevelopmentPotential {
     baseDensity,
     bonusDensity: 0,
     totalUnits: baseDensity,
+    estimatedUnits,
     baseFAR,
     bonusFAR: 0,
     totalFAR: baseFAR,
     buildableSF,
+    buildableFootprintSF,
+    commonAreaSF,
+    netResidentialSF,
     baseHeightFeet: height.maxFeet || 999,
     bonusHeightFeet: 0,
     totalHeightFeet: height.maxFeet || 999,
     baseStories: height.maxStories || 99,
     bonusStories: 0,
     totalStories: height.maxStories || 99,
+    setbacks,
+    openSpace,
     affordableUnits: 0,
     affordablePercent: 0,
-    incomeLevel: IncomeLevel.MODERATE,  // Market rate
-    parkingRequired: baseDensity * (zoneStandards?.parkingPerUnit || 1),
+    incomeLevel: IncomeLevel.MODERATE,
+    affordabilityOptions: ['None required'],
+    parkingRequired,
+    parkingMethod: getParkingMethod(IncentiveProgram.BY_RIGHT, false, parkingRequired),
+    bicycleParkingLongTerm: bikeParking.longTerm,
+    bicycleParkingShortTerm: bikeParking.shortTerm,
+    transitionalHeightApplies: false,
+    transitionalHeightNotes: 'N/A',
     additionalIncentivesAvailable: 0,
+    availableIncentives: [],
+    densityCalculation: createDensityCalculation(
+      site.lotSizeSF, site.baseZone, buildableSF, baseDensity, IncentiveProgram.BY_RIGHT
+    ),
   };
 }
 
@@ -197,27 +481,52 @@ function calculateStateDensityBonusPotential(
       incomeLevel === IncomeLevel.MODERATE ? 'MODERATE' : 'LOWER'
   );
 
+  const commonAreaSF = Math.round(buildableSF * 0.15);
+  const netResidentialSF = buildableSF - commonAreaSF;
+  const estimatedUnits = Math.floor(netResidentialSF / 400);
+  const bikeParking = calculateBicycleParking(totalUnits);
+
   return {
     program: IncentiveProgram.STATE_DENSITY_BONUS,
     eligible: true,
     baseDensity,
     bonusDensity,
     totalUnits,
+    estimatedUnits,
     baseFAR: basePotential.baseFAR,
     bonusFAR,
     totalFAR,
     buildableSF,
+    buildableFootprintSF: basePotential.buildableFootprintSF,
+    commonAreaSF,
+    netResidentialSF,
     baseHeightFeet: basePotential.baseHeightFeet,
     bonusHeightFeet: heightBonus.additionalFeet,
     totalHeightFeet: basePotential.baseHeightFeet + heightBonus.additionalFeet,
     baseStories: basePotential.baseStories,
     bonusStories: heightBonus.additionalStories,
     totalStories: basePotential.baseStories + heightBonus.additionalStories,
+    setbacks: basePotential.setbacks,
+    openSpace: calculateOpenSpaceRequirement(totalUnits, true),
     affordableUnits,
     affordablePercent,
     incomeLevel,
+    affordabilityOptions: [`${affordablePercent}% at ${incomeLevel}`],
     parkingRequired,
+    parkingMethod: getParkingMethod(IncentiveProgram.STATE_DENSITY_BONUS, nearTransit, parkingRequired),
+    bicycleParkingLongTerm: bikeParking.longTerm,
+    bicycleParkingShortTerm: bikeParking.shortTerm,
+    transitionalHeightApplies: false,
+    transitionalHeightNotes: 'N/A - State law preempts local height limits',
     additionalIncentivesAvailable: incentives,
+    availableIncentives: [
+      'Up to 20% reduction in any development standard',
+      'Yard setback reductions',
+      'Open space reductions',
+    ],
+    densityCalculation: createDensityCalculation(
+      site.lotSizeSF, site.baseZone, buildableSF, totalUnits, IncentiveProgram.STATE_DENSITY_BONUS
+    ),
   };
 }
 
@@ -271,7 +580,7 @@ function calculateMIIPTransitPotential(
 
   const buildableSF = site.lotSizeSF * totalFAR;
 
-  return {
+  return addBrickworkFields({
     program: IncentiveProgram.MIIP_TRANSIT,
     eligible: true,
     baseDensity,
@@ -292,7 +601,7 @@ function calculateMIIPTransitPotential(
     incomeLevel,
     parkingRequired: incentives.parkingRequired ? totalUnits : 0,
     additionalIncentivesAvailable: tier === MIIPTransitTier.T3 ? 4 : 3,
-  };
+  }, site, basePotential);
 }
 
 // ============================================================================
@@ -350,7 +659,7 @@ function calculateMIIPOpportunityPotential(
     incentives.maxStories
   );
 
-  return {
+  return addBrickworkFields({
     program: IncentiveProgram.MIIP_OPPORTUNITY,
     eligible: true,
     baseDensity,
@@ -371,7 +680,9 @@ function calculateMIIPOpportunityPotential(
     incomeLevel,
     parkingRequired: 0,  // No parking required in OC
     additionalIncentivesAvailable: tier === MIIPOpportunityTier.OC3 ? 4 : 3,
-  };
+    transitionalHeightApplies: true,  // OC zones may have transitional height
+    transitionalHeightNotes: 'Check if adjacent to R1/R2 zone for transitional height limits',
+  }, site, basePotential);
 }
 
 // ============================================================================
@@ -414,7 +725,7 @@ function calculateMIIPCorridorPotential(
   const totalStories = incentives.maxStories;
   const totalHeightFeet = totalStories * 11;  // 11 ft per story
 
-  return {
+  return addBrickworkFields({
     program: IncentiveProgram.MIIP_CORRIDOR,
     eligible: true,
     baseDensity: basePotential.baseDensity,
@@ -425,17 +736,19 @@ function calculateMIIPCorridorPotential(
     totalFAR,
     buildableSF,
     baseHeightFeet: basePotential.baseHeightFeet,
-    bonusHeightFeet: 0,
+    bonusHeightFeet: totalHeightFeet - basePotential.baseHeightFeet,
     totalHeightFeet,
     baseStories: basePotential.baseStories,
-    bonusStories: 0,
+    bonusStories: totalStories - basePotential.baseStories,
     totalStories,
     affordableUnits,
     affordablePercent,
     incomeLevel,
     parkingRequired: incentives.parkingRequired ? totalUnits : 0,
     additionalIncentivesAvailable: tier === MIIPCorridorTier.CT3 ? 4 : 3,
-  };
+    transitionalHeightApplies: true,  // CT zones have transitional height requirements
+    transitionalHeightNotes: 'Corridor Transition areas require step-backs adjacent to R1/R2 zones',
+  }, site, basePotential);
 }
 
 // ============================================================================
@@ -472,7 +785,7 @@ function calculateAHIPPotential(site: SiteInput): DevelopmentPotential {
   const bonusFAR = totalFAR - basePotential.baseFAR;
   const buildableSF = site.lotSizeSF * totalFAR;
 
-  return {
+  return addBrickworkFields({
     program: IncentiveProgram.AHIP,
     eligible: true,
     baseDensity,
@@ -493,7 +806,9 @@ function calculateAHIPPotential(site: SiteInput): DevelopmentPotential {
     incomeLevel: IncomeLevel.LOW_80,  // Mix of income levels
     parkingRequired: incentives.parkingPerUnit ? totalUnits * incentives.parkingPerUnit : 0,
     additionalIncentivesAvailable: AHIP_MAX_ADDITIONAL_INCENTIVES,
-  };
+    transitionalHeightApplies: false,  // State law preempts local requirements
+    transitionalHeightNotes: 'N/A - 100% affordable overrides local height restrictions per Gov Code 65915',
+  }, site, basePotential);
 }
 
 // ============================================================================
@@ -529,7 +844,7 @@ function calculateSB79Potential(site: SiteInput): DevelopmentPotential {
   const totalStories = Math.min(Math.max(floorsNeeded, basePotential.baseStories), 8);
   const totalHeightFeet = totalStories * 11;
 
-  return {
+  return addBrickworkFields({
     program: IncentiveProgram.SB_79,
     eligible: true,
     baseDensity: basePotential.baseDensity,
@@ -550,7 +865,9 @@ function calculateSB79Potential(site: SiteInput): DevelopmentPotential {
     incomeLevel: IncomeLevel.MODERATE,
     parkingRequired: 0,  // No parking required
     additionalIncentivesAvailable: 0,
-  };
+    transitionalHeightApplies: false,  // State law preempts local restrictions
+    transitionalHeightNotes: 'SB 79 preempts local zoning height restrictions near transit',
+  }, site, basePotential);
 }
 
 // ============================================================================

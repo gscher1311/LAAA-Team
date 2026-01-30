@@ -1,6 +1,23 @@
 /**
- * MIIP - Mixed Income Incentive Program Data (Section 12.22 A.38)
+ * MIIP - Mixed Income Incentive Program Data
  * Part of CHIP (Citywide Housing Incentive Program)
+ *
+ * SOURCES:
+ * - LAMC Section 12.22 A.38: https://codelibrary.amlegal.com/codes/los_angeles/latest/lamc/0-0-0-117885
+ * - LA DCP CHIP Implementation Guidelines (2025)
+ * - CHIP Ordinance No. 187,712 (effective March 2024)
+ *
+ * PROGRAM STRUCTURE:
+ * - Transit Oriented (T-1, T-2, T-3): Based on proximity to transit
+ * - Opportunity Corridor (OC-1, OC-2, OC-3): Based on TCAC opportunity area
+ * - Corridor Transition (CT-1, CT-2, CT-3): For single-family zones near transit
+ *
+ * KEY BENEFITS:
+ * - Density bonus up to 120%
+ * - FAR increases 40-60%
+ * - Height increases 11-33 ft
+ * - Reduced/eliminated parking
+ * - Additional development incentives (3-4 from menu)
  */
 
 import {

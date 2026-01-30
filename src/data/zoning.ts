@@ -1,12 +1,26 @@
 /**
  * Base Zoning Reference Data
- * From "Generalized Summary of Zoning Regulations" and LAMC Chapter 1
+ *
+ * SOURCES:
+ * - LAMC Chapter 1, Article 2 (Zones and Restrictions): https://codelibrary.amlegal.com/codes/los_angeles/latest/lamc/0-0-0-107389
+ * - LAMC 12.03 (Definitions): Density calculations
+ * - LAMC 12.21.1 (General Provisions): Floor Area Ratio
+ * - LAMC 12.21.A.4 (Parking): Parking requirements
+ * - LA DCP "Generalized Summary of Zoning Regulations" (2023 edition)
+ * - Height District Map: https://planning.lacity.gov/zoning/zoning-maps
+ *
+ * NOTES:
+ * - Density in R3/R4/R5 zones = Lot Size / SF per Dwelling Unit
+ * - FAR is Floor Area Ratio = Total Building SF / Lot SF
+ * - Height Districts override zone-based height limits
+ * - Commercial zones have no density limit; units limited by FAR/unit size
  */
 
 import { ZoneType, ZoneStandards, HeightDistrict, HeightDistrictLimits } from '../types';
 
 // ============================================================================
-// ZONE STANDARDS (From E Generalized Summary of Zoning Regulations.pdf)
+// ZONE STANDARDS
+// Source: LAMC Chapter 1, Article 2; LA DCP Generalized Summary of Zoning Regulations
 // ============================================================================
 
 export const ZONE_STANDARDS: ZoneStandards[] = [
@@ -364,6 +378,19 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
 
 // ============================================================================
 // HEIGHT DISTRICT LIMITS
+// Source: LAMC 12.21.1 (FAR by Height District)
+// See: https://codelibrary.amlegal.com/codes/los_angeles/latest/lamc/0-0-0-117259
+//
+// Height District  |  FAR Limit  |  Height Limit
+// ---------------  |  ---------  |  ------------
+// 1                |  Zone FAR   |  Zone Height
+// 1L               |  3:1        |  75 ft
+// 1VL              |  1.5:1      |  45 ft
+// 1XL              |  1:1        |  30 ft
+// 1SS              |  3:1        |  30 ft
+// 2                |  6:1        |  No limit
+// 3                |  10:1       |  No limit
+// 4                |  13:1       |  No limit
 // ============================================================================
 
 export const HEIGHT_DISTRICT_LIMITS: HeightDistrictLimits[] = [

@@ -320,12 +320,16 @@ export interface DevelopmentPotential {
   baseDensity: number;
   bonusDensity: number;
   totalUnits: number;
+  estimatedUnits: number;  // Calculated from buildable envelope
 
   // Floor Area
   baseFAR: number;
   bonusFAR: number;
   totalFAR: number;
-  buildableSF: number;
+  buildableSF: number;  // Max buildable envelope (FAR × lot size)
+  buildableFootprintSF: number;  // Max footprint (lot - setbacks)
+  commonAreaSF: number;  // Estimated common area (15% of envelope)
+  netResidentialSF: number;  // Buildable - common areas
 
   // Height
   baseHeightFeet: number;
@@ -335,16 +339,51 @@ export interface DevelopmentPotential {
   bonusStories: number;
   totalStories: number;
 
+  // Setbacks (per LAMC)
+  setbacks: {
+    front: number;  // feet
+    side: number;   // feet (base)
+    sidePerStory: number;  // additional per story over 2nd
+    sideMax: number;  // maximum side setback
+    rear: number;  // feet (base)
+    rearPerStory: number;  // additional per story over 3rd
+    rearMax: number;  // maximum rear setback
+  };
+
+  // Open Space Requirements
+  openSpace: {
+    required: boolean;
+    sqftPerUnit: number;  // varies by unit size
+    totalRequired: number;
+    method: string;  // e.g., "100 SF/unit <3 hab rooms"
+  };
+
   // Affordability
   affordableUnits: number;
   affordablePercent: number;
   incomeLevel: IncomeLevel;
+  affordabilityOptions: string[];  // e.g., ["12% ELI", "16% VLI", "28% Lower"]
 
   // Parking
   parkingRequired: number;
+  parkingMethod: string;  // e.g., "No Parking per AB 2097"
+  bicycleParkingLongTerm: number;
+  bicycleParkingShortTerm: number;
+
+  // Transitional Height
+  transitionalHeightApplies: boolean;
+  transitionalHeightNotes: string;
 
   // Additional Incentives Available
   additionalIncentivesAvailable: number;
+  availableIncentives: string[];  // List of available incentives
+
+  // Density calculation methodology
+  densityCalculation: {
+    method: string;  // e.g., "Lot SF / 400 SF per DU"
+    formula: string;  // e.g., "15,000 SF / 400 = 37 units"
+    notes: string;
+  };
 }
 
 // Note: UnitMix, FinancialInputs, LandResidualResult, and ProgramComparison
