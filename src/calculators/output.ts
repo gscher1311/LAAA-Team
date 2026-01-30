@@ -8,6 +8,201 @@ import { FinancialAnalysis, formatCurrency, formatPercent } from './financial';
 import { LIHTCCalculation, GapFinancing } from './taxCredits';
 
 // ============================================================================
+// DATA QUALITY WARNINGS
+// ============================================================================
+
+export interface DataWarning {
+  severity: 'critical' | 'warning' | 'info';
+  category: string;
+  message: string;
+  recommendation: string;
+}
+
+/**
+ * Generate data quality warnings based on site input
+ * These warnings help users understand limitations of the analysis
+ */
+export function generateDataWarnings(site: SiteInput): DataWarning[] {
+  const warnings: DataWarning[] = [];
+
+  // Q Condition Warning (CRITICAL)
+  if (site.hasQCondition) {
+    warnings.push({
+      severity: 'critical',
+      category: 'Q Condition',
+      message: `Site has Q Condition${site.qConditionOrdinance ? ` (${site.qConditionOrdinance})` : ''}. ${site.qConditionDescription || 'Specific restrictions apply.'}`,
+      recommendation: 'Q conditions can significantly restrict development. Review the full ordinance text before relying on this analysis.',
+    });
+  }
+
+  // D Limitation Warning
+  if (site.hasDLimitation) {
+    warnings.push({
+      severity: 'critical',
+      category: 'D Limitation',
+      message: `Site has D (Development) Limitation. ${site.dLimitationDescription || 'Development standards may be restricted.'}`,
+      recommendation: 'Review ZIMAS for specific development limitations.',
+    });
+  }
+
+  // T Classification Warning
+  if (site.hasTClassification) {
+    warnings.push({
+      severity: 'warning',
+      category: 'T Classification',
+      message: 'Site has Tentative (T) Classification - zone change may be pending.',
+      recommendation: 'Verify current zoning status with Planning Department.',
+    });
+  }
+
+  // Specific Plan Warning
+  if (site.specificPlan) {
+    warnings.push({
+      severity: 'critical',
+      category: 'Specific Plan',
+      message: `Site is within "${site.specificPlan}" Specific Plan${site.specificPlanSubarea ? ` (${site.specificPlanSubarea})` : ''}.`,
+      recommendation: 'Specific Plan rules OVERRIDE base zoning. This analysis uses base zoning standards and may not reflect actual allowed development. Consult the Specific Plan document.',
+    });
+  }
+
+  // HPOZ Warning
+  if (site.inHPOZ) {
+    warnings.push({
+      severity: 'warning',
+      category: 'Historic Overlay',
+      message: 'Site is in a Historic Preservation Overlay Zone (HPOZ).',
+      recommendation: 'New construction requires HPOZ Board approval. Design review may add time and cost. Demolition may be restricted.',
+    });
+  }
+
+  // NSO Warning
+  if (site.inNSO) {
+    warnings.push({
+      severity: 'warning',
+      category: 'Neighborhood Stabilization',
+      message: 'Site is in a Neighborhood Stabilization Overlay (NSO).',
+      recommendation: 'Demolition of existing housing may trigger replacement requirements.',
+    });
+  }
+
+  // Not ZIMAS Verified Warning
+  if (!site.zimasVerified) {
+    warnings.push({
+      severity: 'warning',
+      category: 'Data Verification',
+      message: 'Zoning data has NOT been verified against ZIMAS.',
+      recommendation: 'Before making decisions, verify all zoning data at planning.lacity.gov/zimas',
+    });
+  }
+
+  // VHFHSZ Warning
+  if (site.inVHFHSZ) {
+    warnings.push({
+      severity: 'warning',
+      category: 'Fire Hazard',
+      message: 'Site is in Very High Fire Hazard Severity Zone (VHFHSZ).',
+      recommendation: 'Fire-resistant construction required. May affect insurance and construction costs.',
+    });
+  }
+
+  // Hillside Warning
+  if (site.inHillsideArea) {
+    warnings.push({
+      severity: 'warning',
+      category: 'Hillside',
+      message: 'Site is in a Hillside Area.',
+      recommendation: 'Hillside ordinance applies. Grading, height, and FAR may be more restricted than base zoning allows.',
+    });
+  }
+
+  // Coastal Zone Warning
+  if (site.inCoastalZone) {
+    warnings.push({
+      severity: 'warning',
+      category: 'Coastal Zone',
+      message: 'Site is in the Coastal Zone.',
+      recommendation: 'Coastal Development Permit may be required. Additional review by Coastal Commission possible.',
+    });
+  }
+
+  // No warnings = add positive note
+  if (warnings.length === 0) {
+    warnings.push({
+      severity: 'info',
+      category: 'Data Quality',
+      message: 'No special conditions detected.',
+      recommendation: 'Still recommend verifying against ZIMAS before making final decisions.',
+    });
+  }
+
+  return warnings;
+}
+
+/**
+ * Generate formatted warnings output
+ */
+export function formatDataWarnings(site: SiteInput): string {
+  const warnings = generateDataWarnings(site);
+  const lines: string[] = [];
+
+  lines.push('');
+  lines.push('═'.repeat(70));
+  lines.push('DATA QUALITY & VERIFICATION WARNINGS');
+  lines.push('═'.repeat(70));
+  lines.push('');
+
+  const critical = warnings.filter(w => w.severity === 'critical');
+  const warning = warnings.filter(w => w.severity === 'warning');
+  const info = warnings.filter(w => w.severity === 'info');
+
+  if (critical.length > 0) {
+    lines.push('⛔ CRITICAL - May Invalidate Analysis:');
+    lines.push('─'.repeat(70));
+    for (const w of critical) {
+      lines.push(`  [${w.category}]`);
+      lines.push(`  ${w.message}`);
+      lines.push(`  → ${w.recommendation}`);
+      lines.push('');
+    }
+  }
+
+  if (warning.length > 0) {
+    lines.push('⚠️  WARNINGS - Review Before Using:');
+    lines.push('─'.repeat(70));
+    for (const w of warning) {
+      lines.push(`  [${w.category}]`);
+      lines.push(`  ${w.message}`);
+      lines.push(`  → ${w.recommendation}`);
+      lines.push('');
+    }
+  }
+
+  if (info.length > 0 && critical.length === 0 && warning.length === 0) {
+    lines.push('✓ No Critical Issues Found');
+    lines.push('─'.repeat(70));
+    for (const w of info) {
+      lines.push(`  ${w.recommendation}`);
+    }
+    lines.push('');
+  }
+
+  // Always add assumptions
+  lines.push('');
+  lines.push('ASSUMPTIONS IN THIS ANALYSIS:');
+  lines.push('─'.repeat(70));
+  lines.push('  • No Q/D/T conditions unless specified');
+  lines.push('  • Base zoning standards apply (no Specific Plan override)');
+  lines.push('  • No HPOZ or other overlay restrictions');
+  lines.push('  • Standard setbacks (no variance)');
+  lines.push('  • 15% common area deduction');
+  lines.push('  • Average 400 SF/unit for density estimation');
+  lines.push('');
+  lines.push('═'.repeat(70));
+
+  return lines.join('\n');
+}
+
+// ============================================================================
 // FORMATTING HELPERS
 // ============================================================================
 

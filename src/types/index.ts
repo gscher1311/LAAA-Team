@@ -31,9 +31,17 @@ export enum TCACOpportunityArea {
 }
 
 export enum ZoneType {
-  // Residential
+  // Residential - Single Family
   R1 = 'R1',
   R2 = 'R2',
+  RS = 'RS',        // Suburban
+  RE9 = 'RE9',      // Residential Estate 9,000 SF
+  RE11 = 'RE11',    // Residential Estate 11,000 SF
+  RE15 = 'RE15',    // Residential Estate 15,000 SF
+  RE20 = 'RE20',    // Residential Estate 20,000 SF
+  RE40 = 'RE40',    // Residential Estate 40,000 SF
+  RA = 'RA',        // Residential Agricultural
+  // Residential - Multi-Family
   R3 = 'R3',
   R4 = 'R4',
   R5 = 'R5',
@@ -61,6 +69,12 @@ export enum ZoneType {
   M3 = 'M3',
   MR1 = 'MR1',
   MR2 = 'MR2',
+  // Agricultural
+  A1 = 'A1',
+  A2 = 'A2',
+  // Open Space / Public
+  OS = 'OS',
+  PF = 'PF',
   // Parking
   P = 'P',
   PB = 'PB'
@@ -134,12 +148,37 @@ export interface SiteInput {
 
   // Physical
   lotSizeSF: number;
+  lotWidthFeet?: number;   // For setback calculations
+  lotDepthFeet?: number;   // For setback calculations
 
-  // Zoning
+  // Zoning - Base
   baseZone: ZoneType;
   heightDistrict: HeightDistrict;
-  specificPlan?: string;
-  overlays?: string[];
+
+  // Zoning - Q/D/T Conditions (from ZIMAS)
+  // CRITICAL: These can override base zoning. Must be verified from ZIMAS.
+  hasQCondition?: boolean;           // Qualified classification
+  qConditionOrdinance?: string;      // e.g., "Ord. 123456"
+  qConditionDescription?: string;    // e.g., "Height limited to 45 ft"
+  hasDLimitation?: boolean;          // Development limitation
+  dLimitationDescription?: string;
+  hasTClassification?: boolean;      // Tentative classification
+
+  // Zoning - Specific Plan (from ZIMAS)
+  // CRITICAL: Specific Plans override base zoning standards
+  specificPlan?: string;             // e.g., "Hollywood Community Plan"
+  specificPlanSubarea?: string;      // e.g., "Regional Center Commercial"
+
+  // Zoning - Overlays (from ZIMAS)
+  overlays?: string[];               // e.g., ["HPOZ", "CDO"]
+  inHPOZ?: boolean;                  // Historic Preservation Overlay Zone
+  inCDO?: boolean;                   // Community Design Overlay
+  inNSO?: boolean;                   // Neighborhood Stabilization Overlay
+  inRFA?: boolean;                   // Residential Floor Area district
+
+  // Community Plan
+  communityPlan?: string;            // e.g., "Hollywood"
+  communityPlanLandUse?: string;     // e.g., "Regional Center Commercial"
 
   // Geographic context
   distanceToMajorTransitFeet?: number;
@@ -147,6 +186,9 @@ export interface SiteInput {
   distanceToMetrolinkFeet?: number;
   distanceToBusRouteFeet?: number;
   inVeryLowVehicleTravelArea?: boolean;
+
+  // Adjacency (for transitional height)
+  adjacentToR1R2?: boolean;          // Adjacent to single-family zone
 
   // TCAC/Market
   tcacArea: TCACOpportunityArea;
@@ -158,6 +200,10 @@ export interface SiteInput {
   inSeaLevelRiseArea?: boolean;
   inHillsideArea?: boolean;
   hasHistoricResource?: boolean;
+
+  // Data Quality Flags
+  zimasVerified?: boolean;           // Was this data verified against ZIMAS?
+  zimasDate?: string;                // Date of ZIMAS lookup
 }
 
 // ============================================================================

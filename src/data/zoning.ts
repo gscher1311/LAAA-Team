@@ -24,7 +24,114 @@ import { ZoneType, ZoneStandards, HeightDistrict, HeightDistrictLimits } from '.
 // ============================================================================
 
 export const ZONE_STANDARDS: ZoneStandards[] = [
-  // Single-Family Residential
+  // ============================================================================
+  // RESIDENTIAL ESTATE ZONES (RE)
+  // Source: LAMC 12.07.01
+  // ============================================================================
+  {
+    zone: ZoneType.RE9,
+    densitySFperDU: 9000,  // 1 unit per 9,000 SF
+    baseFAR: 0.35,
+    maxHeightFeet: 36,
+    maxStories: 2,
+    frontYardFeet: 25,
+    sideYardFeet: 5,
+    rearYardFeet: 25,
+    parkingPerUnit: 2,
+    allowsResidential: true,
+    isCommercial: false,
+    isManufacturing: false,
+  },
+  {
+    zone: ZoneType.RE11,
+    densitySFperDU: 11000,
+    baseFAR: 0.35,
+    maxHeightFeet: 36,
+    maxStories: 2,
+    frontYardFeet: 25,
+    sideYardFeet: 5,
+    rearYardFeet: 25,
+    parkingPerUnit: 2,
+    allowsResidential: true,
+    isCommercial: false,
+    isManufacturing: false,
+  },
+  {
+    zone: ZoneType.RE15,
+    densitySFperDU: 15000,
+    baseFAR: 0.35,
+    maxHeightFeet: 36,
+    maxStories: 2,
+    frontYardFeet: 25,
+    sideYardFeet: 5,
+    rearYardFeet: 25,
+    parkingPerUnit: 2,
+    allowsResidential: true,
+    isCommercial: false,
+    isManufacturing: false,
+  },
+  {
+    zone: ZoneType.RE20,
+    densitySFperDU: 20000,
+    baseFAR: 0.3,
+    maxHeightFeet: 36,
+    maxStories: 2,
+    frontYardFeet: 25,
+    sideYardFeet: 10,
+    rearYardFeet: 25,
+    parkingPerUnit: 2,
+    allowsResidential: true,
+    isCommercial: false,
+    isManufacturing: false,
+  },
+  {
+    zone: ZoneType.RE40,
+    densitySFperDU: 40000,
+    baseFAR: 0.25,
+    maxHeightFeet: 36,
+    maxStories: 2,
+    frontYardFeet: 30,
+    sideYardFeet: 10,
+    rearYardFeet: 25,
+    parkingPerUnit: 2,
+    allowsResidential: true,
+    isCommercial: false,
+    isManufacturing: false,
+  },
+  // Suburban Residential (RS)
+  {
+    zone: ZoneType.RS,
+    densitySFperDU: 5000,  // Similar to R1
+    baseFAR: 0.5,
+    maxHeightFeet: 33,
+    maxStories: 2,
+    frontYardFeet: 20,
+    sideYardFeet: 5,
+    rearYardFeet: 15,
+    parkingPerUnit: 2,
+    allowsResidential: true,
+    isCommercial: false,
+    isManufacturing: false,
+  },
+  // Residential Agricultural (RA)
+  {
+    zone: ZoneType.RA,
+    densitySFperDU: 17500,  // 2.5 units per acre
+    baseFAR: 0.3,
+    maxHeightFeet: 36,
+    maxStories: 2,
+    frontYardFeet: 25,
+    sideYardFeet: 10,
+    rearYardFeet: 25,
+    parkingPerUnit: 2,
+    allowsResidential: true,
+    isCommercial: false,
+    isManufacturing: false,
+  },
+  // ============================================================================
+  // SINGLE-FAMILY RESIDENTIAL (R1, R2)
+  // Source: LAMC 12.08
+  // ============================================================================
   {
     zone: ZoneType.R1,
     densitySFperDU: null,  // 1 unit per lot
@@ -167,6 +274,77 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     frontYardFeet: 20,
     sideYardFeet: 5,
     rearYardFeet: 25,
+    parkingPerUnit: 2,
+    allowsResidential: true,
+    isCommercial: false,
+    isManufacturing: false,
+  },
+  {
+    zone: ZoneType.RD4,
+    densitySFperDU: 4000,
+    baseFAR: 0.5,
+    maxHeightFeet: 33,
+    maxStories: 2,
+    frontYardFeet: 20,
+    sideYardFeet: 5,
+    rearYardFeet: 25,
+    parkingPerUnit: 2,
+    allowsResidential: true,
+    isCommercial: false,
+    isManufacturing: false,
+  },
+  {
+    zone: ZoneType.RD5,
+    densitySFperDU: 5000,
+    baseFAR: 0.5,
+    maxHeightFeet: 33,
+    maxStories: 2,
+    frontYardFeet: 20,
+    sideYardFeet: 5,
+    rearYardFeet: 25,
+    parkingPerUnit: 2,
+    allowsResidential: true,
+    isCommercial: false,
+    isManufacturing: false,
+  },
+  {
+    zone: ZoneType.RD6,
+    densitySFperDU: 6000,
+    baseFAR: 0.5,
+    maxHeightFeet: 33,
+    maxStories: 2,
+    frontYardFeet: 20,
+    sideYardFeet: 5,
+    rearYardFeet: 25,
+    parkingPerUnit: 2,
+    allowsResidential: true,
+    isCommercial: false,
+    isManufacturing: false,
+  },
+  // RW Zones (Residential Waterways) - Source: LAMC 12.09
+  {
+    zone: ZoneType.RW1,
+    densitySFperDU: null,  // 1 unit per lot
+    baseFAR: 0.5,
+    maxHeightFeet: 30,  // Stricter for waterfront
+    maxStories: 2,
+    frontYardFeet: 15,
+    sideYardFeet: 5,
+    rearYardFeet: 5,  // Often waterfront
+    parkingPerUnit: 2,
+    allowsResidential: true,
+    isCommercial: false,
+    isManufacturing: false,
+  },
+  {
+    zone: ZoneType.RW2,
+    densitySFperDU: null,  // 2 units per lot
+    baseFAR: 0.5,
+    maxHeightFeet: 33,
+    maxStories: 2,
+    frontYardFeet: 15,
+    sideYardFeet: 5,
+    rearYardFeet: 5,
     parkingPerUnit: 2,
     allowsResidential: true,
     isCommercial: false,
@@ -371,6 +549,65 @@ export const ZONE_STANDARDS: ZoneStandards[] = [
     rearYardFeet: 0,
     parkingPerUnit: 0,
     allowsResidential: false,
+    isCommercial: false,
+    isManufacturing: false,
+  },
+  // Agricultural Zones - Source: LAMC 12.05
+  {
+    zone: ZoneType.A1,
+    densitySFperDU: 87120,  // 1 unit per 2 acres
+    baseFAR: 0.1,
+    maxHeightFeet: 45,
+    maxStories: null,
+    frontYardFeet: 25,
+    sideYardFeet: 10,
+    rearYardFeet: 25,
+    parkingPerUnit: 2,
+    allowsResidential: true,  // Farm dwellings
+    isCommercial: false,
+    isManufacturing: false,
+  },
+  {
+    zone: ZoneType.A2,
+    densitySFperDU: 43560,  // 1 unit per acre
+    baseFAR: 0.15,
+    maxHeightFeet: 45,
+    maxStories: null,
+    frontYardFeet: 25,
+    sideYardFeet: 10,
+    rearYardFeet: 25,
+    parkingPerUnit: 2,
+    allowsResidential: true,
+    isCommercial: false,
+    isManufacturing: false,
+  },
+  // Open Space - Source: LAMC 12.04
+  {
+    zone: ZoneType.OS,
+    densitySFperDU: null,
+    baseFAR: 0,
+    maxHeightFeet: null,
+    maxStories: null,
+    frontYardFeet: 0,
+    sideYardFeet: 0,
+    rearYardFeet: 0,
+    parkingPerUnit: 0,
+    allowsResidential: false,  // Parks, recreation
+    isCommercial: false,
+    isManufacturing: false,
+  },
+  // Public Facilities - Source: LAMC 12.04
+  {
+    zone: ZoneType.PF,
+    densitySFperDU: null,
+    baseFAR: 3.0,  // Varies by use
+    maxHeightFeet: null,
+    maxStories: null,
+    frontYardFeet: 10,
+    sideYardFeet: 10,
+    rearYardFeet: 10,
+    parkingPerUnit: 0,
+    allowsResidential: false,  // Government, schools, etc.
     isCommercial: false,
     isManufacturing: false,
   },
