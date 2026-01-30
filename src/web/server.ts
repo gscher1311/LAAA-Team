@@ -818,9 +818,8 @@ app.get('/', (req, res) => {
     <div class="info-box">
       <h4>📊 Data Sources for Input</h4>
       <ul>
-        <li><a href="https://planning.lacity.gov/zimas/" target="_blank" rel="noopener">ZIMAS</a> — Zone, Height District, Fire Zone, Coastal Zone, Lot Size</li>
-        <li><a href="https://belonging.berkeley.edu/2024-tcac-opportunity-map" target="_blank" rel="noopener">TCAC/HCD Map</a> — Opportunity Area designation</li>
-        <li><a href="https://www.metro.net/riding/maps/" target="_blank" rel="noopener">LA Metro</a> — Transit distances (rail, bus)</li>
+        <li><a href="https://zimas.lacity.org/" target="_blank" rel="noopener">ZIMAS</a> — Zone, Height District, Fire Zone, Coastal Zone, Lot Size, Transit</li>
+        <li><a href="https://uscssi.maps.arcgis.com/apps/mapviewer/index.html?webmap=7689658f319b488ba03c40ccb903681e&center=-118.284552%2C33.985519&level=11" target="_blank" rel="noopener">SB79 Map</a> — Opportunity Area designation</li>
       </ul>
     </div>
 
@@ -901,7 +900,7 @@ app.get('/', (req, res) => {
             <span class="hint">Closest Metro Rail/Metrolink/high-freq bus</span>
             <input type="number" name="distanceToMajorTransitFeet" placeholder="e.g., 1320" min="0">
             <div class="quick-links">
-              <a href="https://www.metro.net/riding/maps/" target="_blank" class="quick-link">Metro Map ↗</a>
+              <a href="https://zimas.lacity.org/" target="_blank" class="quick-link">Check ZIMAS ↗</a>
             </div>
           </div>
 
