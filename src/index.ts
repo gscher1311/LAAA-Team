@@ -12,7 +12,7 @@ export * from './data';
 // Export calculators
 export * from './calculators';
 
-// Example usage
+// Imports for demo
 import {
   SiteInput,
   ZoneType,
@@ -22,83 +22,110 @@ import {
   IncomeLevel,
 } from './types';
 
-import { checkAllProgramEligibility, summarizeEligibility } from './calculators/eligibility';
-import { calculateAllProgramPotential, comparePotential } from './calculators/developmentPotential';
+import { checkAllProgramEligibility } from './calculators/eligibility';
+import { calculateAllProgramPotential } from './calculators/developmentPotential';
+import {
+  compareFinancials,
+  LA_DEFAULT_ASSUMPTIONS,
+  FinancialAssumptions,
+  FinancialAnalysis,
+} from './calculators/financial';
+import {
+  generateComparisonTable,
+  generateSummary,
+  generateDetailedAnalysis,
+} from './calculators/output';
+
+// ============================================================================
+// MAIN ANALYSIS FUNCTION
+// ============================================================================
+
+export interface AnalysisResult {
+  site: SiteInput;
+  analyses: FinancialAnalysis[];
+  bestProgram: FinancialAnalysis;
+  comparisonTable: string;
+  summary: string;
+}
 
 /**
- * Run analysis for a site
+ * Run complete land residual analysis for a site
  */
-export function analyzeSite(site: SiteInput, incomeLevel: IncomeLevel = IncomeLevel.VLI) {
-  console.log('\n========================================');
-  console.log('LAND RESIDUAL ANALYSIS');
-  console.log('========================================\n');
-  console.log(`Site: ${site.address}`);
-  console.log(`Lot Size: ${site.lotSizeSF.toLocaleString()} SF`);
-  console.log(`Zone: ${site.baseZone} / Height District: ${site.heightDistrict}`);
-  console.log(`Market Area: ${site.marketArea}`);
-  console.log(`TCAC Area: ${site.tcacArea}`);
-
-  // Check eligibility
+export function runAnalysis(
+  site: SiteInput,
+  incomeLevel: IncomeLevel = IncomeLevel.VLI,
+  assumptions: FinancialAssumptions = LA_DEFAULT_ASSUMPTIONS,
+  verbose: boolean = true
+): AnalysisResult {
+  // Step 1: Check eligibility and calculate development potential
   const eligibility = checkAllProgramEligibility(site);
-  console.log(`\nBase Density: ${eligibility.baseDensity} units`);
-  console.log(summarizeEligibility(eligibility));
-
-  // Calculate development potential
   const potentials = calculateAllProgramPotential(site, incomeLevel);
 
-  console.log('\n----------------------------------------');
-  console.log('DEVELOPMENT POTENTIAL BY PROGRAM');
-  console.log('----------------------------------------\n');
+  // Step 2: Run financial analysis for all eligible programs
+  const analyses = compareFinancials(
+    potentials,
+    site.lotSizeSF,
+    site.marketArea,
+    assumptions
+  );
 
-  // Print comparison table
-  console.log('Program'.padEnd(25) +
-    'Units'.padStart(8) +
-    'FAR'.padStart(8) +
-    'Height'.padStart(10) +
-    'Afford%'.padStart(10) +
-    'Parking'.padStart(10));
-  console.log('-'.repeat(71));
+  // Step 3: Generate formatted output
+  const comparisonTable = generateComparisonTable(analyses);
+  const summary = generateSummary(site, analyses);
 
-  for (const p of potentials) {
-    if (!p.eligible) continue;
-
-    const programName = p.program.replace('_', ' ').substring(0, 24);
-    console.log(
-      programName.padEnd(25) +
-      p.totalUnits.toString().padStart(8) +
-      p.totalFAR.toFixed(2).padStart(8) +
-      `${p.totalHeightFeet}ft`.padStart(10) +
-      `${p.affordablePercent}%`.padStart(10) +
-      p.parkingRequired.toString().padStart(10)
-    );
+  // Step 4: Output results
+  if (verbose) {
+    console.log(summary);
+    console.log(comparisonTable);
   }
-
-  // Find best options
-  const comparison = comparePotential(potentials);
-
-  console.log('\n----------------------------------------');
-  console.log('BEST OPTIONS');
-  console.log('----------------------------------------');
-  console.log(`Max Units: ${comparison.maxUnits.program} (${comparison.maxUnits.totalUnits} units)`);
-  console.log(`Max FAR: ${comparison.maxFAR.program} (${comparison.maxFAR.totalFAR.toFixed(2)})`);
-  console.log(`Max Height: ${comparison.maxHeight.program} (${comparison.maxHeight.totalHeightFeet} ft)`);
 
   return {
     site,
-    eligibility,
-    potentials,
-    comparison,
+    analyses,
+    bestProgram: analyses[0],  // Already sorted by land value
+    comparisonTable,
+    summary,
   };
 }
 
-// Demo with sample site
+/**
+ * Run detailed analysis for a specific program
+ */
+export function runDetailedAnalysis(
+  site: SiteInput,
+  programIndex: number = 0,
+  incomeLevel: IncomeLevel = IncomeLevel.VLI,
+  assumptions: FinancialAssumptions = LA_DEFAULT_ASSUMPTIONS
+): void {
+  const result = runAnalysis(site, incomeLevel, assumptions, false);
+
+  if (programIndex >= result.analyses.length) {
+    console.error(`Invalid program index. Max: ${result.analyses.length - 1}`);
+    return;
+  }
+
+  const detailed = generateDetailedAnalysis(result.analyses[programIndex]);
+  console.log(detailed);
+}
+
+// ============================================================================
+// DEMO
+// ============================================================================
+
 if (require.main === module) {
+  console.log('\n');
+  console.log('╔══════════════════════════════════════════════════════════════╗');
+  console.log('║         LAND RESIDUAL ANALYSIS APP - DEMO                    ║');
+  console.log('║         LA Real Estate Development Tool                      ║');
+  console.log('╚══════════════════════════════════════════════════════════════╝');
+
+  // Sample site: 15,000 SF R3 lot near Metro Rail
   const sampleSite: SiteInput = {
-    address: '1234 Main St, Los Angeles, CA',
+    address: '1234 Wilshire Blvd, Los Angeles, CA 90017',
     lotSizeSF: 15000,
     baseZone: ZoneType.R3,
     heightDistrict: HeightDistrict.HD_1L,
-    distanceToMajorTransitFeet: 1200,  // Within 1/4 mile
+    distanceToMajorTransitFeet: 1200,  // Within 1/4 mile of Metro
     distanceToMetroRailFeet: 1200,
     tcacArea: TCACOpportunityArea.MODERATE,
     marketArea: MarketArea.HIGH,
@@ -106,5 +133,27 @@ if (require.main === module) {
     inCoastalZone: false,
   };
 
-  analyzeSite(sampleSite);
+  // Run analysis
+  const result = runAnalysis(sampleSite, IncomeLevel.VLI);
+
+  // Show detailed analysis for best program
+  console.log('\n');
+  console.log('╔══════════════════════════════════════════════════════════════╗');
+  console.log('║         DETAILED ANALYSIS - BEST PROGRAM                     ║');
+  console.log('╚══════════════════════════════════════════════════════════════╝');
+
+  const detailed = generateDetailedAnalysis(result.bestProgram);
+  console.log(detailed);
+
+  // Assumptions used
+  console.log('\n');
+  console.log('ASSUMPTIONS USED:');
+  console.log('─'.repeat(50));
+  console.log(`Market Rent:        $${LA_DEFAULT_ASSUMPTIONS.marketRentPSF}/SF/mo`);
+  console.log(`Hard Cost:          $${LA_DEFAULT_ASSUMPTIONS.hardCostPSF}/SF`);
+  console.log(`Soft Cost:          ${(LA_DEFAULT_ASSUMPTIONS.softCostPercent * 100).toFixed(0)}% of hard`);
+  console.log(`Target YOC:         ${(LA_DEFAULT_ASSUMPTIONS.targetYieldOnCost * 100).toFixed(1)}%`);
+  console.log(`Exit Cap Rate:      ${(LA_DEFAULT_ASSUMPTIONS.exitCapRate * 100).toFixed(1)}%`);
+  console.log(`Dev Profit Target:  ${(LA_DEFAULT_ASSUMPTIONS.targetDevProfitMargin * 100).toFixed(0)}%`);
+  console.log('');
 }
