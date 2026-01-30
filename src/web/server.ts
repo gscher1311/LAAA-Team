@@ -810,7 +810,7 @@ app.get('/', (req, res) => {
         <div class="logo-icon">🏗️</div>
         <div>
           <h1>Land Residual Analysis</h1>
-          <p class="tagline">LA Development Feasibility Tool with LIHTC & Gap Financing</p>
+          <p class="tagline">LA Real Estate Development Analysis Tool</p>
         </div>
       </div>
     </header>
@@ -1149,7 +1149,7 @@ function generateReport(result: FullAnalysisResult): string {
 
     <header class="report-header">
       <h1>Land Residual Analysis Report</h1>
-      <p class="subtitle">LA Development Feasibility with LIHTC & Gap Financing</p>
+      <p class="subtitle">LA Real Estate Development Analysis</p>
 
       <div class="site-info-grid">
         <div class="site-info-item">
