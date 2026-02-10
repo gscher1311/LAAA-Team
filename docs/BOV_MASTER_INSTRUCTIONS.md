@@ -490,7 +490,7 @@ git push origin main
 | `regulatory` | object | `line_items` array + source note + optional legal nonconforming note |
 | `transaction_history` | object | Prior sales array + narrative |
 | `coordinates` | object | `subject` lat/lng array |
-| `sale_comps` | object | `comps` array (with coords), averages, medians, narrative |
+| `sale_comps` | object | `comps` array (with coords + `year_built`), averages, medians, narrative. **Use `year_built` NOT `dom` for sale comps.** |
 | `active_comps` | object | `comps` array (with coords), as_of_date, narrative |
 | `rent_comps` | object | `groups` array (by bedroom count, each with comps + coords), narrative |
 | `financials` | object | Units, income, expenses, NOI, returns, financing, pricing rationale, conditions |
@@ -569,7 +569,7 @@ Before considering a BOV complete, verify ALL of the following:
 
 ### Comparable Sales
 - [ ] **Interactive Leaflet map with geocoded coordinates for EVERY comp**
-- [ ] Comp table with #, Address, Units, Sale Date, Price, $/Unit, Cap, GRM, DOM, Notes
+- [ ] Comp table with #, Address, Units, Sale Date, Price, $/Unit, Cap, GRM, Yr Built, Notes
 - [ ] **Comp tiering labels** (Stabilized, Value-Add, Distressed) in Notes column
 - [ ] **Subject row** bold and clearly labeled in comp table
 - [ ] Averages and medians row

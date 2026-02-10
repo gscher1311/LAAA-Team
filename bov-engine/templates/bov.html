@@ -437,7 +437,7 @@ a { color: #C5A258; text-decoration: none; }
         <th>#</th><th>Address</th><th>Units</th><th>Sale Date</th>
         <th class="num-col">Price</th><th class="num-col">$/Unit</th>
         <th class="num-col">Cap</th><th class="num-col">GRM</th>
-        <th class="num-col">DOM</th><th>Notes</th>
+        <th class="num-col">Yr Built</th><th>Notes</th>
       </tr>
     </thead>
     <tbody>
@@ -451,7 +451,7 @@ a { color: #C5A258; text-decoration: none; }
         <td class="num-col">${{ "{:,.0f}".format(comp.per_unit) }}</td>
         <td class="num-col">{{ comp.cap }}</td>
         <td class="num-col">{{ comp.grm }}</td>
-        <td class="num-col">{{ comp.dom }}</td>
+        <td class="num-col">{{ comp.year_built }}</td>
         <td>{{ comp.notes }}{% if comp.tier %} <em style="color:#C5A258;">[{{ comp.tier }}]</em>{% endif %}</td>
       </tr>
       {% endfor %}
@@ -461,7 +461,7 @@ a { color: #C5A258; text-decoration: none; }
         <td class="num-col">${{ "{:,.0f}".format(sale_comps.averages.per_unit) }}</td>
         <td class="num-col">{{ sale_comps.averages.cap }}</td>
         <td class="num-col">{{ sale_comps.averages.grm }}</td>
-        <td class="num-col">{{ sale_comps.averages.dom }}</td>
+        <td class="num-col"></td>
         <td></td>
       </tr>
       <tr class="subtotal-row">
@@ -470,7 +470,7 @@ a { color: #C5A258; text-decoration: none; }
         <td class="num-col">${{ "{:,.0f}".format(sale_comps.medians.per_unit) }}</td>
         <td class="num-col">{{ sale_comps.medians.cap }}</td>
         <td class="num-col">{{ sale_comps.medians.grm }}</td>
-        <td class="num-col">{{ sale_comps.medians.dom }}</td>
+        <td class="num-col"></td>
         <td></td>
       </tr>
     </tbody>
