@@ -140,7 +140,7 @@ a { color: #C5A258; text-decoration: none; }
 .buyer-item p { margin-top: 4px; color: #555; font-size: 14px; }
 
 /* ========== TRACK RECORD STATS ========== */
-.track-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 30px; }
+.track-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 30px; }
 .track-card {
   background: #1B3A5C; border-radius: 12px; padding: 24px 16px;
   text-align: center; color: #fff;
@@ -328,13 +328,8 @@ a { color: #C5A258; text-decoration: none; }
     </div>
     <div class="track-card">
       <span class="track-value">{{ "{:,}".format(team.stats.units_sold) }}</span>
-      <span class="track-label">Apartment Units Sold</span>
+      <span class="track-label">Units Sold</span>
       <span class="track-sub">All-Time</span>
-    </div>
-    <div class="track-card">
-      <span class="track-value">{{ team.stats.active_listings }}</span>
-      <span class="track-label">Active Listings</span>
-      <span class="track-sub">{{ team.stats.active_inventory }} Inventory</span>
     </div>
   </div>
 

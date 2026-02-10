@@ -163,15 +163,14 @@ Before generating any BOV HTML, complete these steps:
 ### Current Issue: The section looks flat and unengaging.
 
 ### Improved Design Requirements:
-- **4 headline stat cards** in a 2×2 grid (or 4×1 on wide screens):
+- **3 headline stat cards** in a single row (`grid-template-columns: repeat(3, 1fr)`):
   - Closed Transactions (with "Since 1/1/2013" subtitle)
   - Total Sales Volume (with "All-Time" subtitle)
-  - Apartment Units Sold (with "All-Time" subtitle)
-  - Active Listings (with "$XXM Inventory" subtitle)
+  - Units Sold (with "All-Time" subtitle)
+- **DO NOT include active listings or inventory** — these change too frequently and go stale across BOVs
 - Cards should use navy background with gold labels (matching the existing `metric-card` style)
 - **Embedded Google Maps iframe** showing the LAAA interactive closings map
 - Add a fallback text link for print: "View our interactive closings map at www.LAAA.com"
-- **DO NOT include** a current inventory/active listings table in this section (it was removed because it changes too frequently)
 
 ---
 
@@ -542,7 +541,7 @@ Before considering a BOV complete, verify ALL of the following:
 - [ ] Property cover photo with gold border
 
 ### Track Record
-- [ ] 4 headline stat cards (transactions, volume, units, active listings)
+- [ ] 3 headline stat cards (transactions, volume, units sold) — **NO active listings/inventory**
 - [ ] Interactive closings map embed
 - [ ] Clean, modern card layout
 
