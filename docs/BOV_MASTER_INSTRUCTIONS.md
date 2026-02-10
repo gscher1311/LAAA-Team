@@ -82,24 +82,41 @@ When embedding property photos:
 
 ### NEVER estimate or guess coordinates. ALWAYS geocode every address.
 
-**For every address** (subject property AND every comp), you MUST obtain exact latitude/longitude coordinates using:
+**For every address** (subject property AND every comp), you MUST obtain exact latitude/longitude coordinates using the **geopy** Python library with the ArcGIS provider (already installed on this machine).
 
-**Nominatim OpenStreetMap Geocoding API:**
-```
-https://nominatim.openstreetmap.org/search?q={ADDRESS}&format=json&limit=1
+**Geocoding Script (use this exact pattern):**
+```python
+from geopy.geocoders import ArcGIS
+import time
+
+geolocator = ArcGIS()
+
+addresses = [
+    ('Subject', '2341 Beach Ave, Venice, CA 90291'),
+    ('Comp 1', '11 19th Ave, Venice, CA 90291'),
+    # ... add all comp addresses
+]
+
+for label, addr in addresses:
+    try:
+        loc = geolocator.geocode(addr)
+        if loc:
+            print(f'{label}: [{loc.latitude:.6f}, {loc.longitude:.6f}]')
+        else:
+            print(f'{label}: NOT FOUND')
+        time.sleep(0.5)  # Rate limit courtesy
+    except Exception as e:
+        print(f'{label}: ERROR {e}')
 ```
 
-**Example:**
-```
-https://nominatim.openstreetmap.org/search?q=2341+Beach+Ave+Venice+CA+90291&format=json&limit=1
-```
+**Run this script BEFORE building the HTML.** Copy the exact coordinates into the Leaflet marker code.
 
-Response will contain `lat` and `lon` fields — use these exact values.
+**If an address is NOT FOUND:**
+1. Try simplifying (remove unit numbers, zip codes)
+2. Try alternate providers: `from geopy.geocoders import Nominatim` with `user_agent="bov_geocoder"`
+3. If still not found, use placeholder `[0, 0]` and add HTML comment: `<!-- WARNING: Coordinates not verified for [ADDRESS] -->`
 
-**If the API times out or returns no results:**
-1. Try a simplified address (e.g., remove zip code)
-2. Use Google Maps to manually look up the address and extract coordinates
-3. Document which addresses could not be geocoded and flag for manual verification
+**DO NOT use Nominatim as the primary geocoder** — it is rate-limited and often times out. ArcGIS is free, reliable, and accurate for US addresses.
 
 **Map Implementation:**
 - Use Leaflet.js with OpenStreetMap tiles
@@ -107,6 +124,16 @@ Response will contain `lat` and `lon` fields — use these exact values.
 - Comp properties: Numbered circle markers with navy background
 - Each marker should have a popup with: Address, Units, Price, $/Unit
 - Use `fitBounds()` to auto-zoom to show all markers with padding `[40, 40]`
+
+---
+
+### Pre-Build Geocoding Checklist
+Before generating any BOV HTML, complete these steps:
+1. Collect ALL addresses: subject property + every sale comp + every active comp + every rent comp
+2. Run the geopy script above with ALL addresses in a single batch
+3. Verify every address returned coordinates (no NOT FOUND or ERROR results)
+4. Spot-check at least 2-3 coordinates using Google Maps to confirm accuracy
+5. Only then proceed to generate the HTML with the verified coordinates
 
 ---
 
