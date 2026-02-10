@@ -305,16 +305,16 @@ a { color: #C5A258; text-decoration: none; }
   <h2 class="section-title">{{ cover.address_street }}, {{ cover.address_city }}, {{ cover.address_state }} {{ cover.address_zip }}</h2>
   <div class="section-divider"></div>
 
-  <!-- Photo Grid -->
+  <!-- Property Photos -->
+  <h3 style="font-size:18px; color:#1B3A5C; margin-bottom:16px;">Property Photos</h3>
   <div class="photo-grid">
     {% for photo in property.photos %}
     <div class="photo-item">
       {% if photo.base64 and photo.base64 != 'REPLACE_WITH_BASE64' %}
-      <img src="data:image/jpeg;base64,{{ photo.base64 }}" alt="{{ photo.label }}">
+      <img src="data:image/jpeg;base64,{{ photo.base64 }}" alt="Property Photo">
       {% else %}
-      <div style="width:100%;height:200px;background:#e0e0e0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#999;font-size:14px;">{{ photo.label }}</div>
+      <div style="width:100%;height:200px;background:#e0e0e0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#999;font-size:14px;">Photo {{ loop.index }}</div>
       {% endif %}
-      <div class="photo-label">{{ photo.label }}</div>
     </div>
     {% endfor %}
   </div>

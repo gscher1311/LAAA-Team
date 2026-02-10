@@ -8,7 +8,7 @@
 
 1. [General Architecture](#1-general-architecture)
 2. [Section Order & Content](#2-section-order--content)
-3. [Photo Labels & Descriptions](#3-photo-labels--descriptions)
+3. [Property Photos](#3-property-photos)
 4. [Map Geocoding — CRITICAL](#4-map-geocoding--critical)
 5. [Table of Contents Navigation](#5-table-of-contents-navigation)
 6. [Track Record / Resume Section](#6-track-record--resume-section)
@@ -31,6 +31,8 @@
 ## 1. General Architecture
 
 Each BOV is a **single `index.html` file** deployed to GitHub Pages at `gscher1311.github.io/{repo-name}/`.
+
+**Preferred method:** Use the **BOV Template Engine** (see Section 18). Fill in a JSON data file, run the render script, and deploy. This guarantees consistency across all BOVs.
 
 **Key features:**
 - Self-contained HTML with inline CSS (no external CSS frameworks)
@@ -66,16 +68,15 @@ The BOV must contain these sections **in this exact order**:
 
 ---
 
-## 3. Photo Labels & Descriptions
+## 3. Property Photos
 
-### CRITICAL RULE: Never guess photo descriptions.
-
-When embedding property photos:
-- **Always ask the broker** for accurate descriptions of each photo
-- If descriptions are not provided, use **generic sequential labels**: "Property Photo 1", "Property Photo 2", etc.
-- **Never assume** what a photo shows based on the image content — the AI cannot reliably interpret base64-encoded images
-- Common acceptable labels (when verified by broker): "Front House (2BR/1BA)", "Rear Duplex Exterior", "Kitchen", "Living Room", "Bathroom", "Rear Patio", "Street View"
-- Photo grid should be 2 columns on desktop, 1 column on mobile
+### Display Rules:
+- Add a **"Property Photos"** heading (`<h3>`) above the photo grid — this replaces individual captions
+- **Do NOT add individual photo captions** — AI cannot reliably identify what each photo shows, and incorrect captions look worse than no captions
+- Photo grid: 2 columns on desktop (`grid-template-columns: 1fr 1fr`), 1 column on mobile
+- Photos should use `border-radius: 8px`, `aspect-ratio: 16/10`, `object-fit: cover`
+- All `<img>` tags must have `alt="Property Photo"` (generic, not descriptive)
+- If the broker explicitly provides verified captions, they may be added — but default is NO captions
 
 ---
 
@@ -546,8 +547,8 @@ Before considering a BOV complete, verify ALL of the following:
 - [ ] Clean, modern card layout
 
 ### Property Overview
-- [ ] 4 property photos in 2×2 grid
-- [ ] **Photo captions verified against actual images**
+- [ ] **"Property Photos" heading** above photo grid
+- [ ] 4 property photos in 2×2 grid — **NO individual captions** (unless broker-verified)
 - [ ] Narrative description (2-3 paragraphs minimum)
 - [ ] Location paragraph with Walk Score, transit, employers, median income
 - [ ] Target buyer profile callout box
