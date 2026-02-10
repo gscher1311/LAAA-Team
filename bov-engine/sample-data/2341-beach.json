@@ -136,7 +136,7 @@
       { "num": 10, "address": "535 Rose Ave", "units": 3, "date": "04/17/25", "price": 1525000, "per_unit": 508333, "cap": "—", "grm": "—", "year_built": "1947", "notes": "Mixed-use", "tier": "Value-Add", "coords": [33.998944, -118.472847] },
       { "num": 11, "address": "2200 Penmar Ave", "units": 3, "date": "09/08/25", "price": 1400000, "per_unit": 466667, "cap": "4.41%", "grm": "14.5", "year_built": "1963", "notes": "Garage parking", "tier": "Value-Add", "coords": [33.997381, -118.452924] }
     ],
-    "averages": { "price": 1938000, "per_unit": 627000, "cap": "5.30%", "grm": "13.5" },
+    "averages": { "price": 1937818, "per_unit": 645636, "cap": "5.28%", "grm": "13.4" },
     "medians": { "price": 1846000, "per_unit": 615333, "cap": "5.19%", "grm": "13.8" },
     "table_note": "GRM calculated on gross scheduled rent only. 3 additional off-market sales and 1 outlier excluded from core analysis. All comps are 3-unit properties in Venice sold within the last 12 months.",
     "narrative": "At the suggested list price of $1,995,000, the subject trades at $665,000/unit and $1,175/SF, with a 4.73% current cap rate. The per-unit pricing is in line with the 549 San Juan Ave comp ($667K/unit), which sold needing work at 101.5% of asking. The subject's fully renovated condition justifies pricing at or above this benchmark. The most comparable same-street sale is 2318 Beach Ave ($917K/unit, 4.97% cap), which sets the ceiling for the corridor but reflects a larger, townhouse-style building. The 2428 Ocean Ave comp ($647K/unit, 6.19% cap) provides a realistic floor for quality Venice triplexes. The subject's positioning between these comps is appropriate given its renovated condition, stabilized income, and Silver Triangle location."

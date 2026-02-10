@@ -328,7 +328,7 @@ Before generating any BOV HTML, complete these steps:
 4. City, State, Zip
 5. Gold divider line
 6. "Suggested List Price" label + price
-7. Key stats row: Units, Square Feet, Year Built, Acres
+7. Key stats row: Units, Square Feet, Year Built (show all build years, e.g. "1921/1977"), Acres
 8. Client greeting ("Prepared Exclusively for [Client]")
 9. **Date line** (e.g., "February 2026")
 10. Cover photo with gold border
@@ -535,7 +535,7 @@ Before considering a BOV complete, verify ALL of the following:
 - [ ] "Broker Opinion of Value" label
 - [ ] Property address (street + city/state/zip)
 - [ ] Suggested list price
-- [ ] Key stats: Units, Square Feet, Year Built, Lot Size (Acres)
+- [ ] Key stats: Units, Square Feet, **Year Built (all build years if multiple structures)**, Lot Size (Acres)
 - [ ] **Lead agent name and title**
 - [ ] **Date (Month Year)**
 - [ ] Client greeting with URL parameter personalization
@@ -572,7 +572,7 @@ Before considering a BOV complete, verify ALL of the following:
 - [ ] Comp table with #, Address, Units, Sale Date, Price, $/Unit, Cap, GRM, Yr Built, Notes
 - [ ] **Comp tiering labels** (Stabilized, Value-Add, Distressed) in Notes column
 - [ ] **Subject row** bold and clearly labeled in comp table
-- [ ] Averages and medians row
+- [ ] Averages and medians row — **must be calculated from ALL displayed comps, not a subset**. If any comps are excluded from averages, they must be visually separated or footnoted.
 - [ ] Table note about GRM methodology and exclusions
 - [ ] Narrative analysis positioning subject vs. comp **tiers** with ceiling/floor identification
 
