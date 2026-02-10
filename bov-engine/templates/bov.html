@@ -167,31 +167,77 @@ a { color: #C5A258; text-decoration: none; }
 /* ========== NARRATIVE TEXT ========== */
 .narrative { font-size: 15px; line-height: 1.7; color: #444; margin-bottom: 20px; }
 
-/* ========== RESPONSIVE ========== */
+/* ========== TABLE SCROLL (mobile horizontal scroll) ========== */
+.table-scroll { overflow-x: visible; }
+
+/* ========== RESPONSIVE — TABLET (768px) ========== */
 @media (max-width: 768px) {
-  .section { padding: 40px 24px; }
+  .cover { padding: 40px 20px; }
   .cover-address { font-size: 28px; }
-  .cover-price { font-size: 36px; }
-  .cover-stats { gap: 20px; }
+  .cover-city { font-size: 16px; }
+  .cover-price { font-size: 36px; margin-bottom: 20px; }
+  .cover-stats { gap: 20px; flex-wrap: wrap; justify-content: center; }
+  .cover-stat-value { font-size: 22px; }
+  .cover-photo { max-width: 100%; }
+  .section { padding: 40px 24px; }
+  .section-title { font-size: 22px; }
   .metrics-grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .metric-card { padding: 16px 12px; }
+  .metric-value { font-size: 22px; }
   .track-grid { grid-template-columns: repeat(2, 1fr); }
+  .track-card .track-value { font-size: 26px; }
   .detail-grid { grid-template-columns: 1fr; }
   .photo-grid { grid-template-columns: 1fr; }
   .data-table { font-size: 12px; }
-  .data-table thead th, .data-table tbody td { padding: 8px 6px; }
+  .data-table thead th { font-size: 10px; padding: 8px 5px; }
+  .data-table tbody td { padding: 8px 5px; }
+  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 24px; }
+  .table-scroll .data-table { min-width: 580px; margin-bottom: 0; }
+  .map-container { height: 300px; }
   .agent-grid { gap: 24px; }
   .footer { padding: 40px 24px; }
+  .toc-nav { padding: 0 12px; }
+  .toc-nav a { font-size: 10px; padding: 12px 10px; }
+  .callout-box { padding: 16px 18px; font-size: 13px; }
+  .buyer-item { font-size: 13px; }
+  .narrative { font-size: 14px; }
 }
+
+/* ========== RESPONSIVE — PHONE (420px) ========== */
 @media (max-width: 420px) {
-  .section { padding: 24px 12px; }
+  .cover { padding: 30px 16px; }
   .cover-address { font-size: 22px; }
+  .cover-city { font-size: 14px; }
   .cover-price { font-size: 28px; }
   .cover-stats { gap: 12px; }
-  .cover-stat-value { font-size: 20px; }
+  .cover-stat-value { font-size: 18px; }
+  .cover-stat-label { font-size: 9px; }
+  .cover-label { font-size: 11px; letter-spacing: 2px; }
+  .cover-agent { font-size: 11px; }
+  .cover-date { font-size: 11px; }
+  .cover-nyse { font-size: 9px; }
+  .section { padding: 24px 12px; }
+  .section-title { font-size: 20px; }
+  .section-subtitle { font-size: 11px; }
   .metrics-grid-4 { grid-template-columns: 1fr; }
+  .metric-card { padding: 14px 10px; }
+  .metric-value { font-size: 20px; }
   .track-grid { grid-template-columns: 1fr 1fr; }
-  .toc-nav { padding: 0 8px; }
-  .toc-nav a { font-size: 10px; padding: 10px 8px; }
+  .track-card { padding: 16px 10px; }
+  .track-card .track-value { font-size: 22px; }
+  .map-container { height: 250px; }
+  .toc-nav { padding: 0 6px; }
+  .toc-nav a { font-size: 9px; padding: 10px 6px; letter-spacing: 0.5px; }
+  .footer { padding: 30px 12px; }
+  .agent-card { min-width: 150px; }
+  .agent-card img { width: 70px; height: 70px; }
+  .agent-card .agent-name { font-size: 14px; }
+  .agent-card .agent-contact { font-size: 10px; }
+  .footer-disclaimer { font-size: 9px; }
+  .narrative { font-size: 13px; line-height: 1.6; }
+  .callout-box { font-size: 12px; padding: 14px 16px; }
+  .detail-table { font-size: 12px; }
+  .detail-table td { padding: 6px 8px; }
 }
 
 /* ========== PRINT ========== */
@@ -431,6 +477,7 @@ a { color: #C5A258; text-decoration: none; }
   <div id="sale-map" class="map-container"></div>
   <p class="map-fallback">Interactive map available at the live URL.</p>
 
+  <div class="table-scroll">
   <table class="data-table">
     <thead>
       <tr>
@@ -475,6 +522,7 @@ a { color: #C5A258; text-decoration: none; }
       </tr>
     </tbody>
   </table>
+  </div>
   <p class="table-note">{{ sale_comps.table_note }}</p>
   <p class="narrative" style="margin-top:20px;">{{ sale_comps.narrative }}</p>
 </section>
@@ -488,6 +536,7 @@ a { color: #C5A258; text-decoration: none; }
   <div id="active-map" class="map-container"></div>
   <p class="map-fallback">Interactive map available at the live URL.</p>
 
+  <div class="table-scroll">
   <table class="data-table">
     <thead>
       <tr>
@@ -511,6 +560,7 @@ a { color: #C5A258; text-decoration: none; }
       {% endfor %}
     </tbody>
   </table>
+  </div>
   <p class="table-note">Active listing data as of {{ active_comps.as_of_date }}. DOM and pricing subject to change.</p>
   <p class="narrative" style="margin-top:20px;">{{ active_comps.narrative }}</p>
 </section>
@@ -586,6 +636,7 @@ a { color: #C5A258; text-decoration: none; }
 
   <!-- Unit Mix & Rent Roll -->
   <h3 style="font-size:18px; color:#1B3A5C; margin: 28px 0 12px;">Unit Mix &amp; Rent Roll</h3>
+  <div class="table-scroll">
   <table class="data-table">
     <thead>
       <tr><th>Unit</th><th>Type</th><th class="num-col">SF</th><th class="num-col">Current Rent</th><th class="num-col">Rent/SF</th><th class="num-col">Market Rent</th><th class="num-col">Mkt Rent/SF</th></tr>
@@ -619,6 +670,7 @@ a { color: #C5A258; text-decoration: none; }
       </tr>
     </tbody>
   </table>
+  </div>
 
   <!-- Operating Statement -->
   <h3 style="font-size:18px; color:#1B3A5C; margin: 28px 0 12px;">Operating Statement</h3>
@@ -718,6 +770,7 @@ a { color: #C5A258; text-decoration: none; }
 
   <!-- Pricing Matrix -->
   <h3 style="font-size:18px; color:#1B3A5C; margin: 28px 0 12px;">Pricing Matrix</h3>
+  <div class="table-scroll">
   <table class="data-table" id="pricing-matrix">
     <thead>
       <tr><th class="num-col">Price</th><th class="num-col">Cap Rate</th><th class="num-col">$/Unit</th><th class="num-col">$/SF</th><th class="num-col">GRM</th><th class="num-col">Cash-on-Cash</th><th class="num-col">DCR</th></tr>
@@ -726,6 +779,7 @@ a { color: #C5A258; text-decoration: none; }
       <!-- Populated by JavaScript -->
     </tbody>
   </table>
+  </div>
   <p class="table-note">Highlighted row represents the suggested list price. Cash-on-cash assumes {{ financials.financing.down_pct }}% down, {{ financials.financing.rate }}% rate, {{ financials.financing.amortization }}-year amortization.</p>
 
   <!-- Pricing Rationale -->
