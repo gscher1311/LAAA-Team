@@ -23,7 +23,8 @@
 15. [Comp Tiering & Classification](#15-comp-tiering--classification)
 16. [Pricing Rationale Narrative](#16-pricing-rationale-narrative)
 17. [Deal-Specific Conditions & Assumptions](#17-deal-specific-conditions--assumptions)
-18. [Phase 2 Features (Future)](#phase-2-features-future-implementation)
+18. [BOV Template Engine — Automated Build Pipeline](#18-bov-template-engine--automated-build-pipeline)
+19. [Phase 2 Features (Future)](#phase-2-features-future-implementation)
 
 ---
 
@@ -411,6 +412,105 @@ This is NOT the same as the general financial analysis narrative. The pricing ra
 
 ---
 
+## 18. BOV Template Engine — Automated Build Pipeline
+
+### Overview
+The LAAA Team has a Jinja2-based template engine that automates BOV creation. Instead of hand-coding each HTML file, Cursor fills in a **JSON data file** and the engine renders a fully compliant HTML page.
+
+### Location
+All files are in `LAAA-Team/bov-engine/`:
+```
+bov-engine/
+├── templates/
+│   └── bov.html              ← Master Jinja2 HTML template
+├── sample-data/
+│   └── 2341-beach.json       ← Example JSON (use as reference)
+├── scripts/
+│   ├── render_bov.py          ← Python: JSON → HTML
+│   ├── geocode_addresses.py   ← Python: Geocode all addresses
+│   └── export_pdf.js          ← Node.js: HTML → PDF
+└── output/                    ← Rendered HTML + PDF files
+```
+
+### New BOV Workflow (Step by Step)
+
+**Step 1: Create the JSON data file**
+- Copy `sample-data/2341-beach.json` as a starting point
+- Replace ALL values with the new deal's data
+- Key sections: `cover`, `property`, `sale_comps`, `active_comps`, `rent_comps`, `financials`
+- For photos, replace `"REPLACE_WITH_BASE64"` with actual base64-encoded image strings
+- For coordinates, leave them as `[0, 0]` — the geocoder will fill them in
+
+**Step 2: Geocode all addresses**
+```bash
+python scripts/geocode_addresses.py sample-data/NEW-DEAL.json --update
+```
+This reads every address from the JSON, geocodes it via ArcGIS, and writes the coordinates back.
+
+**Step 3: Render HTML**
+```bash
+python scripts/render_bov.py sample-data/NEW-DEAL.json
+```
+Output appears in `output/{repo-name}.html`.
+
+**Step 4: Local preview**
+```bash
+live-server output/
+```
+Opens a browser with hot-reload. Review every section visually.
+
+**Step 5: Export PDF (optional)**
+```bash
+node scripts/export_pdf.js output/NEW-DEAL.html
+```
+Generates a Letter-format PDF using Puppeteer headless Chrome.
+
+**Step 6: Deploy to GitHub Pages**
+```bash
+# Create repo
+gh repo create gscher1311/{repo-name} --public --description "Broker Opinion of Value - {Address}"
+# Clone and copy
+git clone https://github.com/gscher1311/{repo-name}
+cp output/{repo-name}.html {repo-name}/index.html
+cd {repo-name}
+git add index.html && git commit -m "Deploy BOV presentation - {Address}"
+git push origin main
+# Enable GitHub Pages in repo Settings → Pages → Source: main branch
+```
+
+### JSON Data Schema — Required Keys
+| Key | Type | Description |
+|-----|------|-------------|
+| `meta` | object | `repo_name`, `generated_date`, `version` |
+| `cover` | object | Address, price, units, SF, year built, lead agent, cover photo |
+| `team` | object | Team name, firm, track record stats, closings map URL |
+| `property` | object | Description, location, target buyers, photos, details |
+| `building_systems` | array | System name, condition, year for each building component |
+| `regulatory` | object | `line_items` array + source note + optional legal nonconforming note |
+| `transaction_history` | object | Prior sales array + narrative |
+| `coordinates` | object | `subject` lat/lng array |
+| `sale_comps` | object | `comps` array (with coords), averages, medians, narrative |
+| `active_comps` | object | `comps` array (with coords), as_of_date, narrative |
+| `rent_comps` | object | `groups` array (by bedroom count, each with comps + coords), narrative |
+| `financials` | object | Units, income, expenses, NOI, returns, financing, pricing rationale, conditions |
+| `agents` | array | Name, title, phone, email, license, headshot for each agent |
+| `office` | object | Office name, address, website |
+| `disclaimer` | string | Legal disclaimer text |
+
+### Benefits Over Manual HTML
+- **Consistency:** Every BOV uses the exact same template, formatting, and structure
+- **Speed:** 5 minutes to fill in JSON vs. hours of HTML editing
+- **Accuracy:** Financial calculations happen in the template (auto-computed Per Unit, %EGI, pricing matrix)
+- **Geocoding:** Automated — no more guessed coordinates
+- **PDF Export:** One command generates a professional PDF
+- **Maintenance:** Fix a bug once in the template, all future BOVs inherit the fix
+
+### When NOT to Use the Template Engine
+- If the deal requires a completely custom layout (rare)
+- If base64 image embedding is causing file size issues > 5MB — consider external image hosting
+
+---
+
 ## Phase 2 Features (Future Implementation)
 
 The following features are approved for future implementation once the core template is stable:
@@ -504,7 +604,7 @@ Before considering a BOV complete, verify ALL of the following:
 - [ ] Legal disclaimer
 
 ### Technical
-- [ ] All maps geocoded correctly (verified against actual addresses)
+- [ ] All maps geocoded correctly (verified via `geocode_addresses.py`)
 - [ ] Smooth scroll working
 - [ ] Active TOC highlighting working
 - [ ] Mobile responsive (test at 768px and 420px)
@@ -512,3 +612,5 @@ Before considering a BOV complete, verify ALL of the following:
 - [ ] Client URL parameter working
 - [ ] All financial calculations internally consistent
 - [ ] No broken images or missing data
+- [ ] BOV rendered via template engine (`render_bov.py`) — not hand-coded HTML
+- [ ] PDF export tested (`export_pdf.js`)

@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Broker Opinion of Value - {{ cover.address_street }}, {{ cover.address_city }}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+/* ========== RESET & BASE ========== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif; color: #333; line-height: 1.7; background: #fff; }
+img { max-width: 100%; height: auto; }
+a { color: #C5A258; text-decoration: none; }
+
+/* ========== COVER PAGE ========== */
+.cover {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1B3A5C 0%, #0f2440 100%);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 60px 20px;
+  position: relative;
+}
+.cover-logo { max-width: 200px; margin-bottom: 16px; opacity: 0.9; }
+.cover-nyse { font-size: 11px; letter-spacing: 2px; color: rgba(255,255,255,0.5); margin-bottom: 30px; text-transform: uppercase; }
+.cover-label { font-size: 13px; letter-spacing: 3px; text-transform: uppercase; color: #C5A258; margin-bottom: 8px; font-weight: 500; }
+.cover-address { font-size: 42px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 4px; }
+.cover-city { font-size: 20px; font-weight: 300; color: rgba(255,255,255,0.75); margin-bottom: 24px; }
+.cover-divider { width: 80px; height: 3px; background: #C5A258; margin: 0 auto 24px; }
+.cover-price-label { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.6); margin-bottom: 4px; }
+.cover-price { font-size: 48px; font-weight: 700; color: #C5A258; margin-bottom: 28px; }
+.cover-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; margin-bottom: 32px; }
+.cover-stat { text-align: center; }
+.cover-stat-value { font-size: 26px; font-weight: 700; display: block; }
+.cover-stat-label { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: rgba(255,255,255,0.55); }
+.cover-client { font-size: 15px; color: rgba(255,255,255,0.7); margin-bottom: 6px; }
+.cover-client span { color: #C5A258; font-weight: 600; }
+.cover-agent { font-size: 13px; color: rgba(255,255,255,0.5); margin-bottom: 4px; }
+.cover-date { font-size: 13px; color: rgba(255,255,255,0.45); margin-bottom: 32px; }
+.cover-photo {
+  max-width: 700px; width: 100%; border-radius: 8px;
+  border: 3px solid #C5A258; box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+}
+
+/* ========== TOC NAV ========== */
+.toc-nav {
+  background: #1B3A5C; padding: 0 40px;
+  display: flex; flex-wrap: nowrap; gap: 0;
+  justify-content: center; align-items: stretch;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+}
+.toc-nav a {
+  color: rgba(255,255,255,0.65); text-decoration: none;
+  font-size: 11px; font-weight: 500; letter-spacing: 1px;
+  text-transform: uppercase; padding: 14px 16px;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease; white-space: nowrap;
+  display: flex; align-items: center;
+}
+.toc-nav a:hover { color: #fff; background: rgba(197,162,88,0.12); border-bottom-color: rgba(197,162,88,0.4); }
+.toc-nav a.toc-active { color: #C5A258; font-weight: 600; border-bottom-color: #C5A258; }
+
+/* ========== SECTIONS ========== */
+.section { padding: 60px 50px; max-width: 1100px; margin: 0 auto; }
+.section-alt { background: #f8f9fa; }
+.section-title {
+  font-size: 28px; font-weight: 700; color: #1B3A5C;
+  margin-bottom: 6px;
+}
+.section-subtitle {
+  font-size: 13px; text-transform: uppercase; letter-spacing: 2px;
+  color: #C5A258; margin-bottom: 24px; font-weight: 500;
+}
+.section-divider {
+  width: 60px; height: 3px; margin-bottom: 30px;
+  background: linear-gradient(90deg, #C5A258, transparent);
+}
+
+/* ========== METRIC CARDS ========== */
+.metrics-grid { display: grid; gap: 20px; margin-bottom: 36px; }
+.metrics-grid-4 { grid-template-columns: repeat(4, 1fr); }
+.metric-card {
+  background: #1B3A5C; border-radius: 12px;
+  padding: 24px; text-align: center; color: #fff;
+}
+.metric-value { display: block; font-size: 28px; font-weight: 700; margin-bottom: 4px; }
+.metric-label { display: block; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: rgba(255,255,255,0.6); }
+.metric-sub { display: block; font-size: 12px; color: #C5A258; margin-top: 4px; }
+
+/* ========== TABLES ========== */
+.data-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px; }
+.data-table thead th {
+  background: #1B3A5C; color: #fff; padding: 10px 12px;
+  text-align: left; font-size: 12px; text-transform: uppercase;
+  letter-spacing: 0.5px; font-weight: 600;
+}
+.data-table thead th.num-col { text-align: right; }
+.data-table tbody td { padding: 10px 12px; border-bottom: 1px solid #eee; }
+.data-table tbody td.num-col { text-align: right; font-variant-numeric: tabular-nums; }
+.data-table tbody tr:hover { background: #f5f5f5; }
+.data-table tbody tr.highlight { background: #FFF8E7; font-weight: 600; border-left: 3px solid #C5A258; border-right: 3px solid #C5A258; }
+.data-table tbody tr.total-row { font-weight: 700; border-top: 2px solid #1B3A5C; background: #f0f2f5; }
+.data-table tbody tr.subtotal-row { font-weight: 600; background: #f8f9fa; }
+.table-note { font-size: 12px; color: #888; margin-top: 8px; font-style: italic; }
+
+/* ========== DETAIL TABLES ========== */
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+.detail-table { width: 100%; font-size: 13px; border-collapse: collapse; }
+.detail-table td { padding: 8px 12px; border-bottom: 1px solid #eee; }
+.detail-table td:first-child { font-weight: 600; color: #1B3A5C; width: 45%; }
+
+/* ========== PHOTO GRID ========== */
+.photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.photo-item img { width: 100%; border-radius: 8px; aspect-ratio: 16/10; object-fit: cover; }
+.photo-item .photo-label { text-align: center; font-size: 12px; color: #888; margin-top: 6px; }
+
+/* ========== MAP ========== */
+.map-container { border-radius: 8px; overflow: hidden; margin-bottom: 20px; border: 2px solid #eee; height: 380px; }
+.map-fallback { display: none; font-size: 13px; color: #888; }
+
+/* ========== CALLOUT BOX ========== */
+.callout-box {
+  background: #f0f4f8; border-left: 4px solid #C5A258; border-radius: 0 8px 8px 0;
+  padding: 20px 24px; margin: 24px 0; font-size: 14px; line-height: 1.7;
+}
+.callout-box strong { color: #1B3A5C; }
+
+/* ========== TARGET BUYERS ========== */
+.buyer-list { margin: 20px 0; }
+.buyer-item { margin-bottom: 16px; }
+.buyer-item strong { color: #1B3A5C; }
+.buyer-item p { margin-top: 4px; color: #555; font-size: 14px; }
+
+/* ========== TRACK RECORD STATS ========== */
+.track-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 30px; }
+.track-card {
+  background: #1B3A5C; border-radius: 12px; padding: 24px 16px;
+  text-align: center; color: #fff;
+}
+.track-card .track-value { font-size: 32px; font-weight: 700; display: block; margin-bottom: 4px; }
+.track-card .track-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.55); display: block; }
+.track-card .track-sub { font-size: 11px; color: #C5A258; display: block; margin-top: 4px; }
+
+/* ========== FOOTER ========== */
+.footer { background: #1B3A5C; color: #fff; padding: 60px 50px; }
+.agent-grid { display: flex; gap: 40px; justify-content: center; flex-wrap: wrap; margin-bottom: 30px; }
+.agent-card { text-align: center; min-width: 200px; }
+.agent-card img {
+  width: 100px; height: 100px; border-radius: 50%;
+  border: 3px solid #C5A258; object-fit: cover; margin-bottom: 12px;
+}
+.agent-card .agent-name { font-size: 16px; font-weight: 600; }
+.agent-card .agent-title { font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 8px; }
+.agent-card .agent-contact { font-size: 12px; color: rgba(255,255,255,0.5); }
+.footer-office { text-align: center; font-size: 13px; color: rgba(255,255,255,0.5); margin-bottom: 24px; }
+.footer-disclaimer { text-align: center; font-size: 11px; color: rgba(255,255,255,0.35); max-width: 800px; margin: 0 auto; line-height: 1.6; }
+
+/* ========== NARRATIVE TEXT ========== */
+.narrative { font-size: 15px; line-height: 1.7; color: #444; margin-bottom: 20px; }
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 768px) {
+  .section { padding: 40px 24px; }
+  .cover-address { font-size: 28px; }
+  .cover-price { font-size: 36px; }
+  .cover-stats { gap: 20px; }
+  .metrics-grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .track-grid { grid-template-columns: repeat(2, 1fr); }
+  .detail-grid { grid-template-columns: 1fr; }
+  .photo-grid { grid-template-columns: 1fr; }
+  .data-table { font-size: 12px; }
+  .data-table thead th, .data-table tbody td { padding: 8px 6px; }
+  .agent-grid { gap: 24px; }
+  .footer { padding: 40px 24px; }
+}
+@media (max-width: 420px) {
+  .section { padding: 24px 12px; }
+  .cover-address { font-size: 22px; }
+  .cover-price { font-size: 28px; }
+  .cover-stats { gap: 12px; }
+  .cover-stat-value { font-size: 20px; }
+  .metrics-grid-4 { grid-template-columns: 1fr; }
+  .track-grid { grid-template-columns: 1fr 1fr; }
+  .toc-nav { padding: 0 8px; }
+  .toc-nav a { font-size: 10px; padding: 10px 8px; }
+}
+
+/* ========== PRINT ========== */
+@media print {
+  .toc-nav { display: none !important; }
+  .map-container { display: none !important; }
+  .map-fallback { display: block !important; }
+  .cover { min-height: auto; padding: 40px 20px; page-break-after: always; }
+  .section { padding: 30px 20px; page-break-inside: avoid; }
+  body { font-size: 11px; }
+  .cover-address { font-size: 28px; }
+  .cover-price { font-size: 32px; }
+  .section-title { font-size: 20px; }
+  .data-table { font-size: 10px; }
+  @page { size: letter; margin: 0.5in; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===================== COVER PAGE ===================== -->
+<section class="cover">
+  {% if cover.logo_base64 and cover.logo_base64 != 'REPLACE_WITH_BASE64' %}
+  <img src="data:image/png;base64,{{ cover.logo_base64 }}" alt="Marcus &amp; Millichap" class="cover-logo">
+  {% endif %}
+  <div class="cover-nyse">NYSE: MMI</div>
+  <div class="cover-label">Broker Opinion of Value</div>
+  <h1 class="cover-address">{{ cover.address_street }}</h1>
+  <div class="cover-city">{{ cover.address_city }}, {{ cover.address_state }} {{ cover.address_zip }}</div>
+  <div class="cover-divider"></div>
+  <div class="cover-price-label">Suggested List Price</div>
+  <div class="cover-price">${{ "{:,.0f}".format(cover.suggested_price) }}</div>
+  <div class="cover-stats">
+    <div class="cover-stat">
+      <span class="cover-stat-value">{{ cover.units }}</span>
+      <span class="cover-stat-label">Units</span>
+    </div>
+    <div class="cover-stat">
+      <span class="cover-stat-value">{{ "{:,.0f}".format(cover.building_sf) }}</span>
+      <span class="cover-stat-label">Square Feet</span>
+    </div>
+    <div class="cover-stat">
+      <span class="cover-stat-value">{{ cover.year_built }}</span>
+      <span class="cover-stat-label">Year Built</span>
+    </div>
+    <div class="cover-stat">
+      <span class="cover-stat-value">{{ cover.lot_acres }}</span>
+      <span class="cover-stat-label">Acres</span>
+    </div>
+  </div>
+  <div class="cover-client">Prepared Exclusively for <span id="client-name">{{ cover.get('default_client', '') }}</span></div>
+  <div class="cover-agent">{{ cover.lead_agent }}, {{ cover.lead_agent_title }}</div>
+  <div class="cover-date">{{ meta.generated_date }}</div>
+  {% if cover.cover_photo_base64 and cover.cover_photo_base64 != 'REPLACE_WITH_BASE64' %}
+  <img src="data:image/jpeg;base64,{{ cover.cover_photo_base64 }}" alt="{{ cover.address_street }}" class="cover-photo">
+  {% endif %}
+</section>
+
+<!-- ===================== TOC NAV ===================== -->
+<nav class="toc-nav" id="toc-nav">
+  <a href="#track-record">Track Record</a>
+  <a href="#overview">Overview</a>
+  <a href="#building-systems">Building Systems</a>
+  <a href="#regulatory">Regulatory</a>
+  <a href="#transactions">Transactions</a>
+  <a href="#sale-comps">Sale Comps</a>
+  <a href="#on-market">On-Market</a>
+  <a href="#rent-comps">Rent Comps</a>
+  <a href="#financials">Financials</a>
+  <a href="#contact">Contact</a>
+</nav>
+
+<!-- ===================== TRACK RECORD ===================== -->
+<section class="section" id="track-record">
+  <div class="section-subtitle">Team Credentials</div>
+  <h2 class="section-title">{{ team.name }} at {{ team.firm }}</h2>
+  <div class="section-divider"></div>
+
+  <div class="track-grid">
+    <div class="track-card">
+      <span class="track-value">{{ "{:,}".format(team.stats.closed_transactions) }}</span>
+      <span class="track-label">Closed Transactions</span>
+      <span class="track-sub">Since {{ team.stats.closed_since }}</span>
+    </div>
+    <div class="track-card">
+      <span class="track-value">{{ team.stats.total_volume }}</span>
+      <span class="track-label">Total Sales Volume</span>
+      <span class="track-sub">All-Time</span>
+    </div>
+    <div class="track-card">
+      <span class="track-value">{{ "{:,}".format(team.stats.units_sold) }}</span>
+      <span class="track-label">Apartment Units Sold</span>
+      <span class="track-sub">All-Time</span>
+    </div>
+    <div class="track-card">
+      <span class="track-value">{{ team.stats.active_listings }}</span>
+      <span class="track-label">Active Listings</span>
+      <span class="track-sub">{{ team.stats.active_inventory }} Inventory</span>
+    </div>
+  </div>
+
+  <p class="narrative" style="text-align:center;">
+    View our interactive closings map at <a href="{{ team.closings_map_url }}" target="_blank"><strong>{{ team.closings_map_url | replace('https://', '') }}</strong></a>
+  </p>
+  <p class="map-fallback">View our interactive closings map at {{ team.closings_map_url }}</p>
+</section>
+
+<!-- ===================== PROPERTY OVERVIEW ===================== -->
+<section class="section section-alt" id="overview">
+  <div class="section-subtitle">Property Overview</div>
+  <h2 class="section-title">{{ cover.address_street }}, {{ cover.address_city }}, {{ cover.address_state }} {{ cover.address_zip }}</h2>
+  <div class="section-divider"></div>
+
+  <!-- Photo Grid -->
+  <div class="photo-grid">
+    {% for photo in property.photos %}
+    <div class="photo-item">
+      {% if photo.base64 and photo.base64 != 'REPLACE_WITH_BASE64' %}
+      <img src="data:image/jpeg;base64,{{ photo.base64 }}" alt="{{ photo.label }}">
+      {% else %}
+      <div style="width:100%;height:200px;background:#e0e0e0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#999;font-size:14px;">{{ photo.label }}</div>
+      {% endif %}
+      <div class="photo-label">{{ photo.label }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Description -->
+  <p class="narrative">{{ property.description }}</p>
+  {% if property.description_continued %}
+  <p class="narrative">{{ property.description_continued }}</p>
+  {% endif %}
+
+  <!-- Location -->
+  <p class="narrative"><strong>Location.</strong> {{ property.location_paragraph }}</p>
+
+  <!-- Target Buyers -->
+  <h3 style="font-size:18px; color:#1B3A5C; margin: 28px 0 12px;">Target Buyer Profile</h3>
+  <div class="buyer-list">
+    {% for buyer in property.target_buyers %}
+    <div class="buyer-item">
+      <strong>{{ buyer.type }}</strong> &mdash;
+      <span style="color:#555; font-size:14px;">{{ buyer.description }}</span>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Property Details -->
+  <div class="detail-grid">
+    <table class="detail-table">
+      <tr><td>Address</td><td>{{ cover.address_street }}, {{ cover.address_city }}, {{ cover.address_state }} {{ cover.address_zip }}</td></tr>
+      <tr><td>APN</td><td>{{ property.details.apn }}</td></tr>
+      <tr><td>Year Built</td><td>{{ property.details.year_built }}</td></tr>
+      <tr><td>Units</td><td>{{ property.details.units }}</td></tr>
+      <tr><td>Building SF</td><td>{{ "{:,}".format(property.details.building_sf) }}</td></tr>
+      <tr><td>Lot Size</td><td>{{ "{:,}".format(property.details.lot_sf) }} SF ({{ property.details.lot_acres }} Acres)</td></tr>
+      <tr><td>Construction</td><td>{{ property.details.construction }}</td></tr>
+    </table>
+    <table class="detail-table">
+      <tr><td>Zoning</td><td>{{ property.details.zoning }}</td></tr>
+      <tr><td>TOC Tier</td><td>{{ property.details.toc_tier }}</td></tr>
+      <tr><td>Rent Control</td><td>{{ property.details.rent_control }}</td></tr>
+      <tr><td>Stories</td><td>{{ property.details.stories }}</td></tr>
+      <tr><td>Parking</td><td>{{ property.details.parking }}</td></tr>
+      <tr><td>Council District</td><td>{{ property.details.council_district }}</td></tr>
+      <tr><td>Community Plan</td><td>{{ property.details.community_plan }}</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ===================== BUILDING SYSTEMS ===================== -->
+<section class="section" id="building-systems">
+  <div class="section-subtitle">Capital Improvements</div>
+  <h2 class="section-title">Building Systems & Capital Improvements</h2>
+  <div class="section-divider"></div>
+  <table class="data-table">
+    <thead><tr><th>System</th><th>Condition / Status</th><th>Year</th></tr></thead>
+    <tbody>
+      {% for sys in building_systems %}
+      <tr><td>{{ sys.system }}</td><td>{{ sys.condition }}</td><td>{{ sys.year }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<!-- ===================== REGULATORY ===================== -->
+<section class="section section-alt" id="regulatory">
+  <div class="section-subtitle">Compliance</div>
+  <h2 class="section-title">Regulatory & Compliance Summary</h2>
+  <div class="section-divider"></div>
+  <table class="data-table">
+    <thead><tr><th>Item</th><th>Status</th></tr></thead>
+    <tbody>
+      {% for item in regulatory.line_items %}
+      <tr><td>{{ item.item }}</td><td>{{ item.status }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="table-note">Source: {{ regulatory.source_note }}</p>
+
+  {% if regulatory.legal_nonconforming_note %}
+  <div class="callout-box" style="margin-top: 24px;">
+    <strong>Legal Nonconforming Use Note</strong><br>
+    {{ regulatory.legal_nonconforming_note }}
+  </div>
+  {% endif %}
+</section>
+
+<!-- ===================== TRANSACTION HISTORY ===================== -->
+<section class="section" id="transactions">
+  <div class="section-subtitle">Prior Sales</div>
+  <h2 class="section-title">Transaction History</h2>
+  <div class="section-divider"></div>
+  <table class="data-table">
+    <thead><tr><th>Date</th><th class="num-col">Sale Price</th><th class="num-col">$/Unit</th><th class="num-col">$/SF</th><th>Notes</th></tr></thead>
+    <tbody>
+      {% for sale in transaction_history.sales %}
+      <tr>
+        <td>{{ sale.date }}</td>
+        <td class="num-col">${{ "{:,.0f}".format(sale.price) }}</td>
+        <td class="num-col">${{ "{:,.0f}".format(sale.per_unit) }}</td>
+        <td class="num-col">${{ "{:,.0f}".format(sale.per_sf) }}</td>
+        <td>{{ sale.notes }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="narrative" style="margin-top:16px;">{{ transaction_history.narrative }}</p>
+</section>
+
+<!-- ===================== COMPARABLE SALES ===================== -->
+<section class="section section-alt" id="sale-comps">
+  <div class="section-subtitle">Recent Closed Transactions</div>
+  <h2 class="section-title">Comparable Sales</h2>
+  <div class="section-divider"></div>
+
+  <div id="sale-map" class="map-container"></div>
+  <p class="map-fallback">Interactive map available at the live URL.</p>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>#</th><th>Address</th><th>Units</th><th>Sale Date</th>
+        <th class="num-col">Price</th><th class="num-col">$/Unit</th>
+        <th class="num-col">Cap</th><th class="num-col">GRM</th>
+        <th class="num-col">DOM</th><th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for comp in sale_comps.comps %}
+      <tr>
+        <td>{{ comp.num }}</td>
+        <td>{{ comp.address }}</td>
+        <td>{{ comp.units }}</td>
+        <td>{{ comp.date }}</td>
+        <td class="num-col">${{ "{:,.0f}".format(comp.price) }}</td>
+        <td class="num-col">${{ "{:,.0f}".format(comp.per_unit) }}</td>
+        <td class="num-col">{{ comp.cap }}</td>
+        <td class="num-col">{{ comp.grm }}</td>
+        <td class="num-col">{{ comp.dom }}</td>
+        <td>{{ comp.notes }}{% if comp.tier %} <em style="color:#C5A258;">[{{ comp.tier }}]</em>{% endif %}</td>
+      </tr>
+      {% endfor %}
+      <tr class="subtotal-row">
+        <td colspan="4">Averages (Sold)</td>
+        <td class="num-col">${{ "{:,.0f}".format(sale_comps.averages.price) }}</td>
+        <td class="num-col">${{ "{:,.0f}".format(sale_comps.averages.per_unit) }}</td>
+        <td class="num-col">{{ sale_comps.averages.cap }}</td>
+        <td class="num-col">{{ sale_comps.averages.grm }}</td>
+        <td class="num-col">{{ sale_comps.averages.dom }}</td>
+        <td></td>
+      </tr>
+      <tr class="subtotal-row">
+        <td colspan="4">Medians (Sold)</td>
+        <td class="num-col">${{ "{:,.0f}".format(sale_comps.medians.price) }}</td>
+        <td class="num-col">${{ "{:,.0f}".format(sale_comps.medians.per_unit) }}</td>
+        <td class="num-col">{{ sale_comps.medians.cap }}</td>
+        <td class="num-col">{{ sale_comps.medians.grm }}</td>
+        <td class="num-col">{{ sale_comps.medians.dom }}</td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="table-note">{{ sale_comps.table_note }}</p>
+  <p class="narrative" style="margin-top:20px;">{{ sale_comps.narrative }}</p>
+</section>
+
+<!-- ===================== ON-MARKET COMPS ===================== -->
+<section class="section" id="on-market">
+  <div class="section-subtitle">Currently Listed for Sale</div>
+  <h2 class="section-title">On-Market Comparables</h2>
+  <div class="section-divider"></div>
+
+  <div id="active-map" class="map-container"></div>
+  <p class="map-fallback">Interactive map available at the live URL.</p>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>#</th><th>Address</th><th>Units</th>
+        <th class="num-col">List Price</th><th class="num-col">$/Unit</th>
+        <th class="num-col">GRM</th><th class="num-col">DOM</th><th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for comp in active_comps.comps %}
+      <tr>
+        <td>{{ comp.num }}</td>
+        <td>{{ comp.address }}</td>
+        <td>{{ comp.units }}</td>
+        <td class="num-col">${{ "{:,.0f}".format(comp.price) }}</td>
+        <td class="num-col">${{ "{:,.0f}".format(comp.per_unit) }}</td>
+        <td class="num-col">{{ comp.grm }}</td>
+        <td class="num-col">{{ comp.dom }}</td>
+        <td>{{ comp.notes }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="table-note">Active listing data as of {{ active_comps.as_of_date }}. DOM and pricing subject to change.</p>
+  <p class="narrative" style="margin-top:20px;">{{ active_comps.narrative }}</p>
+</section>
+
+<!-- ===================== RENT COMPS ===================== -->
+<section class="section section-alt" id="rent-comps">
+  <div class="section-subtitle">Venice Market Survey</div>
+  <h2 class="section-title">Rent Comparables</h2>
+  <div class="section-divider"></div>
+
+  <div id="rent-map" class="map-container"></div>
+  <p class="map-fallback">Interactive map available at the live URL.</p>
+
+  {% for group in rent_comps.groups %}
+  <h3 style="font-size:16px; color:#1B3A5C; margin: 24px 0 12px;">{{ group.label }}</h3>
+  <table class="data-table">
+    <thead>
+      <tr><th>#</th><th>Address</th><th>Type</th><th class="num-col">SF</th><th class="num-col">Rent</th><th class="num-col">$/SF</th></tr>
+    </thead>
+    <tbody>
+      {% for comp in group.comps %}
+      <tr>
+        <td>{{ comp.num }}</td>
+        <td>{{ comp.address }}</td>
+        <td>{{ comp.type }}</td>
+        <td class="num-col">{{ "{:,.0f}".format(comp.sf) }}</td>
+        <td class="num-col">${{ "{:,.0f}".format(comp.rent) }}</td>
+        <td class="num-col">${{ "%.2f" | format(comp.per_sf) }}</td>
+      </tr>
+      {% endfor %}
+      <tr class="subtotal-row">
+        <td colspan="2">{{ group.label.split()[0] }} Average</td>
+        <td></td>
+        <td class="num-col">{{ "{:,.0f}".format(group.avg_sf) }}</td>
+        <td class="num-col">${{ "{:,.0f}".format(group.avg_rent) }}</td>
+        <td class="num-col">${{ "%.2f" | format(group.avg_per_sf) }}</td>
+      </tr>
+    </tbody>
+  </table>
+  {% endfor %}
+
+  <p class="narrative" style="margin-top:20px;">{{ rent_comps.narrative }}</p>
+</section>
+
+<!-- ===================== FINANCIAL ANALYSIS ===================== -->
+<section class="section" id="financials">
+  <div class="section-subtitle">Investment Underwriting</div>
+  <h2 class="section-title">Financial Analysis</h2>
+  <div class="section-divider"></div>
+
+  <!-- 4 Pricing Metric Cards -->
+  {% set price = cover.suggested_price %}
+  {% set units = cover.units %}
+  {% set sf = cover.building_sf %}
+  <div class="metrics-grid metrics-grid-4">
+    <div class="metric-card">
+      <span class="metric-value">${{ "{:,.0f}".format(price // units) }}</span>
+      <span class="metric-label">Price / Unit</span>
+    </div>
+    <div class="metric-card">
+      <span class="metric-value">${{ "{:,.0f}".format(price // sf) }}</span>
+      <span class="metric-label">Price / SF</span>
+    </div>
+    <div class="metric-card">
+      <span class="metric-value">{{ financials.returns.current.cap_rate }}</span>
+      <span class="metric-label">Current Cap Rate</span>
+    </div>
+    <div class="metric-card">
+      <span class="metric-value">{{ financials.returns.current.grm }}x</span>
+      <span class="metric-label">Current GRM</span>
+    </div>
+  </div>
+
+  <!-- Unit Mix & Rent Roll -->
+  <h3 style="font-size:18px; color:#1B3A5C; margin: 28px 0 12px;">Unit Mix &amp; Rent Roll</h3>
+  <table class="data-table">
+    <thead>
+      <tr><th>Unit</th><th>Type</th><th class="num-col">SF</th><th class="num-col">Current Rent</th><th class="num-col">Rent/SF</th><th class="num-col">Market Rent</th><th class="num-col">Mkt Rent/SF</th></tr>
+    </thead>
+    <tbody>
+      {% set total_sf = namespace(val=0) %}
+      {% set total_rent = namespace(val=0) %}
+      {% set total_mkt = namespace(val=0) %}
+      {% for u in financials.units %}
+      {% set total_sf.val = total_sf.val + u.sf %}
+      {% set total_rent.val = total_rent.val + u.current_rent %}
+      {% set total_mkt.val = total_mkt.val + u.market_rent %}
+      <tr>
+        <td>{{ u.unit }}</td>
+        <td>{{ u.type }}</td>
+        <td class="num-col">{{ u.sf }}</td>
+        <td class="num-col">${{ "{:,.0f}".format(u.current_rent) }}</td>
+        <td class="num-col">${{ "%.2f" | format(u.rent_per_sf) }}</td>
+        <td class="num-col">${{ "{:,.0f}".format(u.market_rent) }}</td>
+        <td class="num-col">${{ "%.2f" | format(u.market_per_sf) }}</td>
+      </tr>
+      {% endfor %}
+      <tr class="total-row">
+        <td><strong>Total</strong></td>
+        <td></td>
+        <td class="num-col"><strong>{{ "{:,}".format(total_sf.val) }}</strong></td>
+        <td class="num-col"><strong>${{ "{:,.0f}".format(total_rent.val) }}/mo</strong></td>
+        <td class="num-col"><strong>${{ "%.2f" | format(total_rent.val / total_sf.val) }}</strong></td>
+        <td class="num-col"><strong>${{ "{:,.0f}".format(total_mkt.val) }}/mo</strong></td>
+        <td class="num-col"><strong>${{ "%.2f" | format(total_mkt.val / total_sf.val) }}</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Operating Statement -->
+  <h3 style="font-size:18px; color:#1B3A5C; margin: 28px 0 12px;">Operating Statement</h3>
+  {% set egi = financials.income.effective_gross_income %}
+  <table class="data-table">
+    <thead>
+      <tr><th>Income</th><th class="num-col">Annual</th><th class="num-col">Per Unit</th><th class="num-col">% EGI</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Gross Scheduled Rent</td>
+        <td class="num-col">${{ "{:,.0f}".format(financials.income.gross_scheduled_rent) }}</td>
+        <td class="num-col">${{ "{:,.0f}".format(financials.income.gross_scheduled_rent // units) }}</td>
+        <td class="num-col">&mdash;</td>
+      </tr>
+      <tr>
+        <td>Less: Vacancy ({{ financials.income.vacancy_pct }}%)</td>
+        <td class="num-col">(${{ "{:,.0f}".format(financials.income.vacancy_amount) }})</td>
+        <td class="num-col">(${{ "{:,.0f}".format(financials.income.vacancy_amount // units) }})</td>
+        <td class="num-col">&mdash;</td>
+      </tr>
+      <tr>
+        <td>Effective Rental Income</td>
+        <td class="num-col">${{ "{:,.0f}".format(financials.income.effective_rental_income) }}</td>
+        <td class="num-col">${{ "{:,.0f}".format(financials.income.effective_rental_income // units) }}</td>
+        <td class="num-col">&mdash;</td>
+      </tr>
+      <tr>
+        <td>Other Income ({{ financials.income.other_income_label }})</td>
+        <td class="num-col">${{ "{:,.0f}".format(financials.income.other_income) }}</td>
+        <td class="num-col">${{ "{:,.0f}".format(financials.income.other_income // units) }}</td>
+        <td class="num-col">&mdash;</td>
+      </tr>
+      <tr class="total-row">
+        <td><strong>Effective Gross Income</strong></td>
+        <td class="num-col"><strong>${{ "{:,.0f}".format(egi) }}</strong></td>
+        <td class="num-col"><strong>${{ "{:,.0f}".format(egi // units) }}</strong></td>
+        <td class="num-col"><strong>100.0%</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <table class="data-table" style="margin-top:0;">
+    <thead>
+      <tr><th>Expenses</th><th class="num-col">Annual</th><th class="num-col">Per Unit</th><th class="num-col">% EGI</th></tr>
+    </thead>
+    <tbody>
+      {% for exp in financials.expenses %}
+      <tr>
+        <td>{{ exp.item }}</td>
+        <td class="num-col">${{ "{:,.0f}".format(exp.amount) }}</td>
+        <td class="num-col">${{ "{:,.0f}".format(exp.amount // units) }}</td>
+        <td class="num-col">{{ "%.1f" | format(exp.amount / egi * 100) }}%</td>
+      </tr>
+      {% endfor %}
+      <tr class="total-row">
+        <td><strong>Total Expenses</strong></td>
+        <td class="num-col"><strong>${{ "{:,.0f}".format(financials.total_expenses) }}</strong></td>
+        <td class="num-col"><strong>${{ "{:,.0f}".format(financials.total_expenses // units) }}</strong></td>
+        <td class="num-col"><strong>{{ "%.1f" | format(financials.total_expenses / egi * 100) }}%</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <table class="data-table" style="margin-top:0;">
+    <tbody>
+      <tr class="total-row">
+        <td><strong>Net Operating Income</strong></td>
+        <td class="num-col"><strong>${{ "{:,.0f}".format(financials.noi) }}</strong></td>
+        <td class="num-col"><strong>${{ "{:,.0f}".format(financials.noi // units) }}</strong></td>
+        <td class="num-col"><strong>{{ "%.1f" | format(financials.noi / egi * 100) }}%</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Returns -->
+  <h3 style="font-size:18px; color:#1B3A5C; margin: 28px 0 12px;">Returns at ${{ "{:,.0f}".format(cover.suggested_price) }}</h3>
+  <div class="detail-grid">
+    <table class="detail-table">
+      <tr><td></td><td><strong>Current</strong></td><td><strong>Market</strong></td></tr>
+      <tr><td>Cap Rate</td><td>{{ financials.returns.current.cap_rate }}</td><td>{{ financials.returns.market.cap_rate }}</td></tr>
+      <tr><td>GRM</td><td>{{ financials.returns.current.grm }}</td><td>{{ financials.returns.market.grm }}</td></tr>
+      <tr><td>Cash-on-Cash</td><td>{{ financials.returns.current.cash_on_cash }}</td><td>{{ financials.returns.market.cash_on_cash }}</td></tr>
+      <tr><td>DCR</td><td>{{ financials.returns.current.dcr }}</td><td>{{ financials.returns.market.dcr }}</td></tr>
+      <tr><td>Total Return</td><td>{{ financials.returns.current.total_return }}</td><td>{{ financials.returns.market.total_return }}</td></tr>
+    </table>
+    <table class="detail-table">
+      <tr><td colspan="2" style="font-weight:700;color:#1B3A5C;">Financing Terms</td></tr>
+      <tr><td>Purchase Price</td><td>${{ "{:,.0f}".format(financials.financing.purchase_price) }}</td></tr>
+      <tr><td>Down Payment ({{ financials.financing.down_pct }}%)</td><td>${{ "{:,.0f}".format(financials.financing.down_amount) }}</td></tr>
+      <tr><td>Loan Amount ({{ financials.financing.ltv }}% LTV)</td><td>${{ "{:,.0f}".format(financials.financing.loan_amount) }}</td></tr>
+      <tr><td>Interest Rate</td><td>{{ financials.financing.rate }}%</td></tr>
+      <tr><td>Amortization</td><td>{{ financials.financing.amortization }} Years</td></tr>
+      <tr><td>Annual Debt Service</td><td>${{ "{:,.0f}".format(financials.financing.annual_debt_service) }}</td></tr>
+    </table>
+  </div>
+
+  <!-- Pricing Matrix -->
+  <h3 style="font-size:18px; color:#1B3A5C; margin: 28px 0 12px;">Pricing Matrix</h3>
+  <table class="data-table" id="pricing-matrix">
+    <thead>
+      <tr><th class="num-col">Price</th><th class="num-col">Cap Rate</th><th class="num-col">$/Unit</th><th class="num-col">$/SF</th><th class="num-col">GRM</th><th class="num-col">Cash-on-Cash</th><th class="num-col">DCR</th></tr>
+    </thead>
+    <tbody id="matrix-body">
+      <!-- Populated by JavaScript -->
+    </tbody>
+  </table>
+  <p class="table-note">Highlighted row represents the suggested list price. Cash-on-cash assumes {{ financials.financing.down_pct }}% down, {{ financials.financing.rate }}% rate, {{ financials.financing.amortization }}-year amortization.</p>
+
+  <!-- Pricing Rationale -->
+  {% if financials.pricing_rationale %}
+  <h3 style="font-size:18px; color:#1B3A5C; margin: 28px 0 12px;">Pricing Rationale</h3>
+  <p class="narrative">{{ financials.pricing_rationale }}</p>
+  {% endif %}
+
+  <!-- Conditions & Assumptions -->
+  {% if financials.conditions %}
+  <div class="callout-box" style="margin-top:28px;">
+    <strong>Assumptions &amp; Conditions</strong><br>
+    {{ financials.conditions }}
+  </div>
+  {% endif %}
+</section>
+
+<!-- ===================== FOOTER / CONTACT ===================== -->
+<section class="footer" id="contact">
+  <div class="agent-grid">
+    {% for agent in agents %}
+    <div class="agent-card">
+      {% if agent.headshot_base64 and agent.headshot_base64 != 'REPLACE_WITH_BASE64' %}
+      <img src="data:image/jpeg;base64,{{ agent.headshot_base64 }}" alt="{{ agent.name }}">
+      {% else %}
+      <div style="width:100px;height:100px;border-radius:50%;border:3px solid #C5A258;background:#2a4a6e;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.5);font-size:28px;font-weight:700;">{{ agent.name[0] }}</div>
+      {% endif %}
+      <div class="agent-name">{{ agent.name }}</div>
+      <div class="agent-title">{{ agent.title }}</div>
+      <div class="agent-contact">
+        {{ agent.phone }} | {{ agent.email }}<br>
+        License: {{ agent.license }}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="footer-office">{{ office.name }} | {{ office.address }} | {{ office.website }}</div>
+  <div class="footer-disclaimer">{{ disclaimer }}</div>
+</section>
+
+<!-- ===================== JAVASCRIPT ===================== -->
+<script>
+(function() {
+  // Client personalization
+  var params = new URLSearchParams(window.location.search);
+  var client = params.get('client');
+  if (client) {
+    document.getElementById('client-name').textContent = client;
+  }
+
+  // Smooth scroll for TOC
+  document.querySelectorAll('.toc-nav a').forEach(function(link) {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      var target = document.querySelector(this.getAttribute('href'));
+      if (target) {
+        var offset = document.querySelector('.toc-nav').offsetHeight + 10;
+        window.scrollTo({ top: target.offsetTop - offset, behavior: 'smooth' });
+      }
+    });
+  });
+
+  // Active TOC highlight
+  var sections = document.querySelectorAll('section[id]');
+  var tocLinks = document.querySelectorAll('.toc-nav a');
+  window.addEventListener('scroll', function() {
+    var scrollPos = window.scrollY + 100;
+    sections.forEach(function(sec) {
+      if (sec.offsetTop <= scrollPos && sec.offsetTop + sec.offsetHeight > scrollPos) {
+        tocLinks.forEach(function(l) {
+          l.classList.remove('toc-active');
+          if (l.getAttribute('href') === '#' + sec.id) l.classList.add('toc-active');
+        });
+      }
+    });
+  });
+
+  // ===== MAP HELPERS =====
+  function subjectIcon() {
+    return L.divIcon({
+      className: '', html: '<div style="background:#1B3A5C;color:#C5A258;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;border:2px solid #C5A258;box-shadow:0 2px 6px rgba(0,0,0,0.3);">&#9733;</div>',
+      iconSize: [28, 28], iconAnchor: [14, 14]
+    });
+  }
+  function compIcon(n) {
+    return L.divIcon({
+      className: '', html: '<div style="background:#1B3A5C;color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:2px solid #fff;box-shadow:0 2px 4px rgba(0,0,0,0.3);">' + n + '</div>',
+      iconSize: [24, 24], iconAnchor: [12, 12]
+    });
+  }
+  var tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+  var tileAttr = '&copy; OpenStreetMap contributors';
+  var subjectCoords = [{{ coordinates.subject[0] }}, {{ coordinates.subject[1] }}];
+
+  // ===== SALE COMPS MAP =====
+  var saleMap = L.map('sale-map').setView(subjectCoords, 14);
+  L.tileLayer(tileUrl, {attribution: tileAttr}).addTo(saleMap);
+  L.marker(subjectCoords, {icon: subjectIcon()}).bindPopup('<b>Subject: {{ cover.address_street }}</b>').addTo(saleMap);
+  var saleCoords = [subjectCoords];
+  {% for comp in sale_comps.comps %}
+  L.marker([{{ comp.coords[0] }}, {{ comp.coords[1] }}], {icon: compIcon({{ comp.num }})}).bindPopup('<b>Comp {{ comp.num }}: {{ comp.address }}</b><br>{{ comp.units }} Units | ${{ "{:,.0f}".format(comp.price) }} | ${{ "{:,.0f}".format(comp.per_unit) }}/unit').addTo(saleMap);
+  saleCoords.push([{{ comp.coords[0] }}, {{ comp.coords[1] }}]);
+  {% endfor %}
+  saleMap.fitBounds(saleCoords, {padding: [40, 40]});
+
+  // ===== ACTIVE COMPS MAP =====
+  var activeMap = L.map('active-map').setView(subjectCoords, 14);
+  L.tileLayer(tileUrl, {attribution: tileAttr}).addTo(activeMap);
+  L.marker(subjectCoords, {icon: subjectIcon()}).bindPopup('<b>Subject: {{ cover.address_street }}</b>').addTo(activeMap);
+  var activeCoords = [subjectCoords];
+  {% for comp in active_comps.comps %}
+  L.marker([{{ comp.coords[0] }}, {{ comp.coords[1] }}], {icon: compIcon({{ comp.num }})}).bindPopup('<b>Comp {{ comp.num }}: {{ comp.address }}</b><br>{{ comp.units }} Units | ${{ "{:,.0f}".format(comp.price) }} | ${{ "{:,.0f}".format(comp.per_unit) }}/unit<br>{{ comp.dom }} DOM').addTo(activeMap);
+  activeCoords.push([{{ comp.coords[0] }}, {{ comp.coords[1] }}]);
+  {% endfor %}
+  activeMap.fitBounds(activeCoords, {padding: [40, 40]});
+
+  // ===== RENT COMPS MAP =====
+  var rentMap = L.map('rent-map').setView(subjectCoords, 14);
+  L.tileLayer(tileUrl, {attribution: tileAttr}).addTo(rentMap);
+  L.marker(subjectCoords, {icon: subjectIcon()}).bindPopup('<b>Subject: {{ cover.address_street }}</b>').addTo(rentMap);
+  var rentCoords = [subjectCoords];
+  {% for group in rent_comps.groups %}
+  {% for comp in group.comps %}
+  L.marker([{{ comp.coords[0] }}, {{ comp.coords[1] }}], {icon: compIcon({{ comp.num }})}).bindPopup('<b>Comp {{ comp.num }}: {{ comp.address }}</b><br>{{ comp.type }} | ${{ "{:,.0f}".format(comp.rent) }}/mo').addTo(rentMap);
+  rentCoords.push([{{ comp.coords[0] }}, {{ comp.coords[1] }}]);
+  {% endfor %}
+  {% endfor %}
+  rentMap.fitBounds(rentCoords, {padding: [40, 40]});
+
+  // ===== PRICING MATRIX (auto-generated) =====
+  var suggestedPrice = {{ cover.suggested_price }};
+  var noi = {{ financials.noi }};
+  var gsr = {{ financials.income.gross_scheduled_rent }};
+  var units = {{ cover.units }};
+  var buildingSF = {{ cover.building_sf }};
+  var downPct = {{ financials.financing.down_pct }} / 100;
+  var rate = {{ financials.financing.rate }} / 100;
+  var amortYears = {{ financials.financing.amortization }};
+
+  // Determine increment
+  var increment;
+  if (suggestedPrice < 500000) increment = 5000;
+  else if (suggestedPrice < 1000000) increment = 10000;
+  else if (suggestedPrice < 2000000) increment = 25000;
+  else if (suggestedPrice < 5000000) increment = 50000;
+  else if (suggestedPrice < 10000000) increment = 100000;
+  else increment = 250000;
+
+  function calcDebtService(loanAmt) {
+    var mr = rate / 12;
+    var n = amortYears * 12;
+    var pmt = loanAmt * (mr * Math.pow(1 + mr, n)) / (Math.pow(1 + mr, n) - 1);
+    return pmt * 12;
+  }
+
+  var matrixBody = document.getElementById('matrix-body');
+  var startPrice = suggestedPrice - (5 * increment);
+  var endPrice = suggestedPrice + (5 * increment);
+
+  for (var p = startPrice; p <= endPrice; p += increment) {
+    var cap = (noi / p * 100).toFixed(2);
+    var perUnit = Math.round(p / units);
+    var perSF = Math.round(p / buildingSF);
+    var grm = (p / gsr).toFixed(2);
+    var downAmt = p * downPct;
+    var loanAmt = p - downAmt;
+    var ds = calcDebtService(loanAmt);
+    var coc = ((noi - ds) / downAmt * 100).toFixed(2);
+    var dcr = (noi / ds).toFixed(2);
+    var isHighlight = (p === suggestedPrice);
+    var row = '<tr' + (isHighlight ? ' class="highlight"' : '') + '>';
+    row += '<td class="num-col">$' + p.toLocaleString() + '</td>';
+    row += '<td class="num-col">' + cap + '%</td>';
+    row += '<td class="num-col">$' + perUnit.toLocaleString() + '</td>';
+    row += '<td class="num-col">$' + perSF.toLocaleString() + '</td>';
+    row += '<td class="num-col">' + grm + 'x</td>';
+    row += '<td class="num-col">' + coc + '%</td>';
+    row += '<td class="num-col">' + dcr + 'x</td>';
+    row += '</tr>';
+    matrixBody.innerHTML += row;
+  }
+})();
+</script>
+
+</body>
+</html>

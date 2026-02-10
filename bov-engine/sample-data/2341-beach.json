@@ -1,0 +1,277 @@
+{
+  "meta": {
+    "repo_name": "2341-beach-bov",
+    "generated_date": "February 2026",
+    "version": "1.0"
+  },
+
+  "cover": {
+    "address_street": "2341 Beach Ave",
+    "address_city": "Venice",
+    "address_state": "CA",
+    "address_zip": "90291",
+    "suggested_price": 1995000,
+    "units": 3,
+    "building_sf": 1698,
+    "year_built": "1921",
+    "lot_acres": 0.06,
+    "lead_agent": "Glen Scher",
+    "lead_agent_title": "Senior Managing Director Investments",
+    "cover_photo_base64": "REPLACE_WITH_BASE64"
+  },
+
+  "team": {
+    "name": "LA Apartment Advisors",
+    "firm": "Marcus & Millichap",
+    "stats": {
+      "closed_transactions": 466,
+      "closed_since": "1/1/2013",
+      "total_volume": "$1.48B",
+      "units_sold": 4539,
+      "active_listings": 28,
+      "active_inventory": "$134M"
+    },
+    "closings_map_url": "https://www.laaa.com"
+  },
+
+  "property": {
+    "description": "The LAAA Team is proud to present 2341 Beach Ave, a fully renovated 3-unit coastal triplex in Venice's Silver Triangle, one of the most desirable micro-neighborhoods on Los Angeles's Westside. The property consists of a 1921 single-family bungalow in front and a 1977 rear duplex, both comprehensively renovated in 2016-2017 with all permits finaled and a Certificate of Occupancy issued. All three units are currently leased at market rents totaling $11,600/month ($139,200 annually), with a blended rent of $6.83/SF.",
+    "description_continued": "The unit mix comprises one 2BR/1BA (700 SF) and two 1BR/1BA (499 SF each), all featuring in-unit washer/dryers, stainless steel appliances, mini-split HVAC, laminated waterproof flooring, skylights, soundproof walls, and French doors opening to a shared patio. The property operates as a documented legal nonconforming triplex in the R1-1-O zone, supported by a complete chain of City permits, a Certificate of Occupancy, Coastal Exemption approval, and RSO registration.",
+    "location_paragraph": "Venice's Silver Triangle sits blocks from Abbot Kinney Boulevard, Venice Beach, and the Venice Canals. The neighborhood commands a Walk Score of 83 and is served by Metro bus lines along Lincoln and Venice Boulevards. Silicon Beach employers including Google, Snap, and Amazon maintain offices within 2-3 miles, driving consistent demand from high-income renters. Median household income in Venice exceeds $125,000, placing it in the 97th percentile nationally.",
+    "target_buyers": [
+      {
+        "type": "1031 Exchange Investors",
+        "description": "Turnkey asset with zero deferred maintenance, immediate cash flow, and no lease-up risk. Ideal for a tax-deferred repositioning from a management-intensive property."
+      },
+      {
+        "type": "Owner-Occupants",
+        "description": "Live in the front 2BR house and offset housing costs with approximately $6,400/month in rental income from the rear duplex, effectively living in Venice for a fraction of the true carrying cost."
+      },
+      {
+        "type": "High-Net-Worth & Family Office",
+        "description": "Irreplaceable legal nonconforming coastal triplex. This zoning configuration cannot be replicated under current R1-1-O rules, making it a scarcity play with long-term appreciation potential."
+      },
+      {
+        "type": "Small Portfolio Investors",
+        "description": "Sub-$2M entry into Venice multifamily is increasingly rare as inventory tightens and older stock trades at premiums. Broad appeal across buyer segments supports competitive pricing and a short expected marketing period."
+      }
+    ],
+    "photos": [
+      { "label": "Front House (2BR/1BA)", "base64": "REPLACE_WITH_BASE64" },
+      { "label": "Rear Unit Interior", "base64": "REPLACE_WITH_BASE64" },
+      { "label": "Kitchen / Living", "base64": "REPLACE_WITH_BASE64" },
+      { "label": "Unit Interior", "base64": "REPLACE_WITH_BASE64" }
+    ],
+    "details": {
+      "apn": "4228-004-034",
+      "year_built": "1921 / 1977, Renovated 2016",
+      "units": 3,
+      "building_sf": 1698,
+      "lot_sf": 2699,
+      "lot_acres": 0.06,
+      "construction": "Wood Frame, Type V-B",
+      "zoning": "R1-1-O (Legal Nonconforming)",
+      "toc_tier": "1",
+      "rent_control": "City of LA RSO (Pre-1978)",
+      "stories": 1,
+      "parking": "1 Attached Garage",
+      "council_district": "CD 11",
+      "community_plan": "Venice"
+    }
+  },
+
+  "building_systems": [
+    { "system": "Roof", "condition": "Replaced", "year": "2017" },
+    { "system": "Plumbing", "condition": "Tankless water heaters (3 units)", "year": "2016-17" },
+    { "system": "HVAC", "condition": "Mini-split AC and heating (all units)", "year": "2016-17" },
+    { "system": "Electrical", "condition": "Upgraded — 3-gang meter, 400 amp service", "year": "2016-17" },
+    { "system": "Kitchen", "condition": "Stainless steel appliances, dishwasher, disposal", "year": "2016-17" },
+    { "system": "Flooring", "condition": "Laminated waterproof flooring throughout", "year": "2016-17" },
+    { "system": "Windows / Doors", "condition": "French doors, skylights (rear duplex)", "year": "2016-17" },
+    { "system": "Soundproofing", "condition": "Soundproof walls in living rooms", "year": "2016-17" },
+    { "system": "Laundry", "condition": "In-unit washer/dryer (all units)", "year": "2016-17" },
+    { "system": "Parking", "condition": "1-car attached garage (Unit 3/4)", "year": "Original" }
+  ],
+
+  "regulatory": {
+    "line_items": [
+      { "item": "Rent Stabilization (RSO)", "status": "Yes — pre-1978 construction" },
+      { "item": "Zoning", "status": "R1-1-O (legal nonconforming triplex — documented)" },
+      { "item": "Code Enforcement Violations", "status": "None on record (LADBS)" },
+      { "item": "Venice Coastal Zone", "status": "Yes — Specific Plan area" },
+      { "item": "Coastal Exemption", "status": "DIR-2016-4362-CEX (processed, acknowledges all 3 units)" },
+      { "item": "Certificate of Occupancy", "status": "Issued 10/20/2017 (rear duplex classified as \"Duplex\")" },
+      { "item": "TOC Tier", "status": "Tier 1" },
+      { "item": "Seismic Zone", "status": "Santa Monica Fault 5.57 km; liquefaction area" },
+      { "item": "Flood Zone", "status": "Zone AE (100-year flood)" },
+      { "item": "Tsunami", "status": "Yes" },
+      { "item": "Fire Hazard Zone", "status": "Not in Very High Fire Hazard Severity Zone" }
+    ],
+    "source_note": "City of Los Angeles ZIMAS, LADBS Permit Records, and City Planning records.",
+    "legal_nonconforming_note": "The R1-1-O zoning permits one dwelling unit, but the triplex configuration is a documented legal nonconforming use supported by: (1) a 1978 building permit authorizing the duplex conversion, (2) a 2017 Certificate of Occupancy explicitly classifying the rear building as a \"Duplex,\" (3) a Coastal Exemption (DIR-2016-4362-CEX) processed by City Planning acknowledging all three units, and (4) RSO registration confirming multi-unit status. All four branches of City government have recognized and documented the triplex use."
+  },
+
+  "transaction_history": {
+    "sales": [
+      { "date": "10/2016", "price": 1210000, "per_unit": 403333, "per_sf": 713, "notes": "Rainbow Capital Group LLC (current ownership)" }
+    ],
+    "narrative": "The suggested list price of $1,995,000 reflects the comprehensive 2016-2017 renovation, stabilized income at market rents, Venice Silver Triangle location premium, and current market conditions for coastal multifamily assets."
+  },
+
+  "coordinates": {
+    "subject": [33.986388, -118.463763]
+  },
+
+  "sale_comps": {
+    "comps": [
+      { "num": 1, "address": "11 19th Ave", "units": 3, "date": "08/29/25", "price": 2600000, "per_unit": 866667, "cap": "4.64%", "grm": "14.7", "dom": 78, "notes": "Walk street, ocean views", "tier": "Stabilized", "coords": [33.985676, -118.471917] },
+      { "num": 2, "address": "2318 Beach Ave", "units": 3, "date": "02/14/25", "price": 2750000, "per_unit": 916667, "cap": "4.97%", "grm": "17.2", "dom": 95, "notes": "Silver Triangle, renovated", "tier": "Stabilized", "coords": [33.986918, -118.463686] },
+      { "num": 3, "address": "2428 Ocean Ave", "units": 3, "date": "03/04/25", "price": 1940000, "per_unit": 646667, "cap": "6.19%", "grm": "12.9", "dom": 28, "notes": "By Venice Canals", "tier": "Stabilized", "coords": [33.985312, -118.463303] },
+      { "num": 4, "address": "346 Brooks Ave", "units": 3, "date": "09/18/25", "price": 1770000, "per_unit": 590000, "cap": "7.31%", "grm": "9.6", "dom": 22, "notes": "Scheduled rents", "tier": "Value-Add", "coords": [33.993485, -118.471762] },
+      { "num": 5, "address": "549 San Juan Ave", "units": 3, "date": "06/27/25", "price": 2000000, "per_unit": 666667, "cap": "—", "grm": "—", "dom": 10, "notes": "RSO, TLC needed", "tier": "Value-Add", "coords": [33.993042, -118.467845] },
+      { "num": 6, "address": "712 6th Ave", "units": 3, "date": "04/24/25", "price": 1800000, "per_unit": 600000, "cap": "—", "grm": "—", "dom": 68, "notes": "RSO, cosmetic repairs", "tier": "Value-Add", "coords": [33.996586, -118.469570] },
+      { "num": 7, "address": "236 S 5th Ave", "units": 3, "date": "07/03/25", "price": 2185000, "per_unit": 728333, "cap": "—", "grm": "11.7", "dom": 44, "notes": "Spanish villa", "tier": "Stabilized", "coords": [33.998696, -118.474884] },
+      { "num": 8, "address": "1011 5th Ave", "units": 3, "date": "02/25/25", "price": 1846000, "per_unit": 615333, "cap": "—", "grm": "—", "dom": 0, "notes": "Off-market", "tier": "Value-Add", "coords": [33.993038, -118.470061] },
+      { "num": 9, "address": "2474 Penmar Ave", "units": 3, "date": "06/26/25", "price": 1490000, "per_unit": 496667, "cap": "4.15%", "grm": "—", "dom": 15, "notes": "RSO, trust sale", "tier": "Distressed", "coords": [33.993171, -118.449639] },
+      { "num": 10, "address": "535 Rose Ave", "units": 3, "date": "04/17/25", "price": 1525000, "per_unit": 508333, "cap": "—", "grm": "—", "dom": 161, "notes": "Mixed-use", "tier": "Value-Add", "coords": [33.998944, -118.472847] },
+      { "num": 11, "address": "2200 Penmar Ave", "units": 3, "date": "09/08/25", "price": 1400000, "per_unit": 466667, "cap": "4.41%", "grm": "14.5", "dom": 46, "notes": "Garage parking", "tier": "Value-Add", "coords": [33.997381, -118.452924] }
+    ],
+    "averages": { "price": 1938000, "per_unit": 627000, "cap": "5.30%", "grm": "13.5", "dom": 47 },
+    "medians": { "price": 1846000, "per_unit": 615333, "cap": "5.19%", "grm": "13.8", "dom": 28 },
+    "table_note": "GRM calculated on gross scheduled rent only. 3 additional off-market sales and 1 outlier excluded from core analysis. All comps are 3-unit properties in Venice sold within the last 12 months.",
+    "narrative": "At the suggested list price of $1,995,000, the subject trades at $665,000/unit and $1,175/SF, with a 4.73% current cap rate. The per-unit pricing is in line with the 549 San Juan Ave comp ($667K/unit), which sold needing work at 101.5% of asking. The subject's fully renovated condition justifies pricing at or above this benchmark. The most comparable same-street sale is 2318 Beach Ave ($917K/unit, 4.97% cap), which sets the ceiling for the corridor but reflects a larger, townhouse-style building. The 2428 Ocean Ave comp ($647K/unit, 6.19% cap) provides a realistic floor for quality Venice triplexes. The subject's positioning between these comps is appropriate given its renovated condition, stabilized income, and Silver Triangle location."
+  },
+
+  "active_comps": {
+    "comps": [
+      { "num": 1, "address": "24 20th Ave", "units": 3, "price": 1950000, "per_unit": 650000, "grm": "11.1", "dom": 66, "notes": "Walk street, furnished", "coords": [33.985186, -118.470972] },
+      { "num": 2, "address": "1916 Pacific Ave", "units": 3, "price": 2250000, "per_unit": 750000, "grm": "17.4", "dom": 146, "notes": "1 block to beach", "coords": [33.985753, -118.470460] },
+      { "num": 3, "address": "643 Santa Clara Ave", "units": 3, "price": 2275000, "per_unit": 758333, "grm": "18.4", "dom": 88, "notes": "Nr Abbot Kinney, price reduced", "coords": [33.993267, -118.465181] },
+      { "num": 4, "address": "558 San Juan Ave", "units": 3, "price": 2500000, "per_unit": 833333, "grm": "19.2", "dom": 13, "notes": "Duplex + SFR, not RSO", "coords": [33.992871, -118.467455] },
+      { "num": 5, "address": "43 Dudley Ave", "units": 3, "price": 2675000, "per_unit": 891667, "grm": "14.4", "dom": 17, "notes": "Walk street, ocean view", "coords": [33.994896, -118.478760] },
+      { "num": 6, "address": "528 Westminster Ave", "units": 3, "price": 2695000, "per_unit": 898333, "grm": "18.9", "dom": 75, "notes": "2025 rebuild, RTI ADU", "coords": [33.993205, -118.468797] },
+      { "num": 7, "address": "1025 Pleasantview Ave", "units": 3, "price": 2900000, "per_unit": 966667, "grm": "15.7", "dom": 28, "notes": "Renovated 2021/2025", "coords": [33.995969, -118.463473] },
+      { "num": 8, "address": "1309 Cabrillo", "units": 3, "price": 1285000, "per_unit": 428333, "grm": "—", "dom": 70, "notes": "Under contract, studios", "coords": [33.990578, -118.467962] }
+    ],
+    "as_of_date": "February 2026",
+    "narrative": "The active listing landscape confirms strong buyer resistance above $2M for non-premium Venice triplexes. Average DOM for actives is 63 days, with stale inventory at 1916 Pacific (146 DOM) and 643 Santa Clara (88 DOM, price-reduced). At $1,995,000, the subject is positioned as the most competitively priced renovated triplex in the Venice market, capturing buyers filtering under the $2M threshold. The most relevant active comp is 24 20th Ave at $1,950,000 ($650K/unit) with 66 DOM despite a walk-street location. This establishes that the subject's non-walk-street positioning at $1,995,000 is realistic, with the Silver Triangle location providing comparable appeal."
+  },
+
+  "rent_comps": {
+    "groups": [
+      {
+        "label": "2-Bedroom Comparables",
+        "comps": [
+          { "num": 1, "address": "2429 McKinley Ave", "type": "2BR/1BA", "sf": 1080, "rent": 7400, "per_sf": 6.85, "coords": [33.985347, -118.462800] },
+          { "num": 2, "address": "2416 Boone Ave", "type": "2BR/1BA", "sf": 1000, "rent": 6200, "per_sf": 6.20, "coords": [33.985996, -118.458447] },
+          { "num": 3, "address": "1537 Cabrillo Ave", "type": "2BR/2BA", "sf": 795, "rent": 5499, "per_sf": 6.92, "coords": [33.989549, -118.464375] }
+        ],
+        "avg_sf": 958,
+        "avg_rent": 6366,
+        "avg_per_sf": 6.66
+      },
+      {
+        "label": "1-Bedroom Comparables",
+        "comps": [
+          { "num": 4, "address": "553 1/2 Washington Blvd", "type": "1BR/1BA", "sf": 600, "rent": 2495, "per_sf": 4.16, "coords": [33.983935, -118.459734] },
+          { "num": 5, "address": "402 N Venice Blvd Unit B", "type": "1BR/1BA", "sf": 500, "rent": 3600, "per_sf": 7.20, "coords": [33.986210, -118.467824] },
+          { "num": 6, "address": "2500 Strongs Dr Unit 2502", "type": "1BR/1BA", "sf": 750, "rent": 3795, "per_sf": 5.06, "coords": [33.983089, -118.467843] }
+        ],
+        "avg_sf": 617,
+        "avg_rent": 3297,
+        "avg_per_sf": 5.47
+      }
+    ],
+    "narrative": "The subject's current rents are at market. The 2BR front house at $5,200/month ($7.43/SF) is size-adjusted below the 2BR comp average of $6,366 (which reflects larger units averaging 958 SF), but above average on a per-SF basis. The 1BR rear units at $3,200/month ($6.41/SF) are at the comp average of $3,297, reflecting the renovation premium and Venice Silver Triangle location. Total rental upside is only 2.4% ($11,600 to $11,885/month), confirming this is a fully stabilized asset. The investment thesis is current income and coastal location appreciation, not rent growth."
+  },
+
+  "financials": {
+    "units": [
+      { "unit": "2341", "type": "2BR/1BA", "sf": 700, "current_rent": 5200, "rent_per_sf": 7.43, "market_rent": 5295, "market_per_sf": 7.56 },
+      { "unit": "2341 1/2", "type": "1BR/1BA", "sf": 499, "current_rent": 3200, "rent_per_sf": 6.41, "market_rent": 3295, "market_per_sf": 6.60 },
+      { "unit": "2341 3/4", "type": "1BR/1BA", "sf": 499, "current_rent": 3200, "rent_per_sf": 6.41, "market_rent": 3295, "market_per_sf": 6.60 }
+    ],
+    "income": {
+      "gross_scheduled_rent": 139200,
+      "vacancy_pct": 3.0,
+      "vacancy_amount": 4176,
+      "effective_rental_income": 135024,
+      "other_income": 720,
+      "other_income_label": "Laundry",
+      "effective_gross_income": 135744,
+      "market_gsr": 142620,
+      "market_vacancy": 4279,
+      "market_eri": 138341,
+      "market_egi": 139061
+    },
+    "expenses": [
+      { "item": "Real Estate Taxes (1.21%)", "amount": 24200 },
+      { "item": "Insurance", "amount": 4000 },
+      { "item": "Utilities", "amount": 600 },
+      { "item": "Repairs & Maintenance", "amount": 3000 },
+      { "item": "Landscaping", "amount": 720 },
+      { "item": "Pest Control", "amount": 1080 },
+      { "item": "General & Admin", "amount": 450 },
+      { "item": "Operating Reserves", "amount": 600 },
+      { "item": "Management (5% of EGI)", "amount": 6787 }
+    ],
+    "total_expenses": 41437,
+    "noi": 94307,
+    "expense_ratio": 30.5,
+
+    "returns": {
+      "current": { "cap_rate": "4.73%", "grm": "14.33", "cash_on_cash": "-0.00%", "dcr": "1.00x", "total_return": "2.02%" },
+      "market": { "cap_rate": "4.89%", "grm": "13.99", "cash_on_cash": "0.46%", "dcr": "1.03x", "total_return": "2.48%" }
+    },
+
+    "financing": {
+      "purchase_price": 1995000,
+      "down_pct": 36,
+      "down_amount": 718200,
+      "loan_amount": 1276800,
+      "ltv": 64,
+      "rate": 6.25,
+      "amortization": 30,
+      "annual_debt_service": 94338
+    },
+
+    "pricing_rationale": "At the suggested list price of $1,995,000, the subject trades at $665,000/unit and $1,175/SF. This positions the property in-line with the stabilized tier of comps, where 549 San Juan Ave traded at $667K/unit. The premium over value-add comps averaging $550K/unit is justified by the fully renovated condition, documented legal nonconforming triplex status, and Silver Triangle location. The pricing captures buyers filtering under the $2M threshold, where active inventory shows significant DOM accumulation above that level.",
+
+    "conditions": "Cash-on-cash and DCR assume 36% down payment, 6.25% interest rate, 30-year amortization. Vacancy at 3% reflects Venice multifamily historical average. Management at 5% of EGI assumes third-party management; owner-operators may achieve higher returns. This analysis is not an appraisal; it is a broker opinion of value for listing purposes."
+  },
+
+  "agents": [
+    {
+      "name": "Luka Leader",
+      "title": "Associate",
+      "phone": "(818) 212-2743",
+      "email": "Luka.Leader@marcusmillichap.com",
+      "license": "CA 02245434",
+      "headshot_base64": "REPLACE_WITH_BASE64"
+    },
+    {
+      "name": "Glen Scher",
+      "title": "Senior Managing Director Investments",
+      "phone": "(818) 212-2808",
+      "email": "Glen.Scher@marcusmillichap.com",
+      "license": "CA 01962976",
+      "headshot_base64": "REPLACE_WITH_BASE64"
+    },
+    {
+      "name": "Filip Niculete",
+      "title": "Senior Managing Director Investments",
+      "phone": "(818) 212-2748",
+      "email": "Filip.Niculete@marcusmillichap.com",
+      "license": "CA 01905352",
+      "headshot_base64": "REPLACE_WITH_BASE64"
+    }
+  ],
+
+  "office": {
+    "name": "LA Apartment Advisors (LAAA)",
+    "address": "16830 Ventura Blvd, Ste. 100, Encino, CA 91436",
+    "website": "marcusmillichap.com/laaa-team"
+  },
+
+  "disclaimer": "This information has been secured from sources we believe to be reliable, but we make no representations or warranties, expressed or implied, as to the accuracy of the information. Buyer must verify the information and bears all risk for any inaccuracies. Marcus & Millichap Real Estate Investment Services, Inc. | License: CA 01930580."
+}

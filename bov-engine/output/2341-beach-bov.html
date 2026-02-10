@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Broker Opinion of Value - 2341 Beach Ave, Venice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+/* ========== RESET & BASE ========== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif; color: #333; line-height: 1.7; background: #fff; }
+img { max-width: 100%; height: auto; }
+a { color: #C5A258; text-decoration: none; }
+
+/* ========== COVER PAGE ========== */
+.cover {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1B3A5C 0%, #0f2440 100%);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 60px 20px;
+  position: relative;
+}
+.cover-logo { max-width: 200px; margin-bottom: 16px; opacity: 0.9; }
+.cover-nyse { font-size: 11px; letter-spacing: 2px; color: rgba(255,255,255,0.5); margin-bottom: 30px; text-transform: uppercase; }
+.cover-label { font-size: 13px; letter-spacing: 3px; text-transform: uppercase; color: #C5A258; margin-bottom: 8px; font-weight: 500; }
+.cover-address { font-size: 42px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 4px; }
+.cover-city { font-size: 20px; font-weight: 300; color: rgba(255,255,255,0.75); margin-bottom: 24px; }
+.cover-divider { width: 80px; height: 3px; background: #C5A258; margin: 0 auto 24px; }
+.cover-price-label { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.6); margin-bottom: 4px; }
+.cover-price { font-size: 48px; font-weight: 700; color: #C5A258; margin-bottom: 28px; }
+.cover-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; margin-bottom: 32px; }
+.cover-stat { text-align: center; }
+.cover-stat-value { font-size: 26px; font-weight: 700; display: block; }
+.cover-stat-label { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: rgba(255,255,255,0.55); }
+.cover-client { font-size: 15px; color: rgba(255,255,255,0.7); margin-bottom: 6px; }
+.cover-client span { color: #C5A258; font-weight: 600; }
+.cover-agent { font-size: 13px; color: rgba(255,255,255,0.5); margin-bottom: 4px; }
+.cover-date { font-size: 13px; color: rgba(255,255,255,0.45); margin-bottom: 32px; }
+.cover-photo {
+  max-width: 700px; width: 100%; border-radius: 8px;
+  border: 3px solid #C5A258; box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+}
+
+/* ========== TOC NAV ========== */
+.toc-nav {
+  background: #1B3A5C; padding: 0 40px;
+  display: flex; flex-wrap: nowrap; gap: 0;
+  justify-content: center; align-items: stretch;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+}
+.toc-nav a {
+  color: rgba(255,255,255,0.65); text-decoration: none;
+  font-size: 11px; font-weight: 500; letter-spacing: 1px;
+  text-transform: uppercase; padding: 14px 16px;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease; white-space: nowrap;
+  display: flex; align-items: center;
+}
+.toc-nav a:hover { color: #fff; background: rgba(197,162,88,0.12); border-bottom-color: rgba(197,162,88,0.4); }
+.toc-nav a.toc-active { color: #C5A258; font-weight: 600; border-bottom-color: #C5A258; }
+
+/* ========== SECTIONS ========== */
+.section { padding: 60px 50px; max-width: 1100px; margin: 0 auto; }
+.section-alt { background: #f8f9fa; }
+.section-title {
+  font-size: 28px; font-weight: 700; color: #1B3A5C;
+  margin-bottom: 6px;
+}
+.section-subtitle {
+  font-size: 13px; text-transform: uppercase; letter-spacing: 2px;
+  color: #C5A258; margin-bottom: 24px; font-weight: 500;
+}
+.section-divider {
+  width: 60px; height: 3px; margin-bottom: 30px;
+  background: linear-gradient(90deg, #C5A258, transparent);
+}
+
+/* ========== METRIC CARDS ========== */
+.metrics-grid { display: grid; gap: 20px; margin-bottom: 36px; }
+.metrics-grid-4 { grid-template-columns: repeat(4, 1fr); }
+.metric-card {
+  background: #1B3A5C; border-radius: 12px;
+  padding: 24px; text-align: center; color: #fff;
+}
+.metric-value { display: block; font-size: 28px; font-weight: 700; margin-bottom: 4px; }
+.metric-label { display: block; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: rgba(255,255,255,0.6); }
+.metric-sub { display: block; font-size: 12px; color: #C5A258; margin-top: 4px; }
+
+/* ========== TABLES ========== */
+.data-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px; }
+.data-table thead th {
+  background: #1B3A5C; color: #fff; padding: 10px 12px;
+  text-align: left; font-size: 12px; text-transform: uppercase;
+  letter-spacing: 0.5px; font-weight: 600;
+}
+.data-table thead th.num-col { text-align: right; }
+.data-table tbody td { padding: 10px 12px; border-bottom: 1px solid #eee; }
+.data-table tbody td.num-col { text-align: right; font-variant-numeric: tabular-nums; }
+.data-table tbody tr:hover { background: #f5f5f5; }
+.data-table tbody tr.highlight { background: #FFF8E7; font-weight: 600; border-left: 3px solid #C5A258; border-right: 3px solid #C5A258; }
+.data-table tbody tr.total-row { font-weight: 700; border-top: 2px solid #1B3A5C; background: #f0f2f5; }
+.data-table tbody tr.subtotal-row { font-weight: 600; background: #f8f9fa; }
+.table-note { font-size: 12px; color: #888; margin-top: 8px; font-style: italic; }
+
+/* ========== DETAIL TABLES ========== */
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+.detail-table { width: 100%; font-size: 13px; border-collapse: collapse; }
+.detail-table td { padding: 8px 12px; border-bottom: 1px solid #eee; }
+.detail-table td:first-child { font-weight: 600; color: #1B3A5C; width: 45%; }
+
+/* ========== PHOTO GRID ========== */
+.photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.photo-item img { width: 100%; border-radius: 8px; aspect-ratio: 16/10; object-fit: cover; }
+.photo-item .photo-label { text-align: center; font-size: 12px; color: #888; margin-top: 6px; }
+
+/* ========== MAP ========== */
+.map-container { border-radius: 8px; overflow: hidden; margin-bottom: 20px; border: 2px solid #eee; height: 380px; }
+.map-fallback { display: none; font-size: 13px; color: #888; }
+
+/* ========== CALLOUT BOX ========== */
+.callout-box {
+  background: #f0f4f8; border-left: 4px solid #C5A258; border-radius: 0 8px 8px 0;
+  padding: 20px 24px; margin: 24px 0; font-size: 14px; line-height: 1.7;
+}
+.callout-box strong { color: #1B3A5C; }
+
+/* ========== TARGET BUYERS ========== */
+.buyer-list { margin: 20px 0; }
+.buyer-item { margin-bottom: 16px; }
+.buyer-item strong { color: #1B3A5C; }
+.buyer-item p { margin-top: 4px; color: #555; font-size: 14px; }
+
+/* ========== TRACK RECORD STATS ========== */
+.track-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 30px; }
+.track-card {
+  background: #1B3A5C; border-radius: 12px; padding: 24px 16px;
+  text-align: center; color: #fff;
+}
+.track-card .track-value { font-size: 32px; font-weight: 700; display: block; margin-bottom: 4px; }
+.track-card .track-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.55); display: block; }
+.track-card .track-sub { font-size: 11px; color: #C5A258; display: block; margin-top: 4px; }
+
+/* ========== FOOTER ========== */
+.footer { background: #1B3A5C; color: #fff; padding: 60px 50px; }
+.agent-grid { display: flex; gap: 40px; justify-content: center; flex-wrap: wrap; margin-bottom: 30px; }
+.agent-card { text-align: center; min-width: 200px; }
+.agent-card img {
+  width: 100px; height: 100px; border-radius: 50%;
+  border: 3px solid #C5A258; object-fit: cover; margin-bottom: 12px;
+}
+.agent-card .agent-name { font-size: 16px; font-weight: 600; }
+.agent-card .agent-title { font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 8px; }
+.agent-card .agent-contact { font-size: 12px; color: rgba(255,255,255,0.5); }
+.footer-office { text-align: center; font-size: 13px; color: rgba(255,255,255,0.5); margin-bottom: 24px; }
+.footer-disclaimer { text-align: center; font-size: 11px; color: rgba(255,255,255,0.35); max-width: 800px; margin: 0 auto; line-height: 1.6; }
+
+/* ========== NARRATIVE TEXT ========== */
+.narrative { font-size: 15px; line-height: 1.7; color: #444; margin-bottom: 20px; }
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 768px) {
+  .section { padding: 40px 24px; }
+  .cover-address { font-size: 28px; }
+  .cover-price { font-size: 36px; }
+  .cover-stats { gap: 20px; }
+  .metrics-grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .track-grid { grid-template-columns: repeat(2, 1fr); }
+  .detail-grid { grid-template-columns: 1fr; }
+  .photo-grid { grid-template-columns: 1fr; }
+  .data-table { font-size: 12px; }
+  .data-table thead th, .data-table tbody td { padding: 8px 6px; }
+  .agent-grid { gap: 24px; }
+  .footer { padding: 40px 24px; }
+}
+@media (max-width: 420px) {
+  .section { padding: 24px 12px; }
+  .cover-address { font-size: 22px; }
+  .cover-price { font-size: 28px; }
+  .cover-stats { gap: 12px; }
+  .cover-stat-value { font-size: 20px; }
+  .metrics-grid-4 { grid-template-columns: 1fr; }
+  .track-grid { grid-template-columns: 1fr 1fr; }
+  .toc-nav { padding: 0 8px; }
+  .toc-nav a { font-size: 10px; padding: 10px 8px; }
+}
+
+/* ========== PRINT ========== */
+@media print {
+  .toc-nav { display: none !important; }
+  .map-container { display: none !important; }
+  .map-fallback { display: block !important; }
+  .cover { min-height: auto; padding: 40px 20px; page-break-after: always; }
+  .section { padding: 30px 20px; page-break-inside: avoid; }
+  body { font-size: 11px; }
+  .cover-address { font-size: 28px; }
+  .cover-price { font-size: 32px; }
+  .section-title { font-size: 20px; }
+  .data-table { font-size: 10px; }
+  @page { size: letter; margin: 0.5in; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===================== COVER PAGE ===================== -->
+<section class="cover">
+  <div class="cover-nyse">NYSE: MMI</div>
+  <div class="cover-label">Broker Opinion of Value</div>
+  <h1 class="cover-address">2341 Beach Ave</h1>
+  <div class="cover-city">Venice, CA 90291</div>
+  <div class="cover-divider"></div>
+  <div class="cover-price-label">Suggested List Price</div>
+  <div class="cover-price">$1,995,000</div>
+  <div class="cover-stats">
+    <div class="cover-stat">
+      <span class="cover-stat-value">3</span>
+      <span class="cover-stat-label">Units</span>
+    </div>
+    <div class="cover-stat">
+      <span class="cover-stat-value">1,698</span>
+      <span class="cover-stat-label">Square Feet</span>
+    </div>
+    <div class="cover-stat">
+      <span class="cover-stat-value">1921</span>
+      <span class="cover-stat-label">Year Built</span>
+    </div>
+    <div class="cover-stat">
+      <span class="cover-stat-value">0.06</span>
+      <span class="cover-stat-label">Acres</span>
+    </div>
+  </div>
+  <div class="cover-client">Prepared Exclusively for <span id="client-name"></span></div>
+  <div class="cover-agent">Glen Scher, Senior Managing Director Investments</div>
+  <div class="cover-date">February 2026</div>
+</section>
+
+<!-- ===================== TOC NAV ===================== -->
+<nav class="toc-nav" id="toc-nav">
+  <a href="#track-record">Track Record</a>
+  <a href="#overview">Overview</a>
+  <a href="#building-systems">Building Systems</a>
+  <a href="#regulatory">Regulatory</a>
+  <a href="#transactions">Transactions</a>
+  <a href="#sale-comps">Sale Comps</a>
+  <a href="#on-market">On-Market</a>
+  <a href="#rent-comps">Rent Comps</a>
+  <a href="#financials">Financials</a>
+  <a href="#contact">Contact</a>
+</nav>
+
+<!-- ===================== TRACK RECORD ===================== -->
+<section class="section" id="track-record">
+  <div class="section-subtitle">Team Credentials</div>
+  <h2 class="section-title">LA Apartment Advisors at Marcus &amp; Millichap</h2>
+  <div class="section-divider"></div>
+
+  <div class="track-grid">
+    <div class="track-card">
+      <span class="track-value">466</span>
+      <span class="track-label">Closed Transactions</span>
+      <span class="track-sub">Since 1/1/2013</span>
+    </div>
+    <div class="track-card">
+      <span class="track-value">$1.48B</span>
+      <span class="track-label">Total Sales Volume</span>
+      <span class="track-sub">All-Time</span>
+    </div>
+    <div class="track-card">
+      <span class="track-value">4,539</span>
+      <span class="track-label">Apartment Units Sold</span>
+      <span class="track-sub">All-Time</span>
+    </div>
+    <div class="track-card">
+      <span class="track-value">28</span>
+      <span class="track-label">Active Listings</span>
+      <span class="track-sub">$134M Inventory</span>
+    </div>
+  </div>
+
+  <p class="narrative" style="text-align:center;">
+    View our interactive closings map at <a href="https://www.laaa.com" target="_blank"><strong>www.laaa.com</strong></a>
+  </p>
+  <p class="map-fallback">View our interactive closings map at https://www.laaa.com</p>
+</section>
+
+<!-- ===================== PROPERTY OVERVIEW ===================== -->
+<section class="section section-alt" id="overview">
+  <div class="section-subtitle">Property Overview</div>
+  <h2 class="section-title">2341 Beach Ave, Venice, CA 90291</h2>
+  <div class="section-divider"></div>
+
+  <!-- Photo Grid -->
+  <div class="photo-grid">
+    <div class="photo-item">
+      <div style="width:100%;height:200px;background:#e0e0e0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#999;font-size:14px;">Front House (2BR/1BA)</div>
+      <div class="photo-label">Front House (2BR/1BA)</div>
+    </div>
+    <div class="photo-item">
+      <div style="width:100%;height:200px;background:#e0e0e0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#999;font-size:14px;">Rear Unit Interior</div>
+      <div class="photo-label">Rear Unit Interior</div>
+    </div>
+    <div class="photo-item">
+      <div style="width:100%;height:200px;background:#e0e0e0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#999;font-size:14px;">Kitchen / Living</div>
+      <div class="photo-label">Kitchen / Living</div>
+    </div>
+    <div class="photo-item">
+      <div style="width:100%;height:200px;background:#e0e0e0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#999;font-size:14px;">Unit Interior</div>
+      <div class="photo-label">Unit Interior</div>
+    </div>
+  </div>
+
+  <!-- Description -->
+  <p class="narrative">The LAAA Team is proud to present 2341 Beach Ave, a fully renovated 3-unit coastal triplex in Venice&#39;s Silver Triangle, one of the most desirable micro-neighborhoods on Los Angeles&#39;s Westside. The property consists of a 1921 single-family bungalow in front and a 1977 rear duplex, both comprehensively renovated in 2016-2017 with all permits finaled and a Certificate of Occupancy issued. All three units are currently leased at market rents totaling $11,600/month ($139,200 annually), with a blended rent of $6.83/SF.</p>
+  <p class="narrative">The unit mix comprises one 2BR/1BA (700 SF) and two 1BR/1BA (499 SF each), all featuring in-unit washer/dryers, stainless steel appliances, mini-split HVAC, laminated waterproof flooring, skylights, soundproof walls, and French doors opening to a shared patio. The property operates as a documented legal nonconforming triplex in the R1-1-O zone, supported by a complete chain of City permits, a Certificate of Occupancy, Coastal Exemption approval, and RSO registration.</p>
+
+  <!-- Location -->
+  <p class="narrative"><strong>Location.</strong> Venice&#39;s Silver Triangle sits blocks from Abbot Kinney Boulevard, Venice Beach, and the Venice Canals. The neighborhood commands a Walk Score of 83 and is served by Metro bus lines along Lincoln and Venice Boulevards. Silicon Beach employers including Google, Snap, and Amazon maintain offices within 2-3 miles, driving consistent demand from high-income renters. Median household income in Venice exceeds $125,000, placing it in the 97th percentile nationally.</p>
+
+  <!-- Target Buyers -->
+  <h3 style="font-size:18px; color:#1B3A5C; margin: 28px 0 12px;">Target Buyer Profile</h3>
+  <div class="buyer-list">
+    <div class="buyer-item">
+      <strong>1031 Exchange Investors</strong> &mdash;
+      <span style="color:#555; font-size:14px;">Turnkey asset with zero deferred maintenance, immediate cash flow, and no lease-up risk. Ideal for a tax-deferred repositioning from a management-intensive property.</span>
+    </div>
+    <div class="buyer-item">
+      <strong>Owner-Occupants</strong> &mdash;
+      <span style="color:#555; font-size:14px;">Live in the front 2BR house and offset housing costs with approximately $6,400/month in rental income from the rear duplex, effectively living in Venice for a fraction of the true carrying cost.</span>
+    </div>
+    <div class="buyer-item">
+      <strong>High-Net-Worth &amp; Family Office</strong> &mdash;
+      <span style="color:#555; font-size:14px;">Irreplaceable legal nonconforming coastal triplex. This zoning configuration cannot be replicated under current R1-1-O rules, making it a scarcity play with long-term appreciation potential.</span>
+    </div>
+    <div class="buyer-item">
+      <strong>Small Portfolio Investors</strong> &mdash;
+      <span style="color:#555; font-size:14px;">Sub-$2M entry into Venice multifamily is increasingly rare as inventory tightens and older stock trades at premiums. Broad appeal across buyer segments supports competitive pricing and a short expected marketing period.</span>
+    </div>
+  </div>
+
+  <!-- Property Details -->
+  <div class="detail-grid">
+    <table class="detail-table">
+      <tr><td>Address</td><td>2341 Beach Ave, Venice, CA 90291</td></tr>
+      <tr><td>APN</td><td>4228-004-034</td></tr>
+      <tr><td>Year Built</td><td>1921 / 1977, Renovated 2016</td></tr>
+      <tr><td>Units</td><td>3</td></tr>
+      <tr><td>Building SF</td><td>1,698</td></tr>
+      <tr><td>Lot Size</td><td>2,699 SF (0.06 Acres)</td></tr>
+      <tr><td>Construction</td><td>Wood Frame, Type V-B</td></tr>
+    </table>
+    <table class="detail-table">
+      <tr><td>Zoning</td><td>R1-1-O (Legal Nonconforming)</td></tr>
+      <tr><td>TOC Tier</td><td>1</td></tr>
+      <tr><td>Rent Control</td><td>City of LA RSO (Pre-1978)</td></tr>
+      <tr><td>Stories</td><td>1</td></tr>
+      <tr><td>Parking</td><td>1 Attached Garage</td></tr>
+      <tr><td>Council District</td><td>CD 11</td></tr>
+      <tr><td>Community Plan</td><td>Venice</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ===================== BUILDING SYSTEMS ===================== -->
+<section class="section" id="building-systems">
+  <div class="section-subtitle">Capital Improvements</div>
+  <h2 class="section-title">Building Systems & Capital Improvements</h2>
+  <div class="section-divider"></div>
+  <table class="data-table">
+    <thead><tr><th>System</th><th>Condition / Status</th><th>Year</th></tr></thead>
+    <tbody>
+      <tr><td>Roof</td><td>Replaced</td><td>2017</td></tr>
+      <tr><td>Plumbing</td><td>Tankless water heaters (3 units)</td><td>2016-17</td></tr>
+      <tr><td>HVAC</td><td>Mini-split AC and heating (all units)</td><td>2016-17</td></tr>
+      <tr><td>Electrical</td><td>Upgraded — 3-gang meter, 400 amp service</td><td>2016-17</td></tr>
+      <tr><td>Kitchen</td><td>Stainless steel appliances, dishwasher, disposal</td><td>2016-17</td></tr>
+      <tr><td>Flooring</td><td>Laminated waterproof flooring throughout</td><td>2016-17</td></tr>
+      <tr><td>Windows / Doors</td><td>French doors, skylights (rear duplex)</td><td>2016-17</td></tr>
+      <tr><td>Soundproofing</td><td>Soundproof walls in living rooms</td><td>2016-17</td></tr>
+      <tr><td>Laundry</td><td>In-unit washer/dryer (all units)</td><td>2016-17</td></tr>
+      <tr><td>Parking</td><td>1-car attached garage (Unit 3/4)</td><td>Original</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ===================== REGULATORY ===================== -->
+<section class="section section-alt" id="regulatory">
+  <div class="section-subtitle">Compliance</div>
+  <h2 class="section-title">Regulatory & Compliance Summary</h2>
+  <div class="section-divider"></div>
+  <table class="data-table">
+    <thead><tr><th>Item</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>Rent Stabilization (RSO)</td><td>Yes — pre-1978 construction</td></tr>
+      <tr><td>Zoning</td><td>R1-1-O (legal nonconforming triplex — documented)</td></tr>
+      <tr><td>Code Enforcement Violations</td><td>None on record (LADBS)</td></tr>
+      <tr><td>Venice Coastal Zone</td><td>Yes — Specific Plan area</td></tr>
+      <tr><td>Coastal Exemption</td><td>DIR-2016-4362-CEX (processed, acknowledges all 3 units)</td></tr>
+      <tr><td>Certificate of Occupancy</td><td>Issued 10/20/2017 (rear duplex classified as &#34;Duplex&#34;)</td></tr>
+      <tr><td>TOC Tier</td><td>Tier 1</td></tr>
+      <tr><td>Seismic Zone</td><td>Santa Monica Fault 5.57 km; liquefaction area</td></tr>
+      <tr><td>Flood Zone</td><td>Zone AE (100-year flood)</td></tr>
+      <tr><td>Tsunami</td><td>Yes</td></tr>
+      <tr><td>Fire Hazard Zone</td><td>Not in Very High Fire Hazard Severity Zone</td></tr>
+    </tbody>
+  </table>
+  <p class="table-note">Source: City of Los Angeles ZIMAS, LADBS Permit Records, and City Planning records.</p>
+
+  <div class="callout-box" style="margin-top: 24px;">
+    <strong>Legal Nonconforming Use Note</strong><br>
+    The R1-1-O zoning permits one dwelling unit, but the triplex configuration is a documented legal nonconforming use supported by: (1) a 1978 building permit authorizing the duplex conversion, (2) a 2017 Certificate of Occupancy explicitly classifying the rear building as a &#34;Duplex,&#34; (3) a Coastal Exemption (DIR-2016-4362-CEX) processed by City Planning acknowledging all three units, and (4) RSO registration confirming multi-unit status. All four branches of City government have recognized and documented the triplex use.
+  </div>
+</section>
+
+<!-- ===================== TRANSACTION HISTORY ===================== -->
+<section class="section" id="transactions">
+  <div class="section-subtitle">Prior Sales</div>
+  <h2 class="section-title">Transaction History</h2>
+  <div class="section-divider"></div>
+  <table class="data-table">
+    <thead><tr><th>Date</th><th class="num-col">Sale Price</th><th class="num-col">$/Unit</th><th class="num-col">$/SF</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>10/2016</td>
+        <td class="num-col">$1,210,000</td>
+        <td class="num-col">$403,333</td>
+        <td class="num-col">$713</td>
+        <td>Rainbow Capital Group LLC (current ownership)</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="narrative" style="margin-top:16px;">The suggested list price of $1,995,000 reflects the comprehensive 2016-2017 renovation, stabilized income at market rents, Venice Silver Triangle location premium, and current market conditions for coastal multifamily assets.</p>
+</section>
+
+<!-- ===================== COMPARABLE SALES ===================== -->
+<section class="section section-alt" id="sale-comps">
+  <div class="section-subtitle">Recent Closed Transactions</div>
+  <h2 class="section-title">Comparable Sales</h2>
+  <div class="section-divider"></div>
+
+  <div id="sale-map" class="map-container"></div>
+  <p class="map-fallback">Interactive map available at the live URL.</p>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>#</th><th>Address</th><th>Units</th><th>Sale Date</th>
+        <th class="num-col">Price</th><th class="num-col">$/Unit</th>
+        <th class="num-col">Cap</th><th class="num-col">GRM</th>
+        <th class="num-col">DOM</th><th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>11 19th Ave</td>
+        <td>3</td>
+        <td>08/29/25</td>
+        <td class="num-col">$2,600,000</td>
+        <td class="num-col">$866,667</td>
+        <td class="num-col">4.64%</td>
+        <td class="num-col">14.7</td>
+        <td class="num-col">78</td>
+        <td>Walk street, ocean views <em style="color:#C5A258;">[Stabilized]</em></td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>2318 Beach Ave</td>
+        <td>3</td>
+        <td>02/14/25</td>
+        <td class="num-col">$2,750,000</td>
+        <td class="num-col">$916,667</td>
+        <td class="num-col">4.97%</td>
+        <td class="num-col">17.2</td>
+        <td class="num-col">95</td>
+        <td>Silver Triangle, renovated <em style="color:#C5A258;">[Stabilized]</em></td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>2428 Ocean Ave</td>
+        <td>3</td>
+        <td>03/04/25</td>
+        <td class="num-col">$1,940,000</td>
+        <td class="num-col">$646,667</td>
+        <td class="num-col">6.19%</td>
+        <td class="num-col">12.9</td>
+        <td class="num-col">28</td>
+        <td>By Venice Canals <em style="color:#C5A258;">[Stabilized]</em></td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td>346 Brooks Ave</td>
+        <td>3</td>
+        <td>09/18/25</td>
+        <td class="num-col">$1,770,000</td>
+        <td class="num-col">$590,000</td>
+        <td class="num-col">7.31%</td>
+        <td class="num-col">9.6</td>
+        <td class="num-col">22</td>
+        <td>Scheduled rents <em style="color:#C5A258;">[Value-Add]</em></td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td>549 San Juan Ave</td>
+        <td>3</td>
+        <td>06/27/25</td>
+        <td class="num-col">$2,000,000</td>
+        <td class="num-col">$666,667</td>
+        <td class="num-col">—</td>
+        <td class="num-col">—</td>
+        <td class="num-col">10</td>
+        <td>RSO, TLC needed <em style="color:#C5A258;">[Value-Add]</em></td>
+      </tr>
+      <tr>
+        <td>6</td>
+        <td>712 6th Ave</td>
+        <td>3</td>
+        <td>04/24/25</td>
+        <td class="num-col">$1,800,000</td>
+        <td class="num-col">$600,000</td>
+        <td class="num-col">—</td>
+        <td class="num-col">—</td>
+        <td class="num-col">68</td>
+        <td>RSO, cosmetic repairs <em style="color:#C5A258;">[Value-Add]</em></td>
+      </tr>
+      <tr>
+        <td>7</td>
+        <td>236 S 5th Ave</td>
+        <td>3</td>
+        <td>07/03/25</td>
+        <td class="num-col">$2,185,000</td>
+        <td class="num-col">$728,333</td>
+        <td class="num-col">—</td>
+        <td class="num-col">11.7</td>
+        <td class="num-col">44</td>
+        <td>Spanish villa <em style="color:#C5A258;">[Stabilized]</em></td>
+      </tr>
+      <tr>
+        <td>8</td>
+        <td>1011 5th Ave</td>
+        <td>3</td>
+        <td>02/25/25</td>
+        <td class="num-col">$1,846,000</td>
+        <td class="num-col">$615,333</td>
+        <td class="num-col">—</td>
+        <td class="num-col">—</td>
+        <td class="num-col">0</td>
+        <td>Off-market <em style="color:#C5A258;">[Value-Add]</em></td>
+      </tr>
+      <tr>
+        <td>9</td>
+        <td>2474 Penmar Ave</td>
+        <td>3</td>
+        <td>06/26/25</td>
+        <td class="num-col">$1,490,000</td>
+        <td class="num-col">$496,667</td>
+        <td class="num-col">4.15%</td>
+        <td class="num-col">—</td>
+        <td class="num-col">15</td>
+        <td>RSO, trust sale <em style="color:#C5A258;">[Distressed]</em></td>
+      </tr>
+      <tr>
+        <td>10</td>
+        <td>535 Rose Ave</td>
+        <td>3</td>
+        <td>04/17/25</td>
+        <td class="num-col">$1,525,000</td>
+        <td class="num-col">$508,333</td>
+        <td class="num-col">—</td>
+        <td class="num-col">—</td>
+        <td class="num-col">161</td>
+        <td>Mixed-use <em style="color:#C5A258;">[Value-Add]</em></td>
+      </tr>
+      <tr>
+        <td>11</td>
+        <td>2200 Penmar Ave</td>
+        <td>3</td>
+        <td>09/08/25</td>
+        <td class="num-col">$1,400,000</td>
+        <td class="num-col">$466,667</td>
+        <td class="num-col">4.41%</td>
+        <td class="num-col">14.5</td>
+        <td class="num-col">46</td>
+        <td>Garage parking <em style="color:#C5A258;">[Value-Add]</em></td>
+      </tr>
+      <tr class="subtotal-row">
+        <td colspan="4">Averages (Sold)</td>
+        <td class="num-col">$1,938,000</td>
+        <td class="num-col">$627,000</td>
+        <td class="num-col">5.30%</td>
+        <td class="num-col">13.5</td>
+        <td class="num-col">47</td>
+        <td></td>
+      </tr>
+      <tr class="subtotal-row">
+        <td colspan="4">Medians (Sold)</td>
+        <td class="num-col">$1,846,000</td>
+        <td class="num-col">$615,333</td>
+        <td class="num-col">5.19%</td>
+        <td class="num-col">13.8</td>
+        <td class="num-col">28</td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="table-note">GRM calculated on gross scheduled rent only. 3 additional off-market sales and 1 outlier excluded from core analysis. All comps are 3-unit properties in Venice sold within the last 12 months.</p>
+  <p class="narrative" style="margin-top:20px;">At the suggested list price of $1,995,000, the subject trades at $665,000/unit and $1,175/SF, with a 4.73% current cap rate. The per-unit pricing is in line with the 549 San Juan Ave comp ($667K/unit), which sold needing work at 101.5% of asking. The subject&#39;s fully renovated condition justifies pricing at or above this benchmark. The most comparable same-street sale is 2318 Beach Ave ($917K/unit, 4.97% cap), which sets the ceiling for the corridor but reflects a larger, townhouse-style building. The 2428 Ocean Ave comp ($647K/unit, 6.19% cap) provides a realistic floor for quality Venice triplexes. The subject&#39;s positioning between these comps is appropriate given its renovated condition, stabilized income, and Silver Triangle location.</p>
+</section>
+
+<!-- ===================== ON-MARKET COMPS ===================== -->
+<section class="section" id="on-market">
+  <div class="section-subtitle">Currently Listed for Sale</div>
+  <h2 class="section-title">On-Market Comparables</h2>
+  <div class="section-divider"></div>
+
+  <div id="active-map" class="map-container"></div>
+  <p class="map-fallback">Interactive map available at the live URL.</p>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>#</th><th>Address</th><th>Units</th>
+        <th class="num-col">List Price</th><th class="num-col">$/Unit</th>
+        <th class="num-col">GRM</th><th class="num-col">DOM</th><th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>24 20th Ave</td>
+        <td>3</td>
+        <td class="num-col">$1,950,000</td>
+        <td class="num-col">$650,000</td>
+        <td class="num-col">11.1</td>
+        <td class="num-col">66</td>
+        <td>Walk street, furnished</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>1916 Pacific Ave</td>
+        <td>3</td>
+        <td class="num-col">$2,250,000</td>
+        <td class="num-col">$750,000</td>
+        <td class="num-col">17.4</td>
+        <td class="num-col">146</td>
+        <td>1 block to beach</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>643 Santa Clara Ave</td>
+        <td>3</td>
+        <td class="num-col">$2,275,000</td>
+        <td class="num-col">$758,333</td>
+        <td class="num-col">18.4</td>
+        <td class="num-col">88</td>
+        <td>Nr Abbot Kinney, price reduced</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td>558 San Juan Ave</td>
+        <td>3</td>
+        <td class="num-col">$2,500,000</td>
+        <td class="num-col">$833,333</td>
+        <td class="num-col">19.2</td>
+        <td class="num-col">13</td>
+        <td>Duplex + SFR, not RSO</td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td>43 Dudley Ave</td>
+        <td>3</td>
+        <td class="num-col">$2,675,000</td>
+        <td class="num-col">$891,667</td>
+        <td class="num-col">14.4</td>
+        <td class="num-col">17</td>
+        <td>Walk street, ocean view</td>
+      </tr>
+      <tr>
+        <td>6</td>
+        <td>528 Westminster Ave</td>
+        <td>3</td>
+        <td class="num-col">$2,695,000</td>
+        <td class="num-col">$898,333</td>
+        <td class="num-col">18.9</td>
+        <td class="num-col">75</td>
+        <td>2025 rebuild, RTI ADU</td>
+      </tr>
+      <tr>
+        <td>7</td>
+        <td>1025 Pleasantview Ave</td>
+        <td>3</td>
+        <td class="num-col">$2,900,000</td>
+        <td class="num-col">$966,667</td>
+        <td class="num-col">15.7</td>
+        <td class="num-col">28</td>
+        <td>Renovated 2021/2025</td>
+      </tr>
+      <tr>
+        <td>8</td>
+        <td>1309 Cabrillo</td>
+        <td>3</td>
+        <td class="num-col">$1,285,000</td>
+        <td class="num-col">$428,333</td>
+        <td class="num-col">—</td>
+        <td class="num-col">70</td>
+        <td>Under contract, studios</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="table-note">Active listing data as of February 2026. DOM and pricing subject to change.</p>
+  <p class="narrative" style="margin-top:20px;">The active listing landscape confirms strong buyer resistance above $2M for non-premium Venice triplexes. Average DOM for actives is 63 days, with stale inventory at 1916 Pacific (146 DOM) and 643 Santa Clara (88 DOM, price-reduced). At $1,995,000, the subject is positioned as the most competitively priced renovated triplex in the Venice market, capturing buyers filtering under the $2M threshold. The most relevant active comp is 24 20th Ave at $1,950,000 ($650K/unit) with 66 DOM despite a walk-street location. This establishes that the subject&#39;s non-walk-street positioning at $1,995,000 is realistic, with the Silver Triangle location providing comparable appeal.</p>
+</section>
+
+<!-- ===================== RENT COMPS ===================== -->
+<section class="section section-alt" id="rent-comps">
+  <div class="section-subtitle">Venice Market Survey</div>
+  <h2 class="section-title">Rent Comparables</h2>
+  <div class="section-divider"></div>
+
+  <div id="rent-map" class="map-container"></div>
+  <p class="map-fallback">Interactive map available at the live URL.</p>
+
+  <h3 style="font-size:16px; color:#1B3A5C; margin: 24px 0 12px;">2-Bedroom Comparables</h3>
+  <table class="data-table">
+    <thead>
+      <tr><th>#</th><th>Address</th><th>Type</th><th class="num-col">SF</th><th class="num-col">Rent</th><th class="num-col">$/SF</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>2429 McKinley Ave</td>
+        <td>2BR/1BA</td>
+        <td class="num-col">1,080</td>
+        <td class="num-col">$7,400</td>
+        <td class="num-col">$6.85</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>2416 Boone Ave</td>
+        <td>2BR/1BA</td>
+        <td class="num-col">1,000</td>
+        <td class="num-col">$6,200</td>
+        <td class="num-col">$6.20</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>1537 Cabrillo Ave</td>
+        <td>2BR/2BA</td>
+        <td class="num-col">795</td>
+        <td class="num-col">$5,499</td>
+        <td class="num-col">$6.92</td>
+      </tr>
+      <tr class="subtotal-row">
+        <td colspan="2">2-Bedroom Average</td>
+        <td></td>
+        <td class="num-col">958</td>
+        <td class="num-col">$6,366</td>
+        <td class="num-col">$6.66</td>
+      </tr>
+    </tbody>
+  </table>
+  <h3 style="font-size:16px; color:#1B3A5C; margin: 24px 0 12px;">1-Bedroom Comparables</h3>
+  <table class="data-table">
+    <thead>
+      <tr><th>#</th><th>Address</th><th>Type</th><th class="num-col">SF</th><th class="num-col">Rent</th><th class="num-col">$/SF</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>4</td>
+        <td>553 1/2 Washington Blvd</td>
+        <td>1BR/1BA</td>
+        <td class="num-col">600</td>
+        <td class="num-col">$2,495</td>
+        <td class="num-col">$4.16</td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td>402 N Venice Blvd Unit B</td>
+        <td>1BR/1BA</td>
+        <td class="num-col">500</td>
+        <td class="num-col">$3,600</td>
+        <td class="num-col">$7.20</td>
+      </tr>
+      <tr>
+        <td>6</td>
+        <td>2500 Strongs Dr Unit 2502</td>
+        <td>1BR/1BA</td>
+        <td class="num-col">750</td>
+        <td class="num-col">$3,795</td>
+        <td class="num-col">$5.06</td>
+      </tr>
+      <tr class="subtotal-row">
+        <td colspan="2">1-Bedroom Average</td>
+        <td></td>
+        <td class="num-col">617</td>
+        <td class="num-col">$3,297</td>
+        <td class="num-col">$5.47</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p class="narrative" style="margin-top:20px;">The subject&#39;s current rents are at market. The 2BR front house at $5,200/month ($7.43/SF) is size-adjusted below the 2BR comp average of $6,366 (which reflects larger units averaging 958 SF), but above average on a per-SF basis. The 1BR rear units at $3,200/month ($6.41/SF) are at the comp average of $3,297, reflecting the renovation premium and Venice Silver Triangle location. Total rental upside is only 2.4% ($11,600 to $11,885/month), confirming this is a fully stabilized asset. The investment thesis is current income and coastal location appreciation, not rent growth.</p>
+</section>
+
+<!-- ===================== FINANCIAL ANALYSIS ===================== -->
+<section class="section" id="financials">
+  <div class="section-subtitle">Investment Underwriting</div>
+  <h2 class="section-title">Financial Analysis</h2>
+  <div class="section-divider"></div>
+
+  <!-- 4 Pricing Metric Cards -->
+  <div class="metrics-grid metrics-grid-4">
+    <div class="metric-card">
+      <span class="metric-value">$665,000</span>
+      <span class="metric-label">Price / Unit</span>
+    </div>
+    <div class="metric-card">
+      <span class="metric-value">$1,174</span>
+      <span class="metric-label">Price / SF</span>
+    </div>
+    <div class="metric-card">
+      <span class="metric-value">4.73%</span>
+      <span class="metric-label">Current Cap Rate</span>
+    </div>
+    <div class="metric-card">
+      <span class="metric-value">14.33x</span>
+      <span class="metric-label">Current GRM</span>
+    </div>
+  </div>
+
+  <!-- Unit Mix & Rent Roll -->
+  <h3 style="font-size:18px; color:#1B3A5C; margin: 28px 0 12px;">Unit Mix &amp; Rent Roll</h3>
+  <table class="data-table">
+    <thead>
+      <tr><th>Unit</th><th>Type</th><th class="num-col">SF</th><th class="num-col">Current Rent</th><th class="num-col">Rent/SF</th><th class="num-col">Market Rent</th><th class="num-col">Mkt Rent/SF</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>2341</td>
+        <td>2BR/1BA</td>
+        <td class="num-col">700</td>
+        <td class="num-col">$5,200</td>
+        <td class="num-col">$7.43</td>
+        <td class="num-col">$5,295</td>
+        <td class="num-col">$7.56</td>
+      </tr>
+      <tr>
+        <td>2341 1/2</td>
+        <td>1BR/1BA</td>
+        <td class="num-col">499</td>
+        <td class="num-col">$3,200</td>
+        <td class="num-col">$6.41</td>
+        <td class="num-col">$3,295</td>
+        <td class="num-col">$6.60</td>
+      </tr>
+      <tr>
+        <td>2341 3/4</td>
+        <td>1BR/1BA</td>
+        <td class="num-col">499</td>
+        <td class="num-col">$3,200</td>
+        <td class="num-col">$6.41</td>
+        <td class="num-col">$3,295</td>
+        <td class="num-col">$6.60</td>
+      </tr>
+      <tr class="total-row">
+        <td><strong>Total</strong></td>
+        <td></td>
+        <td class="num-col"><strong>1,698</strong></td>
+        <td class="num-col"><strong>$11,600/mo</strong></td>
+        <td class="num-col"><strong>$6.83</strong></td>
+        <td class="num-col"><strong>$11,885/mo</strong></td>
+        <td class="num-col"><strong>$7.00</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Operating Statement -->
+  <h3 style="font-size:18px; color:#1B3A5C; margin: 28px 0 12px;">Operating Statement</h3>
+  <table class="data-table">
+    <thead>
+      <tr><th>Income</th><th class="num-col">Annual</th><th class="num-col">Per Unit</th><th class="num-col">% EGI</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Gross Scheduled Rent</td>
+        <td class="num-col">$139,200</td>
+        <td class="num-col">$46,400</td>
+        <td class="num-col">&mdash;</td>
+      </tr>
+      <tr>
+        <td>Less: Vacancy (3.0%)</td>
+        <td class="num-col">($4,176)</td>
+        <td class="num-col">($1,392)</td>
+        <td class="num-col">&mdash;</td>
+      </tr>
+      <tr>
+        <td>Effective Rental Income</td>
+        <td class="num-col">$135,024</td>
+        <td class="num-col">$45,008</td>
+        <td class="num-col">&mdash;</td>
+      </tr>
+      <tr>
+        <td>Other Income (Laundry)</td>
+        <td class="num-col">$720</td>
+        <td class="num-col">$240</td>
+        <td class="num-col">&mdash;</td>
+      </tr>
+      <tr class="total-row">
+        <td><strong>Effective Gross Income</strong></td>
+        <td class="num-col"><strong>$135,744</strong></td>
+        <td class="num-col"><strong>$45,248</strong></td>
+        <td class="num-col"><strong>100.0%</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <table class="data-table" style="margin-top:0;">
+    <thead>
+      <tr><th>Expenses</th><th class="num-col">Annual</th><th class="num-col">Per Unit</th><th class="num-col">% EGI</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Real Estate Taxes (1.21%)</td>
+        <td class="num-col">$24,200</td>
+        <td class="num-col">$8,066</td>
+        <td class="num-col">17.8%</td>
+      </tr>
+      <tr>
+        <td>Insurance</td>
+        <td class="num-col">$4,000</td>
+        <td class="num-col">$1,333</td>
+        <td class="num-col">2.9%</td>
+      </tr>
+      <tr>
+        <td>Utilities</td>
+        <td class="num-col">$600</td>
+        <td class="num-col">$200</td>
+        <td class="num-col">0.4%</td>
+      </tr>
+      <tr>
+        <td>Repairs &amp; Maintenance</td>
+        <td class="num-col">$3,000</td>
+        <td class="num-col">$1,000</td>
+        <td class="num-col">2.2%</td>
+      </tr>
+      <tr>
+        <td>Landscaping</td>
+        <td class="num-col">$720</td>
+        <td class="num-col">$240</td>
+        <td class="num-col">0.5%</td>
+      </tr>
+      <tr>
+        <td>Pest Control</td>
+        <td class="num-col">$1,080</td>
+        <td class="num-col">$360</td>
+        <td class="num-col">0.8%</td>
+      </tr>
+      <tr>
+        <td>General &amp; Admin</td>
+        <td class="num-col">$450</td>
+        <td class="num-col">$150</td>
+        <td class="num-col">0.3%</td>
+      </tr>
+      <tr>
+        <td>Operating Reserves</td>
+        <td class="num-col">$600</td>
+        <td class="num-col">$200</td>
+        <td class="num-col">0.4%</td>
+      </tr>
+      <tr>
+        <td>Management (5% of EGI)</td>
+        <td class="num-col">$6,787</td>
+        <td class="num-col">$2,262</td>
+        <td class="num-col">5.0%</td>
+      </tr>
+      <tr class="total-row">
+        <td><strong>Total Expenses</strong></td>
+        <td class="num-col"><strong>$41,437</strong></td>
+        <td class="num-col"><strong>$13,812</strong></td>
+        <td class="num-col"><strong>30.5%</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <table class="data-table" style="margin-top:0;">
+    <tbody>
+      <tr class="total-row">
+        <td><strong>Net Operating Income</strong></td>
+        <td class="num-col"><strong>$94,307</strong></td>
+        <td class="num-col"><strong>$31,435</strong></td>
+        <td class="num-col"><strong>69.5%</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Returns -->
+  <h3 style="font-size:18px; color:#1B3A5C; margin: 28px 0 12px;">Returns at $1,995,000</h3>
+  <div class="detail-grid">
+    <table class="detail-table">
+      <tr><td></td><td><strong>Current</strong></td><td><strong>Market</strong></td></tr>
+      <tr><td>Cap Rate</td><td>4.73%</td><td>4.89%</td></tr>
+      <tr><td>GRM</td><td>14.33</td><td>13.99</td></tr>
+      <tr><td>Cash-on-Cash</td><td>-0.00%</td><td>0.46%</td></tr>
+      <tr><td>DCR</td><td>1.00x</td><td>1.03x</td></tr>
+      <tr><td>Total Return</td><td>2.02%</td><td>2.48%</td></tr>
+    </table>
+    <table class="detail-table">
+      <tr><td colspan="2" style="font-weight:700;color:#1B3A5C;">Financing Terms</td></tr>
+      <tr><td>Purchase Price</td><td>$1,995,000</td></tr>
+      <tr><td>Down Payment (36%)</td><td>$718,200</td></tr>
+      <tr><td>Loan Amount (64% LTV)</td><td>$1,276,800</td></tr>
+      <tr><td>Interest Rate</td><td>6.25%</td></tr>
+      <tr><td>Amortization</td><td>30 Years</td></tr>
+      <tr><td>Annual Debt Service</td><td>$94,338</td></tr>
+    </table>
+  </div>
+
+  <!-- Pricing Matrix -->
+  <h3 style="font-size:18px; color:#1B3A5C; margin: 28px 0 12px;">Pricing Matrix</h3>
+  <table class="data-table" id="pricing-matrix">
+    <thead>
+      <tr><th class="num-col">Price</th><th class="num-col">Cap Rate</th><th class="num-col">$/Unit</th><th class="num-col">$/SF</th><th class="num-col">GRM</th><th class="num-col">Cash-on-Cash</th><th class="num-col">DCR</th></tr>
+    </thead>
+    <tbody id="matrix-body">
+      <!-- Populated by JavaScript -->
+    </tbody>
+  </table>
+  <p class="table-note">Highlighted row represents the suggested list price. Cash-on-cash assumes 36% down, 6.25% rate, 30-year amortization.</p>
+
+  <!-- Pricing Rationale -->
+  <h3 style="font-size:18px; color:#1B3A5C; margin: 28px 0 12px;">Pricing Rationale</h3>
+  <p class="narrative">At the suggested list price of $1,995,000, the subject trades at $665,000/unit and $1,175/SF. This positions the property in-line with the stabilized tier of comps, where 549 San Juan Ave traded at $667K/unit. The premium over value-add comps averaging $550K/unit is justified by the fully renovated condition, documented legal nonconforming triplex status, and Silver Triangle location. The pricing captures buyers filtering under the $2M threshold, where active inventory shows significant DOM accumulation above that level.</p>
+
+  <!-- Conditions & Assumptions -->
+  <div class="callout-box" style="margin-top:28px;">
+    <strong>Assumptions &amp; Conditions</strong><br>
+    Cash-on-cash and DCR assume 36% down payment, 6.25% interest rate, 30-year amortization. Vacancy at 3% reflects Venice multifamily historical average. Management at 5% of EGI assumes third-party management; owner-operators may achieve higher returns. This analysis is not an appraisal; it is a broker opinion of value for listing purposes.
+  </div>
+</section>
+
+<!-- ===================== FOOTER / CONTACT ===================== -->
+<section class="footer" id="contact">
+  <div class="agent-grid">
+    <div class="agent-card">
+      <div style="width:100px;height:100px;border-radius:50%;border:3px solid #C5A258;background:#2a4a6e;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.5);font-size:28px;font-weight:700;">L</div>
+      <div class="agent-name">Luka Leader</div>
+      <div class="agent-title">Associate</div>
+      <div class="agent-contact">
+        (818) 212-2743 | Luka.Leader@marcusmillichap.com<br>
+        License: CA 02245434
+      </div>
+    </div>
+    <div class="agent-card">
+      <div style="width:100px;height:100px;border-radius:50%;border:3px solid #C5A258;background:#2a4a6e;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.5);font-size:28px;font-weight:700;">G</div>
+      <div class="agent-name">Glen Scher</div>
+      <div class="agent-title">Senior Managing Director Investments</div>
+      <div class="agent-contact">
+        (818) 212-2808 | Glen.Scher@marcusmillichap.com<br>
+        License: CA 01962976
+      </div>
+    </div>
+    <div class="agent-card">
+      <div style="width:100px;height:100px;border-radius:50%;border:3px solid #C5A258;background:#2a4a6e;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.5);font-size:28px;font-weight:700;">F</div>
+      <div class="agent-name">Filip Niculete</div>
+      <div class="agent-title">Senior Managing Director Investments</div>
+      <div class="agent-contact">
+        (818) 212-2748 | Filip.Niculete@marcusmillichap.com<br>
+        License: CA 01905352
+      </div>
+    </div>
+  </div>
+  <div class="footer-office">LA Apartment Advisors (LAAA) | 16830 Ventura Blvd, Ste. 100, Encino, CA 91436 | marcusmillichap.com/laaa-team</div>
+  <div class="footer-disclaimer">This information has been secured from sources we believe to be reliable, but we make no representations or warranties, expressed or implied, as to the accuracy of the information. Buyer must verify the information and bears all risk for any inaccuracies. Marcus &amp; Millichap Real Estate Investment Services, Inc. | License: CA 01930580.</div>
+</section>
+
+<!-- ===================== JAVASCRIPT ===================== -->
+<script>
+(function() {
+  // Client personalization
+  var params = new URLSearchParams(window.location.search);
+  var client = params.get('client');
+  if (client) {
+    document.getElementById('client-name').textContent = client;
+  }
+
+  // Smooth scroll for TOC
+  document.querySelectorAll('.toc-nav a').forEach(function(link) {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      var target = document.querySelector(this.getAttribute('href'));
+      if (target) {
+        var offset = document.querySelector('.toc-nav').offsetHeight + 10;
+        window.scrollTo({ top: target.offsetTop - offset, behavior: 'smooth' });
+      }
+    });
+  });
+
+  // Active TOC highlight
+  var sections = document.querySelectorAll('section[id]');
+  var tocLinks = document.querySelectorAll('.toc-nav a');
+  window.addEventListener('scroll', function() {
+    var scrollPos = window.scrollY + 100;
+    sections.forEach(function(sec) {
+      if (sec.offsetTop <= scrollPos && sec.offsetTop + sec.offsetHeight > scrollPos) {
+        tocLinks.forEach(function(l) {
+          l.classList.remove('toc-active');
+          if (l.getAttribute('href') === '#' + sec.id) l.classList.add('toc-active');
+        });
+      }
+    });
+  });
+
+  // ===== MAP HELPERS =====
+  function subjectIcon() {
+    return L.divIcon({
+      className: '', html: '<div style="background:#1B3A5C;color:#C5A258;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;border:2px solid #C5A258;box-shadow:0 2px 6px rgba(0,0,0,0.3);">&#9733;</div>',
+      iconSize: [28, 28], iconAnchor: [14, 14]
+    });
+  }
+  function compIcon(n) {
+    return L.divIcon({
+      className: '', html: '<div style="background:#1B3A5C;color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:2px solid #fff;box-shadow:0 2px 4px rgba(0,0,0,0.3);">' + n + '</div>',
+      iconSize: [24, 24], iconAnchor: [12, 12]
+    });
+  }
+  var tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+  var tileAttr = '&copy; OpenStreetMap contributors';
+  var subjectCoords = [33.986388, -118.463763];
+
+  // ===== SALE COMPS MAP =====
+  var saleMap = L.map('sale-map').setView(subjectCoords, 14);
+  L.tileLayer(tileUrl, {attribution: tileAttr}).addTo(saleMap);
+  L.marker(subjectCoords, {icon: subjectIcon()}).bindPopup('<b>Subject: 2341 Beach Ave</b>').addTo(saleMap);
+  var saleCoords = [subjectCoords];
+  L.marker([33.985676, -118.471917], {icon: compIcon(1)}).bindPopup('<b>Comp 1: 11 19th Ave</b><br>3 Units | $2,600,000 | $866,667/unit').addTo(saleMap);
+  saleCoords.push([33.985676, -118.471917]);
+  L.marker([33.986918, -118.463686], {icon: compIcon(2)}).bindPopup('<b>Comp 2: 2318 Beach Ave</b><br>3 Units | $2,750,000 | $916,667/unit').addTo(saleMap);
+  saleCoords.push([33.986918, -118.463686]);
+  L.marker([33.985312, -118.463303], {icon: compIcon(3)}).bindPopup('<b>Comp 3: 2428 Ocean Ave</b><br>3 Units | $1,940,000 | $646,667/unit').addTo(saleMap);
+  saleCoords.push([33.985312, -118.463303]);
+  L.marker([33.993485, -118.471762], {icon: compIcon(4)}).bindPopup('<b>Comp 4: 346 Brooks Ave</b><br>3 Units | $1,770,000 | $590,000/unit').addTo(saleMap);
+  saleCoords.push([33.993485, -118.471762]);
+  L.marker([33.993042, -118.467845], {icon: compIcon(5)}).bindPopup('<b>Comp 5: 549 San Juan Ave</b><br>3 Units | $2,000,000 | $666,667/unit').addTo(saleMap);
+  saleCoords.push([33.993042, -118.467845]);
+  L.marker([33.996586, -118.46957], {icon: compIcon(6)}).bindPopup('<b>Comp 6: 712 6th Ave</b><br>3 Units | $1,800,000 | $600,000/unit').addTo(saleMap);
+  saleCoords.push([33.996586, -118.46957]);
+  L.marker([33.998696, -118.474884], {icon: compIcon(7)}).bindPopup('<b>Comp 7: 236 S 5th Ave</b><br>3 Units | $2,185,000 | $728,333/unit').addTo(saleMap);
+  saleCoords.push([33.998696, -118.474884]);
+  L.marker([33.993038, -118.470061], {icon: compIcon(8)}).bindPopup('<b>Comp 8: 1011 5th Ave</b><br>3 Units | $1,846,000 | $615,333/unit').addTo(saleMap);
+  saleCoords.push([33.993038, -118.470061]);
+  L.marker([33.993171, -118.449639], {icon: compIcon(9)}).bindPopup('<b>Comp 9: 2474 Penmar Ave</b><br>3 Units | $1,490,000 | $496,667/unit').addTo(saleMap);
+  saleCoords.push([33.993171, -118.449639]);
+  L.marker([33.998944, -118.472847], {icon: compIcon(10)}).bindPopup('<b>Comp 10: 535 Rose Ave</b><br>3 Units | $1,525,000 | $508,333/unit').addTo(saleMap);
+  saleCoords.push([33.998944, -118.472847]);
+  L.marker([33.997381, -118.452924], {icon: compIcon(11)}).bindPopup('<b>Comp 11: 2200 Penmar Ave</b><br>3 Units | $1,400,000 | $466,667/unit').addTo(saleMap);
+  saleCoords.push([33.997381, -118.452924]);
+  saleMap.fitBounds(saleCoords, {padding: [40, 40]});
+
+  // ===== ACTIVE COMPS MAP =====
+  var activeMap = L.map('active-map').setView(subjectCoords, 14);
+  L.tileLayer(tileUrl, {attribution: tileAttr}).addTo(activeMap);
+  L.marker(subjectCoords, {icon: subjectIcon()}).bindPopup('<b>Subject: 2341 Beach Ave</b>').addTo(activeMap);
+  var activeCoords = [subjectCoords];
+  L.marker([33.985186, -118.470972], {icon: compIcon(1)}).bindPopup('<b>Comp 1: 24 20th Ave</b><br>3 Units | $1,950,000 | $650,000/unit<br>66 DOM').addTo(activeMap);
+  activeCoords.push([33.985186, -118.470972]);
+  L.marker([33.985753, -118.47046], {icon: compIcon(2)}).bindPopup('<b>Comp 2: 1916 Pacific Ave</b><br>3 Units | $2,250,000 | $750,000/unit<br>146 DOM').addTo(activeMap);
+  activeCoords.push([33.985753, -118.47046]);
+  L.marker([33.993267, -118.465181], {icon: compIcon(3)}).bindPopup('<b>Comp 3: 643 Santa Clara Ave</b><br>3 Units | $2,275,000 | $758,333/unit<br>88 DOM').addTo(activeMap);
+  activeCoords.push([33.993267, -118.465181]);
+  L.marker([33.992871, -118.467455], {icon: compIcon(4)}).bindPopup('<b>Comp 4: 558 San Juan Ave</b><br>3 Units | $2,500,000 | $833,333/unit<br>13 DOM').addTo(activeMap);
+  activeCoords.push([33.992871, -118.467455]);
+  L.marker([33.994896, -118.47876], {icon: compIcon(5)}).bindPopup('<b>Comp 5: 43 Dudley Ave</b><br>3 Units | $2,675,000 | $891,667/unit<br>17 DOM').addTo(activeMap);
+  activeCoords.push([33.994896, -118.47876]);
+  L.marker([33.993205, -118.468797], {icon: compIcon(6)}).bindPopup('<b>Comp 6: 528 Westminster Ave</b><br>3 Units | $2,695,000 | $898,333/unit<br>75 DOM').addTo(activeMap);
+  activeCoords.push([33.993205, -118.468797]);
+  L.marker([33.995969, -118.463473], {icon: compIcon(7)}).bindPopup('<b>Comp 7: 1025 Pleasantview Ave</b><br>3 Units | $2,900,000 | $966,667/unit<br>28 DOM').addTo(activeMap);
+  activeCoords.push([33.995969, -118.463473]);
+  L.marker([33.990578, -118.467962], {icon: compIcon(8)}).bindPopup('<b>Comp 8: 1309 Cabrillo</b><br>3 Units | $1,285,000 | $428,333/unit<br>70 DOM').addTo(activeMap);
+  activeCoords.push([33.990578, -118.467962]);
+  activeMap.fitBounds(activeCoords, {padding: [40, 40]});
+
+  // ===== RENT COMPS MAP =====
+  var rentMap = L.map('rent-map').setView(subjectCoords, 14);
+  L.tileLayer(tileUrl, {attribution: tileAttr}).addTo(rentMap);
+  L.marker(subjectCoords, {icon: subjectIcon()}).bindPopup('<b>Subject: 2341 Beach Ave</b>').addTo(rentMap);
+  var rentCoords = [subjectCoords];
+  L.marker([33.985347, -118.4628], {icon: compIcon(1)}).bindPopup('<b>Comp 1: 2429 McKinley Ave</b><br>2BR/1BA | $7,400/mo').addTo(rentMap);
+  rentCoords.push([33.985347, -118.4628]);
+  L.marker([33.985996, -118.458447], {icon: compIcon(2)}).bindPopup('<b>Comp 2: 2416 Boone Ave</b><br>2BR/1BA | $6,200/mo').addTo(rentMap);
+  rentCoords.push([33.985996, -118.458447]);
+  L.marker([33.989549, -118.464375], {icon: compIcon(3)}).bindPopup('<b>Comp 3: 1537 Cabrillo Ave</b><br>2BR/2BA | $5,499/mo').addTo(rentMap);
+  rentCoords.push([33.989549, -118.464375]);
+  L.marker([33.983935, -118.459734], {icon: compIcon(4)}).bindPopup('<b>Comp 4: 553 1/2 Washington Blvd</b><br>1BR/1BA | $2,495/mo').addTo(rentMap);
+  rentCoords.push([33.983935, -118.459734]);
+  L.marker([33.98621, -118.467824], {icon: compIcon(5)}).bindPopup('<b>Comp 5: 402 N Venice Blvd Unit B</b><br>1BR/1BA | $3,600/mo').addTo(rentMap);
+  rentCoords.push([33.98621, -118.467824]);
+  L.marker([33.983089, -118.467843], {icon: compIcon(6)}).bindPopup('<b>Comp 6: 2500 Strongs Dr Unit 2502</b><br>1BR/1BA | $3,795/mo').addTo(rentMap);
+  rentCoords.push([33.983089, -118.467843]);
+  rentMap.fitBounds(rentCoords, {padding: [40, 40]});
+
+  // ===== PRICING MATRIX (auto-generated) =====
+  var suggestedPrice = 1995000;
+  var noi = 94307;
+  var gsr = 139200;
+  var units = 3;
+  var buildingSF = 1698;
+  var downPct = 36 / 100;
+  var rate = 6.25 / 100;
+  var amortYears = 30;
+
+  // Determine increment
+  var increment;
+  if (suggestedPrice < 500000) increment = 5000;
+  else if (suggestedPrice < 1000000) increment = 10000;
+  else if (suggestedPrice < 2000000) increment = 25000;
+  else if (suggestedPrice < 5000000) increment = 50000;
+  else if (suggestedPrice < 10000000) increment = 100000;
+  else increment = 250000;
+
+  function calcDebtService(loanAmt) {
+    var mr = rate / 12;
+    var n = amortYears * 12;
+    var pmt = loanAmt * (mr * Math.pow(1 + mr, n)) / (Math.pow(1 + mr, n) - 1);
+    return pmt * 12;
+  }
+
+  var matrixBody = document.getElementById('matrix-body');
+  var startPrice = suggestedPrice - (5 * increment);
+  var endPrice = suggestedPrice + (5 * increment);
+
+  for (var p = startPrice; p <= endPrice; p += increment) {
+    var cap = (noi / p * 100).toFixed(2);
+    var perUnit = Math.round(p / units);
+    var perSF = Math.round(p / buildingSF);
+    var grm = (p / gsr).toFixed(2);
+    var downAmt = p * downPct;
+    var loanAmt = p - downAmt;
+    var ds = calcDebtService(loanAmt);
+    var coc = ((noi - ds) / downAmt * 100).toFixed(2);
+    var dcr = (noi / ds).toFixed(2);
+    var isHighlight = (p === suggestedPrice);
+    var row = '<tr' + (isHighlight ? ' class="highlight"' : '') + '>';
+    row += '<td class="num-col">$' + p.toLocaleString() + '</td>';
+    row += '<td class="num-col">' + cap + '%</td>';
+    row += '<td class="num-col">$' + perUnit.toLocaleString() + '</td>';
+    row += '<td class="num-col">$' + perSF.toLocaleString() + '</td>';
+    row += '<td class="num-col">' + grm + 'x</td>';
+    row += '<td class="num-col">' + coc + '%</td>';
+    row += '<td class="num-col">' + dcr + 'x</td>';
+    row += '</tr>';
+    matrixBody.innerHTML += row;
+  }
+})();
+</script>
+
+</body>
+</html>
