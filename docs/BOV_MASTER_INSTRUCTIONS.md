@@ -18,6 +18,12 @@
 10. [Narrative & Content Quality](#10-narrative--content-quality)
 11. [Technical Standards](#11-technical-standards)
 12. [Deployment & GitHub Pages](#12-deployment--github-pages)
+13. [Cover Page — Agent & Date Requirements](#13-cover-page--agent--date-requirements)
+14. [Operating Statement — Per Unit & %EGI Columns](#14-operating-statement--per-unit--egi-columns)
+15. [Comp Tiering & Classification](#15-comp-tiering--classification)
+16. [Pricing Rationale Narrative](#16-pricing-rationale-narrative)
+17. [Deal-Specific Conditions & Assumptions](#17-deal-specific-conditions--assumptions)
+18. [Phase 2 Features (Future)](#phase-2-features-future-implementation)
 
 ---
 
@@ -44,7 +50,7 @@ The BOV must contain these sections **in this exact order**:
 
 | # | Section | ID | Purpose |
 |---|---------|-----|---------|
-| 1 | Cover Page | — | Hero with property photo, address, suggested list price, key stats, client greeting |
+| 1 | Cover Page | — | Hero with property photo, address, suggested list price, key stats, client greeting, lead agent name/title, date |
 | 2 | Table of Contents Nav | `toc-nav` | Sticky navigation bar |
 | 3 | Team Track Record | `track-record` | LAAA team credentials, closings map |
 | 4 | Property Overview | `overview` | Photos, narrative description, property details tables, target buyer profile |
@@ -54,7 +60,7 @@ The BOV must contain these sections **in this exact order**:
 | 8 | Comparable Sales (Closed) | `sale-comps` | Interactive Leaflet map + comp table + narrative analysis |
 | 9 | On-Market Comparables | `on-market` | Interactive Leaflet map + active listing table + narrative |
 | 10 | Rent Comparables | `rent-comps` | Interactive Leaflet map + rent comp tables by bedroom count + narrative |
-| 11 | Financial Analysis | `financials` | Pricing metrics, unit mix/rent roll, operating statement, returns, financing terms, pricing matrix, narrative |
+| 11 | Financial Analysis | `financials` | Pricing metrics, unit mix/rent roll, operating statement (with Per Unit + %EGI columns), returns, financing terms, pricing matrix, **pricing rationale narrative** |
 | 12 | Footer / Contact | `contact` | Agent headshots/contact info, office address, disclaimer |
 
 ---
@@ -278,16 +284,132 @@ Response will contain `lat` and `lon` fields — use these exact values.
 
 ---
 
+## 13. Cover Page — Agent & Date Requirements
+
+### Always include on the cover page:
+- **Lead agent name and title** (e.g., "Glen Scher, Senior Managing Director Investments")
+- **Date** in format "Month Year" (e.g., "February 2026")
+- **NYSE: MMI** should appear in the Marcus & Millichap branding/logo area
+- The `?client=Client+Name` URL parameter populates the "Prepared Exclusively for" greeting
+
+### Cover Layout (top to bottom):
+1. M&M logo (with "NYSE: MMI" if space permits)
+2. "Broker Opinion of Value" label
+3. Property address (street)
+4. City, State, Zip
+5. Gold divider line
+6. "Suggested List Price" label + price
+7. Key stats row: Units, Square Feet, Year Built, Acres
+8. Client greeting ("Prepared Exclusively for [Client]")
+9. **Date line** (e.g., "February 2026")
+10. Cover photo with gold border
+
+---
+
+## 14. Operating Statement — Per Unit & %EGI Columns
+
+### The operating statement MUST include three value columns:
+
+| Line Item | Annual | Per Unit | % EGI |
+|-----------|-------:|--------:|------:|
+| Gross Scheduled Rent | $XXX,XXX | $XX,XXX | — |
+| Less: Vacancy (X%) | ($X,XXX) | ($X,XXX) | — |
+| Other Income | $X,XXX | $XXX | — |
+| **Effective Gross Income** | **$XXX,XXX** | **$XX,XXX** | **100.0%** |
+| Real Estate Taxes | $XX,XXX | $X,XXX | X.X% |
+| Insurance | $X,XXX | $XXX | X.X% |
+| *(all other expense lines)* | ... | ... | ... |
+| **Total Expenses** | **$XX,XXX** | **$X,XXX** | **XX.X%** |
+| **Net Operating Income** | **$XX,XXX** | **$XX,XXX** | **XX.X%** |
+
+### Calculation Rules:
+- **Per Unit** = Annual amount ÷ Total number of units
+- **% EGI** = Annual amount ÷ Effective Gross Income × 100
+- Income lines (GSR, Vacancy, Other Income) do NOT get % EGI
+- Only expense lines and NOI get % EGI
+- Round Per Unit to nearest dollar, % EGI to one decimal place
+
+---
+
+## 15. Comp Tiering & Classification
+
+### Every comp in the sale comps table should have a classification/tier:
+
+**Standard tiers:**
+- **Stabilized** — Renovated, fully leased at market rents, minimal deferred maintenance
+- **Value-Add** — Below-market rents, deferred maintenance, needs renovation
+- **Distressed** — REO, foreclosure, trust/estate sale, significant issues
+
+### Implementation:
+- Add a **Notes** column to the comp table that includes the tier label
+- In the comp narrative, explicitly reference the tiers: "The comps stratify into [X] tiers..."
+- Position the subject property relative to the tiers: "At $XXK/unit, the subject sits between the stabilized ceiling ($XXK) and the value-add middle ($XXK)..."
+- Identify the ceiling (highest stabilized comp) and floor (lowest comp) explicitly
+
+### The subject row in the comp table should always be bold and clearly labeled.
+
+---
+
+## 16. Pricing Rationale Narrative
+
+### After the pricing matrix, include a dedicated "Pricing Rationale" section.
+
+This is NOT the same as the general financial analysis narrative. The pricing rationale must:
+
+1. **State the recommended price** and its key metrics ($/unit, $/SF, cap rate, GRM)
+2. **Position against comp tiers** — explain which comps the subject is above/below and why
+3. **Justify the premium or discount** — what property-specific attributes support the price (renovation, location, zoning, lot size, views, etc.)
+4. **Address the expected negotiation range** — where offers are likely to come in
+5. **Reference specific comps by address** — not generic statements
+
+### Example structure:
+> "At the suggested list price of $X,XXX,XXX, the subject trades at $XXXK/unit and $X,XXX/SF. This positions the property [above/below/in-line with] the [stabilized/value-add] tier of comps, where [Comp Address] traded at $XXXK/unit. The [premium/discount] is justified by [specific reasons]. The pricing captures buyers filtering under the $XM threshold, where [market observation about active inventory/DOM]."
+
+---
+
+## 17. Deal-Specific Conditions & Assumptions
+
+### At the bottom of the Financial Analysis section, include a conditions block:
+
+**Format:** A subtle callout box (similar to the Legal Nonconforming Use Note style) listing key assumptions and conditions.
+
+**Always include:**
+- Financing assumptions used in cash-on-cash and DCR calculations (LTV%, rate, amortization)
+- Vacancy rate assumption and justification
+- Management fee assumption and whether owner-managed is assumed
+- Any property-specific conditions (e.g., "Subject to title clearance", "Assumes all units delivered vacant", "Excludes deferred maintenance costs")
+
+**Example:**
+> **Assumptions & Conditions:** Cash-on-cash and DCR assume 36% down payment, 6.25% interest rate, 30-year amortization. Vacancy at 3% reflects Venice multifamily historical average. Management at 5% of EGI assumes third-party management; owner-operators may achieve higher returns. This analysis is not an appraisal; it is a broker opinion of value for listing purposes.
+
+---
+
+## Phase 2 Features (Future Implementation)
+
+The following features are approved for future implementation once the core template is stable:
+
+- **Comp $/Unit bar chart** — Visual bar chart comparing subject to all comps (requires Chart.js or similar)
+- **Expense breakdown pie chart** — Visual showing expense allocation
+- **Scenario analysis section** — For REO/distressed deals only: High End, Expected, Low End, Downside scenarios
+- **Walk-away floor pricing** — For REO deals: 3-tier recommendation (List Price | Expected Range | Floor)
+- **Optional "Property Context" section** — For unusual deal circumstances (REO, estate, legal issues)
+
+These are NOT to be implemented until explicitly requested. They add chart library dependencies and calculation complexity that increases error risk.
+
+---
+
 ## Full Audit Checklist (for reviewing any BOV)
 
 Before considering a BOV complete, verify ALL of the following:
 
 ### Cover Page
-- [ ] M&M logo present
+- [ ] M&M logo present (with NYSE: MMI)
 - [ ] "Broker Opinion of Value" label
 - [ ] Property address (street + city/state/zip)
 - [ ] Suggested list price
 - [ ] Key stats: Units, Square Feet, Year Built, Lot Size (Acres)
+- [ ] **Lead agent name and title**
+- [ ] **Date (Month Year)**
 - [ ] Client greeting with URL parameter personalization
 - [ ] Property cover photo with gold border
 
@@ -320,9 +442,11 @@ Before considering a BOV complete, verify ALL of the following:
 ### Comparable Sales
 - [ ] **Interactive Leaflet map with geocoded coordinates for EVERY comp**
 - [ ] Comp table with #, Address, Units, Sale Date, Price, $/Unit, Cap, GRM, DOM, Notes
+- [ ] **Comp tiering labels** (Stabilized, Value-Add, Distressed) in Notes column
+- [ ] **Subject row** bold and clearly labeled in comp table
 - [ ] Averages and medians row
 - [ ] Table note about GRM methodology and exclusions
-- [ ] Narrative analysis positioning subject vs. comps
+- [ ] Narrative analysis positioning subject vs. comp **tiers** with ceiling/floor identification
 
 ### On-Market Comparables
 - [ ] **Interactive Leaflet map with geocoded coordinates**
@@ -339,11 +463,12 @@ Before considering a BOV complete, verify ALL of the following:
 ### Financial Analysis
 - [ ] **4 metric cards: Price/Unit, Price/SF, Current Cap Rate, Current GRM**
 - [ ] Unit mix & rent roll table
-- [ ] Operating statement (Income: GSR, Vacancy, ERI, Other Income, EGI; Expenses itemized; NOI)
+- [ ] Operating statement with **Annual, Per Unit, AND % EGI columns**
 - [ ] Returns at suggested price table (Cap Rate, GRM, Cash-on-Cash, DCR, Total Return — both Current and Market)
 - [ ] Financing terms table
 - [ ] **Pricing matrix: ~11 rows with ~1% increments, highlighted suggested price**
-- [ ] Closing narrative about investment thesis
+- [ ] **Pricing Rationale narrative** (positions subject vs. comp tiers, references specific comps, explains the "why")
+- [ ] **Deal-specific conditions/assumptions block** (financing terms, vacancy assumption, management assumption, disclaimers)
 
 ### Footer
 - [ ] Agent headshots (circular, gold border)
